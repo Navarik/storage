@@ -28,5 +28,9 @@ server.mount('get',  '/entity/:id/version/:v', getEntity)
 server.mount('get',  '/entity/:id/v/:v',       getEntity)
 
 // Connect to databases then start web-server
-Promise.all([schema.connect(), entity.connect()])
+Promise
+  .all([
+    schema.connect({ location: process.env.DATA_LOCATION }),
+    entity.connect({ location: process.env.DATA_LOCATION })
+  ])
   .then(() => server.start(process.env.PORT))
