@@ -7,6 +7,7 @@ import { badRequestError, created } from './utils'
 import format from './format'
 
 const schemaId = x => `${x.namespace}.${x.name}`
+const indexById = xs => xs.reduce((acc, x) => ({ ...acc, [schemaId(x)]: x }), {})
 
 async function queryEntities(req) {
   const data = await entityModel.find(req.params)
@@ -42,21 +43,26 @@ export async function getEntity(req, res) {
   return { data, schema }
 }
 
-export async function createEntity(req, res) {
+async function createOneEntity(req, res) {
   const typeName = req.body.type
-  if (!typeName) {
-    return badRequestError(res, 'No type specified')
-  }
-
   const schema = await schemaModel.get(typeName)
-  if (!schema) {
-    return badRequestError(res, `Schema not found for type: ${typeName}`)
-  }
-
   const data = await entityModel.create(format(schema, req.body))
 
   return created(res, { data, schema })
 }
+
+async function createCollection(req, res) {
+  const allSchemata = await Promise.all(req.body.map(x => schemaModel.get(x.type)))
+  const schema = indexById(unique(allSchemata))
+  const data = await Promise.all(req.body.map(x => entityModel.create(format(schema[x.type], x))))
+
+  return created(res, { data, schema })
+}
+
+export const createEntity = (req, res) => (req.body instanceof Array
+  ? createCollection(req, res)
+  : createOneEntity(req, res)
+)
 
 export async function updateEntity(req, res) {
   const old = await entityModel.get(req.params.id)

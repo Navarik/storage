@@ -10,6 +10,4 @@ export const createSchema = (req, res) => schemaModel
   .then(created(res))
   .catch(conflictError(res))
 
-export const updateSchema = (req, res) => schemaModel
-  .update(req.params.id, req.body)
-  .catch(conflictError(res))
+export const updateSchema = (req, res) => schemaModel.update(req.params.id, req.body)
