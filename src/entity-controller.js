@@ -3,67 +3,74 @@ import exclude from 'poly-exclude'
 import flatten from 'array-flatten'
 import * as entityModel from '@navarik/entity-core'
 import * as schemaModel from '@navarik/schema-core'
-import { conflictError, badRequestError, created } from './utils'
+import { badRequestError, created } from './utils'
 import format from './format'
 
-const queryEntities = req => entityModel
-  .find(req.params)
-  .then(data => Promise
-    .all(unique(data.map(x => x.type)).map(schemaModel.get))
-    .then(schema => ({ data, schema }))
+const schemaId = x => `${x.namespace}.${x.name}`
+
+async function queryEntities(req) {
+  const data = await entityModel.find(req.params)
+  const types = unique(data.map(x => x.type))
+  const schema = await Promise.all(types.map(schemaModel.get))
+
+  return { data, schema }
+}
+
+async function queryNamespace(req) {
+  const searchParams = exclude(['namespace'], req.params)
+  const schema = await schemaModel.find({ namespace: req.params.namespace }) || []
+  const data = await Promise.all(
+    schemata.map(schemaId).map(type => entityModel.find({ ...searchParams, type }))
   )
 
-const queryNamespace = req => schemaModel
-  .find({ namespace: req.params.namespace })
-  .then(schemata => Promise
-    .all(schemata.map(x => entityModel
-      .find({
-        ...exclude(['namespace'], req.params),
-        type: `${req.params.namespace}.${x.name}`
-      })
-    ))
-    .then(flatten)
-    .then(data => ({ data, schema: data.length ? schemata : [] }))
-  )
+  return { data: flatten(data), schema }
+}
 
 export const findEntities = req => (req.params.namespace
   ? queryNamespace(req)
   : queryEntities(req)
 )
 
-export const getEntity = (req, res) => entityModel
-  .get(req.params.id, req.params.v)
-  .then(data => (data !== undefined
-    ? schemaModel.get(data.type).then(schema => ({ data, schema }))
-    : undefined
-  ))
+export async function getEntity(req, res) {
+  const data = await entityModel.get(req.params.id, req.params.v)
+  if (data === undefined) {
+    return undefined
+  }
 
-export const createEntity = (req, res) => Promise.resolve(req.body)
-  .then(body => (!body.type
-    ? badRequestError(res, 'No type specified')
-    : schemaModel.get(body.type)
-      .then(schema => (!schema
-        ? badRequestError(res, `Schema not found for type: ${body.type}`)
-        : entityModel.create(format(schema, body))
-          .then(data => ({ data, schema }))
-          .then(created(res))
-          .catch(conflictError(res))
-        )
-      )
-    )
-  )
+  const schema = await schemaModel.get(data.type)
 
-export const updateEntity = (req, res) => entityModel
-  .get(req.params.id)
-  .then(old => (!old
-    ? undefined
-    : schemaModel.get(req.body.type || old.type)
-      .then(schema => (!schema
-        ? badRequestError(res, `Schema not found for type: ${req.body.type || old.type}`)
-        : entityModel.update(req.params.id, format(schema, req.body))
-          .then(data => ({ data, schema }))
-          .catch(badRequestError(res))
-        )
-      )
-    )
-  )
+  return { data, schema }
+}
+
+export async function createEntity(req, res) {
+  const typeName = req.body.type
+  if (!typeName) {
+    return badRequestError(res, 'No type specified')
+  }
+
+  const schema = await schemaModel.get(typeName)
+  if (!schema) {
+    return badRequestError(res, `Schema not found for type: ${typeName}`)
+  }
+
+  const data = await entityModel.create(format(schema, req.body))
+
+  return created(res, { data, schema })
+}
+
+export async function updateEntity(req, res) {
+  const old = await entityModel.get(req.params.id)
+  if (!old) {
+    return undefined
+  }
+
+  const type = req.body.type || old.type
+  const schema = await schemaModel.get(type)
+  if (!schema) {
+    return badRequestError(res, `Schema not found for type: ${type}`)
+  }
+
+  const data = await entityModel.update(req.params.id, format(schema, req.body))
+
+  return { data, schema }
+}
