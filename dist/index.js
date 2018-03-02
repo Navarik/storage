@@ -1,5 +1,7 @@
 'use strict';
 
+require('babel-polyfill');
+
 var _schemaCore = require('@navarik/schema-core');
 
 var schema = _interopRequireWildcard(_schemaCore);

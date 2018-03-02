@@ -1,3 +1,4 @@
+import 'babel-polyfill'
 import * as schema from '@navarik/schema-core'
 import * as entity from '@navarik/entity-core'
 import server from '@navarik/http-server'

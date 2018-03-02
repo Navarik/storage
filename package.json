@@ -16,6 +16,7 @@
     "@navarik/schema-core": "^0.1.6",
     "array-flatten": "^2.1.1",
     "array-unique": "^0.3.2",
+    "babel-polyfill": "^6.26.0",
     "consulite": "^2.0.0",
     "forever-monitor": "^1.7.1",
     "logops": "^2.1.0",
