@@ -11,7 +11,7 @@
   "main": "dist",
   "author": "Navarik Corp.",
   "dependencies": {
-    "@navarik/entity-core": "^0.1.2",
+    "@navarik/entity-core": "^0.1.3",
     "@navarik/http-server": "^0.1.0",
     "@navarik/schema-core": "^0.1.6",
     "array-flatten": "^2.1.1",
