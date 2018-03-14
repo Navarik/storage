@@ -13,7 +13,7 @@
   "dependencies": {
     "@navarik/entity-core": "^0.1.3",
     "@navarik/http-server": "^0.2.0",
-    "@navarik/schema-core": "^0.1.6",
+    "@navarik/schema-core": "^0.1.7",
     "array-flatten": "^2.1.1",
     "array-unique": "^0.3.2",
     "babel-polyfill": "^6.26.0",
