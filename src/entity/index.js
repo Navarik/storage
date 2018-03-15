@@ -1,5 +1,4 @@
 import { diff } from 'deep-object-diff'
-import { isConnected, configure, close } from '../adapters/db'
 import { head, errorWhen, splitName, empty } from '../utils'
 import * as model from './model'
 import { formatCollection, formatObject } from './format'
@@ -33,12 +32,3 @@ export const update = (id, body) => get(id)
     version: version + 1
   }))
   .then(formatObject)
-
-export const connect = (config = {}) => configure({
-  location: config.location,
-  migrations: `${__dirname}/../../migrations`
-})
-
-export const disconnect = () => close()
-
-export { isConnected }
