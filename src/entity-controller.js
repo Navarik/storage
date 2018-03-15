@@ -1,8 +1,8 @@
 import unique from 'array-unique'
 import exclude from 'poly-exclude'
 import flatten from 'array-flatten'
-import * as entityModel from '@navarik/entity-core'
-import * as schemaModel from '@navarik/schema-core'
+import * as entityModel from './entity'
+import * as schemaModel from './schema'
 import { badRequestError, created } from './utils'
 import format from './format'
 

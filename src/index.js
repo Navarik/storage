@@ -1,7 +1,7 @@
 import 'babel-polyfill'
-import * as schema from '@navarik/schema-core'
-import * as entity from '@navarik/entity-core'
-import server from '@navarik/http-server'
+import * as schema from './schema'
+import * as entity from './entity'
+import server from './adapters/http-server'
 import { findSchemas, getSchema, createSchema, updateSchema } from './schema-controller'
 import { createEntity, findEntities, updateEntity, getEntity } from './entity-controller'
 

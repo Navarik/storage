@@ -1,4 +1,4 @@
-import * as schemaModel from '@navarik/schema-core'
+import * as schemaModel from './schema'
 import { conflictError, created } from './utils'
 
 export const findSchemas = req => schemaModel.find(req.params)
