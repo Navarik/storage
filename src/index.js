@@ -1,6 +1,4 @@
 import 'babel-polyfill'
-import * as schema from './schema'
-import * as entity from './entity'
 import server from './adapters/http-server'
 import * as db from './adapters/db'
 import { findSchemas, getSchema, createSchema, updateSchema } from './schema-controller'
@@ -10,7 +8,7 @@ import { createEntity, findEntities, updateEntity, getEntity } from './entity-co
 server.addHealthCheck(db.isConnected, 'DB down')
 
 // Mount business logic
-server.mount('get',  '/namespaces',            schema.namespaces)
+// server.mount('get',  '/namespaces',            schema.namespaces)
 
 server.mount('post', '/schemas',               createSchema)
 server.mount('post', '/schemata',              createSchema)
