@@ -1,11 +1,13 @@
 import 'babel-polyfill'
 import server from './adapters/http-server'
-import * as db from './adapters/db'
+import * as entityModel from './models/entity'
+import * as schemaModel from './models/schema'
 import { findSchemas, getSchema, createSchema, updateSchema } from './schema-controller'
 import { createEntity, findEntities, updateEntity, getEntity } from './entity-controller'
 
 // Healthchecks
-server.addHealthCheck(db.isConnected, 'DB down')
+server.addHealthCheck(schemaModel.isConnected, 'Schema core down')
+server.addHealthCheck(entityModel.isConnected, 'Entity core down')
 
 // Mount business logic
 // server.mount('get',  '/namespaces',            schema.namespaces)
@@ -27,9 +29,9 @@ server.mount('get',  '/entity/:id/version/:v', getEntity)
 server.mount('get',  '/entity/:id/v/:v',       getEntity)
 
 // Connect to databases then start web-server
-db
-  .configure({
-    location: process.env.DATA_LOCATION,
-    migrations: `${__dirname}/../migrations`
-  })
+Promise
+  .all([
+    schemaModel.configure({ location: process.env.DATA_LOCATION }),
+    entityModel.configure({ location: process.env.DATA_LOCATION })
+  ])
   .then(() => server.start(process.env.PORT))

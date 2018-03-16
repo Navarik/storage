@@ -48,7 +48,8 @@ export async function createEntity(req, res) {
   const types = unique(collection.map(x => x.type))
 
   const schema = await Promise.all(types.map(schemaModel.get)).then(indexById)
-  const data = await Promise.all(collection.map(x => entityModel.create(format(schema[x.type], x))))
+  const formatted = collection.map(x => format(schema[x.type], x))
+  const data = await entityModel.createAll(collection)
 
   return created(res, { data, schema })
 }

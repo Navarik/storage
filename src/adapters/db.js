@@ -1,31 +1,26 @@
 import fs from 'fs'
 import Database from 'nedb'
 
-let client = null
-
 const enforceArray = xs => (xs instanceof Array ? xs : [xs])
-
 const databaseError = err => new Error(err)
+const promisify = func => (...args) => new Promise((resolve, reject) =>
+  func(...args, (err, res) => (err ? reject(databaseError(err)) : resolve(res)))
+)
 
-const connect = (location = ':memory:') => new Promise((resolve, reject) => {
-  client = new Database()
-  resolve(client)
+const createDatabase = config => new Promise((resolve, reject) => {
+  const client = new Database()
+
+  const find = promisify((...args) => client.find(...args))
+  const insert = promisify((...args) => client.insert(...args))
+  const update = promisify((...args) => client.update(...args))
+
+  resolve({
+    find,
+    findOne: query => find(query).then(xs => xs[0]),
+    insert: data => insert(enforceArray(data)),
+    update,
+    close: () => client.close()
+  })
 })
 
-export const isConnected = () => client !== null
-
-export const find = query => new Promise((resolve, reject) =>
-  client.find(query, (err, res) => (err ? reject(databaseError(err)) : resolve(res)))
-)
-
-export const insert = data => new Promise((resolve, reject) =>
-  client.insert(enforceArray(data), (err, res) => (err ? reject(databaseError(err)) : resolve(res)))
-)
-
-export const update = (query, data) => new Promise((resolve, reject) =>
-  client.update(query, data, (err, res) => (err ? reject(databaseError(err)) : resolve(res)))
-)
-
-export const configure = (config) => connect(config.location)
-
-export const close = () => client.close()
+export default createDatabase

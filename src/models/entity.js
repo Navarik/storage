@@ -1,25 +1,16 @@
 import { diff } from 'deep-object-diff'
 import { head, errorWhen, splitName, empty } from '../utils'
-import * as db from '../adapters/db'
+import createDb from '../adapters/db'
+
+let db = null
 
 const latest = (data = {}) => ({ ...data, is_latest: 1, is_deleted: 0 })
+const first = (data = {}) => ({ version: 1, ...data, is_latest: 1, is_deleted: 0 })
 
-export const get = (id, version) => db
-  .find({
-    id,
-    is_deleted: 0,
-    ...(version ? { version } : { is_latest: 1 })
-  })
-  .then(head)
-  // .then(formatCollection)
-
+export const get = (id, version) => db.findOne(version ? { id, version } : { id, is_latest: 1 })
 export const find = params => db.find(latest(params))
-  // .then(formatCollection)
-
-export const create = body => Promise.resolve()
-  .then(errorWhen(() => body.id, `Can not set new entity id to ${body.id}`))
-  .then(() => db.insert(latest({ version: 1, ...body })))
-  // .then(formatObject)
+export const create = body => db.insert(first(body))
+export const createAll = body => db.insert(body.map(first))
 
 // export const update = (id, body) => get(id)
 //   .then(errorWhen(x => !x, `Id ${id} does not exist`))
@@ -32,3 +23,7 @@ export const create = body => Promise.resolve()
 //     version: version + 1
 //   }))
 //   .then(formatObject)
+
+export const configure = conf => createDb(conf).then(client => { db = client })
+
+export const isConnected = () => db !== null
