@@ -2,7 +2,7 @@ import 'babel-polyfill'
 import server from './adapters/http-server'
 import * as entityModel from './models/entity'
 import * as schemaModel from './models/schema'
-import { findSchemas, getSchema, createSchema, updateSchema } from './schema-controller'
+import { findSchemas, getSchema, createSchema, updateSchema, getNamespaces } from './schema-controller'
 import { createEntity, findEntities, updateEntity, getEntity } from './entity-controller'
 
 // Healthchecks
@@ -10,7 +10,7 @@ server.addHealthCheck(schemaModel.isConnected, 'Schema core down')
 server.addHealthCheck(entityModel.isConnected, 'Entity core down')
 
 // Mount business logic
-// server.mount('get',  '/namespaces',            schema.namespaces)
+server.mount('get',  '/namespaces',            getNamespaces)
 
 server.mount('post', '/schemas',               createSchema)
 server.mount('post', '/schemata',              createSchema)
@@ -31,7 +31,7 @@ server.mount('get',  '/entity/:id/v/:v',       getEntity)
 // Connect to databases then start web-server
 Promise
   .all([
-    schemaModel.configure({ location: process.env.DATA_LOCATION }),
-    entityModel.configure({ location: process.env.DATA_LOCATION })
+    schemaModel.connect({ location: process.env.DATA_LOCATION }),
+    entityModel.connect({ location: process.env.DATA_LOCATION })
   ])
   .then(() => server.start(process.env.PORT))
