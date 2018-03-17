@@ -1,7 +1,7 @@
 import unique from 'array-unique'
 import flatten from 'array-flatten'
-import * as entityModel from './models/entity'
-import * as schemaModel from './models/schema'
+import * as entityModel from './model/entity'
+import * as schemaModel from './model/schema'
 import { badRequestError, created } from './utils'
 import format from './format'
 

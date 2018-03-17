@@ -1,6 +1,6 @@
 import unique from 'array-unique'
 import { diff } from 'deep-object-diff'
-import * as schemaModel from './models/schema'
+import * as schemaModel from './model/schema'
 import { conflictError, badRequestError, created, empty, splitName } from './utils'
 
 export const getNamespaces = () => schemaModel.find({})

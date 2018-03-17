@@ -14,6 +14,7 @@ const enforceType = (type, value) => {
 const enforceSchema = curry((schema, data) => {
   const result = {
     type: `${schema.namespace}.${schema.name}`
+    id: data._id
   }
 
   for (let i in schema.fields) {
