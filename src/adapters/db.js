@@ -1,51 +1,26 @@
 import fs from 'fs'
-import { Database } from 'sqlite3'
-import { splitName } from '../utils'
+import Database from 'nedb'
 
-let client = null
+const enforceArray = xs => (xs instanceof Array ? xs : [xs])
+const databaseError = err => new Error(err)
+const promisify = func => (...args) => new Promise((resolve, reject) =>
+  func(...args, (err, res) => (err ? reject(databaseError(err)) : resolve(res)))
+)
 
-const getFileNames = directory => fs.readdirSync(directory).map(fileName => `${directory}/${fileName}`)
+const createDatabase = config => new Promise((resolve, reject) => {
+  const client = new Database()
 
-const readAll = directories => directories
-  .reduce((acc, directory) => acc.concat(getFileNames(directory)), [])
-  .reduce((acc, fileName) => acc.concat(fs.readFileSync(fileName, 'utf8').replace(/\r?\n|\r/g, '').split(';')), [])
-  .filter(x => x)
+  const find = promisify((...args) => client.find(...args))
+  const insert = promisify((...args) => client.insert(...args))
+  const update = promisify((...args) => client.update(...args))
 
-const connect = (location = ':memory:') => new Promise((resolve, reject) => {
-  if (location !== ':memory:') {
-    const { namespace } = splitName('/', location)
-
-    if (!fs.existsSync(namespace)) {
-      fs.mkdirSync(namespace)
-    }
-  }
-
-  client = new Database(location, err => (err ? reject(err) : resolve(client)))
+  resolve({
+    find,
+    findOne: query => find(query).then(xs => xs[0]),
+    insert: data => insert(enforceArray(data)),
+    update,
+    close: () => client.close()
+  })
 })
 
-export const isConnected = () => client !== null
-
-const databaseError = err => new Error(err)
-
-export const query = ({ text, values }) => new Promise((resolve, reject) =>
-  client.all(text, values, (err, res) => (err ? reject(databaseError(err)) : resolve(res)))
-)
-
-export const exec = ({ text, values }) => new Promise((resolve, reject) =>
-  client.run(text, values, function (err, res) {
-    if (err) {
-      reject(databaseError(err))
-    } else {
-      resolve(this.lastID)
-    }
-  })
-)
-
-export const configure = (config) =>
-  connect(config.location)
-    .then(() => readAll(config.migrations.split(',')).reduce(
-      (chain, text) => chain.then(() => exec({ text, values: [] })),
-      Promise.resolve()
-    ))
-
-export const close = () => client.close()
+export default createDatabase

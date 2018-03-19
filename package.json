@@ -23,6 +23,8 @@
     "forever-monitor": "^1.7.1",
     "group-by": "0.0.1",
     "logops": "^2.1.0",
+    "nedb": "^1.8.0",
+    "object-path": "^0.11.4",
     "poly-exclude": "^1.0.4",
     "poly-map": "^1.1.0",
     "sql": "^0.78.0",
