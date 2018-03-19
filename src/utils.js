@@ -1,10 +1,12 @@
+import map from 'poly-map'
 import curry from 'curry'
+import objectPath from 'object-path'
+import unique from 'array-unique'
+import { diff } from 'deep-object-diff'
+import flatten from 'array-flatten'
 
-export const conflictError = curry((res, err) => { res.status(409); return err.message || err })
-export const badRequestError = curry((res, err) => { res.status(400); return err.message || err })
-export const created = curry((res, result) => { res.status(201); return result })
-
-export const head = xs => xs[0]
+export const indexBy = curry((f, xs) => xs.reduce((acc, x) => ({ ...acc, [f(x)]: x }), {}))
+export const head = xs => xs && Object.values(xs)[0]
 export const empty = x => Object.keys(x).length === 0
 
 export const splitName = (separator, string) => {
@@ -14,3 +16,7 @@ export const splitName = (separator, string) => {
 
   return { name, namespace }
 }
+
+export const get = curry((path, data) => objectPath.get(data, path))
+
+export { unique, diff, map, flatten }

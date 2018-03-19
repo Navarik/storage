@@ -7,22 +7,22 @@ import cors from 'cors'
 const controller = handler => (req, res) => {
   const params = { ...(req.params || {}), ...(req.query || {}) }
 
-  try {
-    return handler({ params, body: req.body }, res)
-      .then(data => {
-        if (data === undefined) {
-          res.status(404).send()
-        } else {
-          res.send(data)
-        }
-      })
-      .catch(err => {
+  return handler({ params, body: req.body }, res)
+    .then(data => {
+      if (data === undefined) {
+        res.status(404).send()
+      } else {
+        res.send(data)
+      }
+    })
+    .catch(err => {
+      if (err.code) {
+        res.status(err.code).send({ message: err.message })
+      } else {
         logger.error(err)
-        res.status(500).send({ message: 'System error' })
-      })
-  } catch (err) {
-    res.status(400).send({ message: err.message })
-  }
+        res.status(500).send({ message: 'System error', details: err.message })
+      }
+    })
 }
 
 const server = express()

@@ -9,14 +9,13 @@ export const getNamespaces = () => schemaModel.find({})
 
 export const findSchemas = req => schemaModel.find(req.params)
 
-export const getSchema = req => schemaModel.get(req.params.id, req.params.v)
+export const getSchema = req => schemaModel.findOne(splitName('.', req.params.id), req.params.v)
 
 export const createSchema = async (req, res) => {
-  const id = `${req.body.namespace}.${req.body.name}`
-  const found = await schemaModel.get(id)
+  const found = await schemaModel.findOne({ name: req.body.name, namespace: req.body.namespace })
 
   if (found) {
-    return conflictError(res, `Schema already exists: ${id}`)
+    return conflictError(res, `Schema already exists: ${req.body.namespace}.${req.body.name}`)
   }
 
   const result = await schemaModel.create(req.body)
@@ -25,7 +24,7 @@ export const createSchema = async (req, res) => {
 }
 
 export const updateSchema = async (req, res) => {
-  const found = await schemaModel.get(req.params.id)
+  const found = await schemaModel.findOne(splitName('.', req.params.id))
 
   if (!found) {
     return badRequestError(res, `Schema not found: ${req.params.id}`)

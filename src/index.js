@@ -1,9 +1,20 @@
 import 'babel-polyfill'
+import logger from 'logops'
 import server from './adapters/http-server'
-import * as entityModel from './models/entity'
-import * as schemaModel from './models/schema'
-import { findSchemas, getSchema, createSchema, updateSchema, getNamespaces } from './schema-controller'
-import { createEntity, findEntities, updateEntity, getEntity } from './entity-controller'
+import { BadRequestError, ConflictError } from './errors'
+import EntityModel from './model/entity'
+import SchemaModel from './model/schema'
+
+// Models
+const schemaModel = new SchemaModel({ location: process.env.DATA_LOCATION })
+const entityModel = new EntityModel({ location: process.env.DATA_LOCATION }, schemaModel)
+
+// Controllers
+const getNamespaces = (req, res) => schemaModel.getNamespaces(req.params)
+const findSchemas   = (req, res) => schemaModel.find(req.params)
+const createSchema  = (req, res) => schemaModel.create(req.body).then(x => { res.status(201); return x })
+const updateSchema  = (req, res) => schemaModel.update(req.params.id, req.body)
+const getSchema     = (req, res) => schemaModel.findOne(req.params.id, req.params.v)
 
 // Healthchecks
 server.addHealthCheck(schemaModel.isConnected, 'Schema core down')
@@ -21,17 +32,14 @@ server.mount('get',  '/schema/:id',            getSchema)
 server.mount('get',  '/schema/:id/version/:v', getSchema)
 server.mount('get',  '/schema/:id/v/:v',       getSchema)
 
-server.mount('post', '/entities',              createEntity)
-server.mount('get',  '/entities',              findEntities)
-server.mount('put',  '/entity/:id',            updateEntity)
-server.mount('get',  '/entity/:id',            getEntity)
-server.mount('get',  '/entity/:id/version/:v', getEntity)
-server.mount('get',  '/entity/:id/v/:v',       getEntity)
+// server.mount('post', '/entities',              createEntity)
+// server.mount('get',  '/entities',              findEntities)
+// server.mount('put',  '/entity/:id',            updateEntity)
+// server.mount('get',  '/entity/:id',            getEntity)
+// server.mount('get',  '/entity/:id/version/:v', getEntity)
+// server.mount('get',  '/entity/:id/v/:v',       getEntity)
 
 // Connect to databases then start web-server
 Promise
-  .all([
-    schemaModel.connect({ location: process.env.DATA_LOCATION }),
-    entityModel.connect({ location: process.env.DATA_LOCATION })
-  ])
+  .all([ schemaModel.connect(), entityModel.connect() ])
   .then(() => server.start(process.env.PORT))
