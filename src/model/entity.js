@@ -16,7 +16,7 @@ class EntityModel extends VersionedStorage {
 
   async getSchemata(entities) {
     const types = unique(entities.map(get('type')))
-    const schemata = await Promise.all(types.map(this.schemaModel.findOne))
+    const schemata = await Promise.all(types.map(type => this.schemaModel.findOne(type)))
     const result = indexBy(get('id'), schemata)
 
     return result
@@ -31,21 +31,25 @@ class EntityModel extends VersionedStorage {
 
   async find(params) {
     const entities = await super.find(params)
-    const response = this.formatCollection(entities)
+    const response = await this.formatCollection(entities)
 
     return response
   }
 
   async create(body) {
     const entities = (body instanceof Array ? body : [body])
-    const response = this.formatCollection(entities)
+    const response = await this.formatCollection(entities)
     response.data = await super.createAll(response.data)
 
     return response
   }
 
   async findOne(id, version) {
-    const entity = await super.findOne(id, version)
+    const entity = await super.findOne({ _id: id }, version)
+    if (!entity) {
+      return undefined
+    }
+
     const schema = await this.schemaModel.findOne(entity.type)
     const data = format(schema, entity)
 

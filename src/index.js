@@ -16,6 +16,11 @@ const createSchema  = (req, res) => schemaModel.create(req.body).then(x => { res
 const updateSchema  = (req, res) => schemaModel.update(req.params.id, req.body)
 const getSchema     = (req, res) => schemaModel.findOne(req.params.id, req.params.v)
 
+const findEntities  = (req, res) => entityModel.find(req.params)
+const createEntity  = (req, res) => entityModel.create(req.body).then(x => { res.status(201); return x })
+const updateEntity  = (req, res) => entityModel.update(req.params.id, req.body)
+const getEntity     = (req, res) => entityModel.findOne(req.params.id, req.params.v)
+
 // Healthchecks
 server.addHealthCheck(schemaModel.isConnected, 'Schema core down')
 server.addHealthCheck(entityModel.isConnected, 'Entity core down')
@@ -32,12 +37,12 @@ server.mount('get',  '/schema/:id',            getSchema)
 server.mount('get',  '/schema/:id/version/:v', getSchema)
 server.mount('get',  '/schema/:id/v/:v',       getSchema)
 
-// server.mount('post', '/entities',              createEntity)
-// server.mount('get',  '/entities',              findEntities)
-// server.mount('put',  '/entity/:id',            updateEntity)
-// server.mount('get',  '/entity/:id',            getEntity)
-// server.mount('get',  '/entity/:id/version/:v', getEntity)
-// server.mount('get',  '/entity/:id/v/:v',       getEntity)
+server.mount('post', '/entities',              createEntity)
+server.mount('get',  '/entities',              findEntities)
+server.mount('put',  '/entity/:id',            updateEntity)
+server.mount('get',  '/entity/:id',            getEntity)
+server.mount('get',  '/entity/:id/version/:v', getEntity)
+server.mount('get',  '/entity/:id/v/:v',       getEntity)
 
 // Connect to databases then start web-server
 Promise
