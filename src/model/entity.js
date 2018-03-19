@@ -17,14 +17,14 @@ class EntityModel extends VersionedStorage {
   async getSchemata(entities) {
     const types = unique(entities.map(get('type')))
     const schemata = await Promise.all(types.map(type => this.schemaModel.findOne(type)))
-    const result = indexBy(get('id'), schemata)
 
-    return result
+    return schemata
   }
 
   async formatCollection(entities) {
     const schema = await this.getSchemata(entities)
-    const data = entities.map(x => format(schema[x.type], x))
+    const indexedSchemata = indexBy(get('id'), schema)
+    const data = entities.map(x => format(indexedSchemata[x.type], x))
 
     return { data, schema }
   }
