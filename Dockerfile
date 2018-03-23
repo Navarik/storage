@@ -1,4 +1,4 @@
-FROM node:8-alpine
+FROM node:8.9-alpine
 
 WORKDIR /usr/src/service
 ARG NPM_TOKEN
