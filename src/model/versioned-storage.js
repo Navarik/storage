@@ -1,16 +1,27 @@
 import createDb from '../adapters/db'
+import { getFileNames, readJsonFile } from '../adapters/filesystem'
 import { head } from '../utils'
 
 const asLatest = (data = {}) => ({ ...data, is_latest: 1, is_deleted: 0 })
 const asFirst = (data = {}) => ({ version: 1, ...data, is_latest: 1, is_deleted: 0 })
 
 class VersionedStorage {
-  constructor() {
+  constructor(config) {
     this.db = null
+    this.config = config
   }
 
-  connect(conf) {
-    return createDb(conf).then(client => { this.db = client })
+  connect(config) {
+    const conf = config || this.config
+
+    return createDb(conf).then(client => {
+      this.db = client
+
+      if (conf.seed) {
+        const seeds = getFileNames(conf.seed).map(readJsonFile).map(asLatest)
+        return this.db.insert(seeds)
+      }
+    })
   }
 
   isConnected() {

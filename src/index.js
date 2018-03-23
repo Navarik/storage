@@ -6,8 +6,8 @@ import EntityModel from './model/entity'
 import SchemaModel from './model/schema'
 
 // Models
-const schemaModel = new SchemaModel({ location: process.env.DATA_LOCATION })
-const entityModel = new EntityModel({ location: process.env.DATA_LOCATION }, schemaModel)
+const schemaModel = new SchemaModel({ seed: process.env.SEED_SCHEMATA })
+const entityModel = new EntityModel({ seed: process.env.SEED_DATA }, schemaModel)
 
 // Controllers
 const getNamespaces = (req, res) => schemaModel.getNamespaces(req.params)

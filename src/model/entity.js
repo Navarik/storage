@@ -5,13 +5,8 @@ import format from './format-entity'
 
 class EntityModel extends VersionedStorage {
   constructor(config, schemaModel) {
-    super()
-    this.config = config
+    super(config)
     this.schemaModel = schemaModel
-  }
-
-  connect(config) {
-    return super.connect(config || this.config)
   }
 
   async getSchemata(entities) {

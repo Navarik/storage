@@ -1,4 +1,3 @@
-import fs from 'fs'
 import Database from 'nedb'
 
 const enforceArray = xs => (xs instanceof Array ? xs : [xs])
@@ -7,7 +6,7 @@ const promisify = func => (...args) => new Promise((resolve, reject) =>
   func(...args, (err, res) => (err ? reject(databaseError(err)) : resolve(res)))
 )
 
-const createDatabase = config => new Promise((resolve, reject) => {
+const createDatabase = () => new Promise((resolve, reject) => {
   const client = new Database()
 
   const find = promisify((...args) => client.find(...args))

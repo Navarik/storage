@@ -12,12 +12,7 @@ const normalize = (type, body, version = 1) => ({
 
 class SchemaModel extends VersionedStorage {
   constructor(config) {
-    super()
-    this.config = config
-  }
-
-  connect(config) {
-    return super.connect(config || this.config)
+    super(config)
   }
 
   async getNamespaces() {

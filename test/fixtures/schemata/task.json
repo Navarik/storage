@@ -1,0 +1,52 @@
+{
+  "namespace": "ow",
+  "name": "task",
+  "description": "OW task",
+  "type": "record",
+  "fields": [
+    {
+      "name": "API_INSP_REPORT_ID",
+      "type": "string"
+    },
+    {
+      "name": "VEF_INSP_REPORT_ID",
+      "type": "string"
+    },
+    {
+      "name": "ATTACHMENT_PATH",
+      "type": "string"
+    },
+    {
+      "name": "ATTACHMENT_FILE_NAME",
+      "type": "string"
+    },
+    {
+      "name": "ATTACHMENT_CHECKSUM",
+      "type": "string"
+    },
+    {
+      "name": "STATUS_CODE",
+      "type": "string"
+    },
+    {
+      "name": "DATE_CREATED",
+      "type": "string"
+    },
+    {
+      "name": "DATE_MODIFIED",
+      "type": "string"
+    },
+    {
+      "name": "PROCESSOR_API_KEY_ID",
+      "type": "string"
+    },
+    {
+      "name": "labels",
+      "type": "string"
+    },
+    {
+      "name": "attachment_url",
+      "type": "string"
+    }
+  ]
+}
