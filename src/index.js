@@ -1,13 +1,16 @@
 import 'babel-polyfill'
 import logger from 'logops'
 import server from './adapters/http-server'
+import { getFileNames, readJsonFile } from './adapters/filesystem'
 import { BadRequestError, ConflictError } from './errors'
 import EntityModel from './model/entity'
 import SchemaModel from './model/schema'
 
+const importData = (model, directory) => model.createAll(getFileNames(directory).map(readJsonFile))
+
 // Models
-const schemaModel = new SchemaModel({ seed: process.env.SEED_SCHEMATA })
-const entityModel = new EntityModel({ seed: process.env.SEED_DATA }, schemaModel)
+const schemaModel = new SchemaModel()
+const entityModel = new EntityModel({}, schemaModel)
 
 // Controllers
 const getNamespaces = (req, res) => schemaModel.getNamespaces(req.params)
@@ -47,4 +50,6 @@ server.mount('get',  '/entity/:id/v/:v',       getEntity)
 // Connect to databases then start web-server
 Promise
   .all([ schemaModel.connect(), entityModel.connect() ])
+  .then(() => (process.env.SEED_SCHEMATA && importData(schemaModel, process.env.SEED_SCHEMATA)))
+  .then(() => (process.env.SEED_DATA && importData(schemaModel, process.env.SEED_DATA)))
   .then(() => server.start(process.env.PORT))
