@@ -6,44 +6,64 @@ import { BadRequestError, ConflictError } from './errors'
 import EntityModel from './model/entity'
 import SchemaModel from './model/schema'
 
+const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
 const importData = (model, directory) => model.createAll(getFileNames(directory).map(readJsonFile))
 
 // Models
-const schemaModel = new SchemaModel()
+const schemaModel = new SchemaModel({ rootUuid: UUID_ROOT })
 const entityModel = new EntityModel({}, schemaModel)
 
 // Controllers
-const getNamespaces = (req, res) => schemaModel.getNamespaces(req.params)
-const findSchemas   = (req, res) => schemaModel.find(req.params)
-const createSchema  = (req, res) => schemaModel.create(req.body).then(x => { res.status(201); return x })
-const updateSchema  = (req, res) => schemaModel.update(req.params.id, req.body)
-const getSchema     = (req, res) => schemaModel.findOne(req.params.id, req.params.v)
+const getNamespaces     = (req, res) => schemaModel.getNamespaces(req.params)
+const findSchemata      = (req, res) => schemaModel.find(req.params)
+const findOneSchema     = (req, res) => schemaModel.findOne(req.params, req.params.version)
+const getSchema         = (req, res) => schemaModel.get(req.params.id)
+const getSchemaVersion  = (req, res) => schemaModel.getVersion(req.params.vid)
+const allSchemaVersions = (req, res) => schemaModel.findAll(req.params)
+const createSchema      = (req, res) => schemaModel.create(req.body).then(x => { res.status(201); return x })
+const updateSchema      = (req, res) => schemaModel.update(req.params.id, req.body)
 
-const findEntities  = (req, res) => entityModel.find(req.params)
-const createEntity  = (req, res) => entityModel.create(req.body).then(x => { res.status(201); return x })
-const updateEntity  = (req, res) => entityModel.update(req.params.id, req.body)
-const getEntity     = (req, res) => entityModel.findOne(req.params.id, req.params.v)
+const findEntities      = (req, res) => entityModel.find(req.params)
+const createEntity      = (req, res) => entityModel.create(req.body).then(x => { res.status(201); return x })
+const updateEntity      = (req, res) => entityModel.update(req.params.id, req.body)
+const getEntity         = (req, res) => entityModel.findOne(req.params.id, req.params.v)
+const allEntityVersions = (req, res) => entityModel.findAll(req.params)
 
 // Healthchecks
 server.addHealthCheck(schemaModel.isConnected, 'Schema core down')
 server.addHealthCheck(entityModel.isConnected, 'Entity core down')
 
 // Mount business logic
-server.mount('get',  '/namespaces',            getNamespaces)
+// Schema lists
+server.mount('get', '/schemas',                       findSchemata)
+server.mount('get', '/schemata',                      findSchemata)
+server.mount('get', '/schemas/namespaces',            getNamespaces)
+server.mount('get', '/schemata/namespaces',           getNamespaces)
+server.mount('get', '/schemas/namespace/:namespace',  findSchemata)
+server.mount('get', '/schemata/namespace/:namespace', findSchemata)
 
+// Schema ID lookups
+server.mount('get', '/schema/:id',                    getSchema)
+server.mount('get', '/schema/:id/versions',           allSchemaVersions)
+server.mount('get', '/schema_version/:vid',           getSchemaVersion)
+
+// Single Schema search
+server.mount('get', '/schema/:namespace/:name',                  findOneSchema)
+server.mount('get', '/schema/:namespace/:name/versions',         allSchemaVersions)
+server.mount('get', '/schema/:namespace/:name/version/:version', findOneSchema)
+server.mount('get', '/schema/:namespace/:name/v/:version',       findOneSchema)
+
+// Schema creation/update
 server.mount('post', '/schemas',               createSchema)
 server.mount('post', '/schemata',              createSchema)
-server.mount('get',  '/schemas',               findSchemas)
-server.mount('get',  '/schemata',              findSchemas)
 server.mount('put',  '/schema/:id',            updateSchema)
-server.mount('get',  '/schema/:id',            getSchema)
-server.mount('get',  '/schema/:id/version/:v', getSchema)
-server.mount('get',  '/schema/:id/v/:v',       getSchema)
 
+// Entity management
 server.mount('post', '/entities',              createEntity)
 server.mount('get',  '/entities',              findEntities)
 server.mount('put',  '/entity/:id',            updateEntity)
 server.mount('get',  '/entity/:id',            getEntity)
+server.mount('get',  '/entity/:id/versions',   allEntityVersions)
 server.mount('get',  '/entity/:id/version/:v', getEntity)
 server.mount('get',  '/entity/:id/v/:v',       getEntity)
 
@@ -51,5 +71,5 @@ server.mount('get',  '/entity/:id/v/:v',       getEntity)
 Promise
   .all([ schemaModel.connect(), entityModel.connect() ])
   .then(() => (process.env.SEED_SCHEMATA && importData(schemaModel, process.env.SEED_SCHEMATA)))
-  .then(() => (process.env.SEED_DATA && importData(schemaModel, process.env.SEED_DATA)))
+  .then(() => (process.env.SEED_DATA && importData(entityModel, process.env.SEED_DATA)))
   .then(() => server.start(process.env.PORT))

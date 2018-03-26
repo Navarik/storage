@@ -21,6 +21,7 @@
     "express": "^4.16.3",
     "express-logging": "^1.1.1",
     "forever-monitor": "^1.7.1",
+    "function-pipe": "^1.0.0",
     "group-by": "0.0.1",
     "logops": "^2.1.0",
     "nedb": "^1.8.0",

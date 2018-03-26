@@ -13,7 +13,10 @@ const enforceType = (type, value) => {
 
 const enforceSchema = curry((schema, data) => {
   const result = {
-    type: `${schema.namespace}.${schema.name}`
+    type: `${schema.namespace}.${schema.name}`,
+    version: data.version,
+    id: data.id,
+    version_id: data.version_id
   }
 
   for (let i in schema.fields) {

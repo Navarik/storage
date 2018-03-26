@@ -1,10 +1,13 @@
 import uuidv4 from 'uuid/v4'
-import { splitName, map, get, unique, indexBy } from '../utils'
+import { map, get, unique, indexBy, pipe, head, empty, diff } from '../utils'
 import { BadRequestError } from '../errors'
 import VersionedStorage from './versioned-storage'
 import format from './format-entity'
+import { split, combine } from './type-naming'
 
 const enforceArray = body => (body instanceof Array ? body : [body])
+const createType = combine('.')
+const splitType = split('.')
 
 class EntityModel extends VersionedStorage {
   constructor(config, schemaModel) {
@@ -16,7 +19,7 @@ class EntityModel extends VersionedStorage {
   }
 
   async getSchemata(entities) {
-    const types = unique(entities.map(get('type')))
+    const types = unique(entities.map(pipe(get('type'), splitType)))
     const schemata = await Promise.all(types.map(type => this.schemaModel.findOne(type)))
 
     return schemata
@@ -24,7 +27,7 @@ class EntityModel extends VersionedStorage {
 
   async formatCollection(entities) {
     const schema = await this.getSchemata(entities)
-    const indexedSchemata = indexBy(get('id'), schema)
+    const indexedSchemata = indexBy(createType, schema)
     const data = entities.map(x => format(indexedSchemata[x.type], x))
 
     return { data, schema }
@@ -37,6 +40,25 @@ class EntityModel extends VersionedStorage {
     return response
   }
 
+  async findAll(params) {
+    const entities = await super.findAll(params)
+    const response = await this.formatCollection(entities)
+
+    return response
+  }
+
+  async findOne(id, version) {
+    const entity = await super.findOne({ id }, version)
+    if (!entity) {
+      return undefined
+    }
+
+    const schema = await this.schemaModel.findOne(splitType(entity.type))
+    const data = format(schema, entity)
+
+    return { data, schema }
+  }
+
   async create(body) {
     const entities = enforceArray(body)
     const response = await this.formatCollection(entities)
@@ -45,31 +67,18 @@ class EntityModel extends VersionedStorage {
     return response
   }
 
-  async findOne(id, version) {
-    const entity = await super.findOne({ _id: id }, version)
-    if (!entity) {
-      return undefined
-    }
-
-    const schema = await this.schemaModel.findOne(entity.type)
-    const data = format(schema, entity)
-
-    return { data, schema }
-  }
-
   async update(id, newBody) {
     const found = await this.findOne(id)
     if (!found) {
-      return BadRequestError(`Entity not found: ${id}`)
+      throw new BadRequestError(`Entity not found: ${id}`)
     } else if (empty(diff(found, newBody))) {
-      return BadRequestError(res, 'Versions are identical')
+      throw new BadRequestError(res, 'Versions are identical')
     }
 
-    const type = newBody.type || found.type
-    const schema = await getSchema(type)
-    const data = await super.update(found, format(schema, newBody))
+    // @todo support schema migrations
+    const data = await super.update(found.data, format(found.schema, newBody))
 
-    return { data, schema }
+    return { data, schema: found.schema }
   }
 }
 

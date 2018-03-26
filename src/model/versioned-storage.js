@@ -1,9 +1,11 @@
 import uuidv5 from 'uuid/v5'
 import createDb from '../adapters/db'
-import { head } from '../utils'
+import { exclude, head, maybe, map } from '../utils'
 
 const asLatest = (data = {}) => ({ ...data, is_latest: 1, is_deleted: 0 })
-const asFirst = (data = {}) => ({ version: 1, ...data, is_latest: 1, is_deleted: 0 })
+const asFirst = (data = {}) => ({ ...data, version: 1, is_latest: 1, is_deleted: 0 })
+
+const format = maybe(exclude(['_id', 'is_latest', 'is_deleted']))
 
 class VersionedStorage {
   constructor(config) {
@@ -19,7 +21,7 @@ class VersionedStorage {
 
     return {
       ...data,
-      id: this.idGenerator(JSON.stringify(data), data.id)
+      id: this.idGenerator(data, data.id)
     }
   }
 
@@ -38,15 +40,27 @@ class VersionedStorage {
     return this.db !== null
   }
 
+  get(id) {
+    return this.db.findOne({ id, is_latest: 1 }).then(format)
+  }
+
+  getVersion(vid) {
+    return this.db.findOne({ version_id: vid }).then(format)
+  }
+
   findOne(params, version) {
     return this.db.findOne(version
       ? { ...params, version: Number(version) }
       : { ...params, is_latest: 1 }
-    )
+    ).then(format)
   }
 
   find(params) {
-    return this.db.find(asLatest(params))
+    return this.db.find(asLatest(params)).then(map(format))
+  }
+
+  findAll(params) {
+    return this.db.find(params).then(map(format))
   }
 
   create(body) {
@@ -54,13 +68,21 @@ class VersionedStorage {
   }
 
   createAll(body) {
-    return this.db.insert(body.map(item => asFirst(this.addVersionId(this.addId(item)))))
+    return this.db
+      .insert(body.map(item => asFirst(this.addVersionId(this.addId(item)))))
+      .then(map(format))
   }
 
   update(oldData, newData) {
     return this.db
       .update({ id: oldData.id }, { ...oldData, is_latest: 0 })
-      .then(() => this.db.insert(asLatest(this.addVersionId(newData))))
+      .then(() => this.db.insert(asLatest(this.addVersionId({
+        ...newData,
+        id: oldData.id,
+        version: oldData.version + 1
+      }))))
+      .then(head)
+      .then(format)
   }
 }
 
