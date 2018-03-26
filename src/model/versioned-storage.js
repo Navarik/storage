@@ -64,7 +64,7 @@ class VersionedStorage {
   }
 
   create(body) {
-    return createAll([body]).then(head)
+    return this.createAll([body]).then(head)
   }
 
   createAll(body) {

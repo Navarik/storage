@@ -3,11 +3,12 @@ import logger from 'logops'
 import server from './adapters/http-server'
 import { getFileNames, readJsonFile } from './adapters/filesystem'
 import { BadRequestError, ConflictError } from './errors'
+import { flatten } from './utils'
 import EntityModel from './model/entity'
 import SchemaModel from './model/schema'
 
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
-const importData = (model, directory) => model.createAll(getFileNames(directory).map(readJsonFile))
+const readDirectory = directory => flatten(getFileNames(directory).map(readJsonFile))
 
 // Models
 const schemaModel = new SchemaModel({ rootUuid: UUID_ROOT })
@@ -70,6 +71,6 @@ server.mount('get',  '/entity/:id/v/:v',       getEntity)
 // Connect to databases then start web-server
 Promise
   .all([ schemaModel.connect(), entityModel.connect() ])
-  .then(() => (process.env.SEED_SCHEMATA && importData(schemaModel, process.env.SEED_SCHEMATA)))
-  .then(() => (process.env.SEED_DATA && importData(entityModel, process.env.SEED_DATA)))
+  .then(() => (process.env.SEED_SCHEMATA && schemaModel.createAll(readDirectory(process.env.SEED_SCHEMATA))))
+  .then(() => (process.env.SEED_DATA && entityModel.create(readDirectory(process.env.SEED_DATA))))
   .then(() => server.start(process.env.PORT))
