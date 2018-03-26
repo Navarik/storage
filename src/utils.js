@@ -1,4 +1,5 @@
 import map from 'poly-map'
+import exclude from 'poly-exclude'
 import curry from 'curry'
 import objectPath from 'object-path'
 import unique from 'array-unique'
@@ -19,4 +20,4 @@ export const splitName = (separator, string) => {
 
 export const get = curry((path, data) => objectPath.get(data, path))
 
-export { unique, diff, map, flatten }
+export { unique, diff, map, flatten, exclude }

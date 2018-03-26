@@ -1,11 +1,17 @@
+import uuidv4 from 'uuid/v4'
 import { splitName, map, get, unique, indexBy } from '../utils'
 import { BadRequestError } from '../errors'
 import VersionedStorage from './versioned-storage'
 import format from './format-entity'
 
+const enforceArray = body => (body instanceof Array ? body : [body])
+
 class EntityModel extends VersionedStorage {
   constructor(config, schemaModel) {
-    super(config)
+    super({
+      idGenerator: () => uuidv4(), // Random unique identifier
+      ...config
+    })
     this.schemaModel = schemaModel
   }
 
@@ -32,7 +38,7 @@ class EntityModel extends VersionedStorage {
   }
 
   async create(body) {
-    const entities = (body instanceof Array ? body : [body])
+    const entities = enforceArray(body)
     const response = await this.formatCollection(entities)
     response.data = await super.createAll(response.data)
 

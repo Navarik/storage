@@ -1,3 +1,4 @@
+import uuidv5 from 'uuid/v5'
 import createDb from '../adapters/db'
 import { head } from '../utils'
 
@@ -8,6 +9,25 @@ class VersionedStorage {
   constructor(config) {
     this.db = null
     this.config = config
+    this.idGenerator = config.idGenerator
+  }
+
+  addId(data) {
+    if (data.id) {
+      return id
+    }
+
+    return {
+      ...data,
+      id: this.idGenerator(JSON.stringify(data), data.id)
+    }
+  }
+
+  addVersionId(data) {
+    return {
+      ...data,
+      version_id: uuidv5(JSON.stringify(data), data.id)
+    }
   }
 
   connect(config) {
@@ -30,17 +50,17 @@ class VersionedStorage {
   }
 
   create(body) {
-    return this.db.insert([asFirst(body)]).then(head)
+    return createAll([body]).then(head)
   }
 
   createAll(body) {
-    return this.db.insert(body.map(asFirst))
+    return this.db.insert(body.map(item => asFirst(this.addVersionId(this.addId(item)))))
   }
 
   update(oldData, newData) {
     return this.db
-      .update({ _id: oldData._id }, { ...oldData, is_latest: 0 })
-      .then(() => this.db.insert(asLatest(newData)))
+      .update({ id: oldData.id }, { ...oldData, is_latest: 0 })
+      .then(() => this.db.insert(asLatest(this.addVersionId(newData))))
   }
 }
 

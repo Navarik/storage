@@ -1,9 +1,15 @@
-import { empty, splitName, unique, diff, get, head } from '../utils'
+import uuidv5 from 'uuid/v5'
+import { exclude, empty, splitName, unique, diff, get, head } from '../utils'
 import { BadRequestError, ConflictError } from '../errors'
 import VersionedStorage from './versioned-storage'
 
-const createId = body => `${body.namespace}.${body.name}`
-const format = body => ({ ...body, id: createId(body) })
+const UUID_NAMESPACE = '0f090772-9ef8-4a98-e740-bbbf33382dd7'
+const fullyQualifiedName = body => `${body.namespace}.${body.name}`
+
+const format = body => ({
+  ...exclude(['_id', 'is_latest', 'is_deleted'], body)
+})
+
 const normalize = (type, body, version = 1) => ({
   ...splitName('.', type),
   ...body,
@@ -12,7 +18,11 @@ const normalize = (type, body, version = 1) => ({
 
 class SchemaModel extends VersionedStorage {
   constructor(config) {
-    super(config)
+    super({
+      // Generate same ID for the same schema names
+      idGenerator: data => uuidv5(fullyQualifiedName(data), UUID_NAMESPACE),
+      ...config
+    })
   }
 
   async getNamespaces() {
@@ -35,7 +45,7 @@ class SchemaModel extends VersionedStorage {
   }
 
   async create(body) {
-    const id = createId(body)
+    const id = fullyQualifiedName(body)
     const found = await this.findOne(id)
     if (found) {
       throw new ConflictError(`Schema already exists: ${id}`)
