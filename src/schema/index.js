@@ -1,15 +1,13 @@
 import uuidv5 from 'uuid/v5'
 import { empty, unique, diff, get, head } from '../utils'
 import { BadRequestError, ConflictError } from '../errors'
-import VersionedStorage from './versioned-storage'
-
-const fullyQualifiedName = body => `${body.namespace}.${body.name}`
+import VersionedStorage from '../versioned-storage'
 
 class SchemaModel extends VersionedStorage {
   constructor(config) {
     super({
       // Generate same ID for the same schema names
-      idGenerator: data => uuidv5(fullyQualifiedName(data), config.rootUuid),
+      idGenerator: body => uuidv5(`${body.namespace}.${body.name}`, config.rootUuid),
       ...config
     })
   }

@@ -1,13 +1,21 @@
 import uuidv4 from 'uuid/v4'
 import { map, get, unique, indexBy, pipe, head, empty, diff } from '../utils'
 import { BadRequestError } from '../errors'
-import VersionedStorage from './versioned-storage'
-import format from './format-entity'
+import VersionedStorage from '../versioned-storage'
+import formatEntity from './format'
 import { split, combine } from './type-naming'
 
 const enforceArray = body => (body instanceof Array ? body : [body])
 const createType = combine('.')
 const splitType = split('.')
+const extractTypes = pipe(map(get('type')), unique, map(splitType))
+
+const formatCollection = (schema, entities) => {
+  const schemaIndex = indexBy(createType, schema)
+  const collection = entities.map(x => formatEntity(schemaIndex[x.type], x))
+
+  return collection
+}
 
 class EntityModel extends VersionedStorage {
   constructor(config, schemaModel) {
@@ -18,33 +26,34 @@ class EntityModel extends VersionedStorage {
     this.schemaModel = schemaModel
   }
 
-  async getSchemata(entities) {
-    const types = unique(entities.map(pipe(get('type'), splitType)))
+  async extractSchemata(entities) {
+    const types = extractTypes(entities)
     const schemata = await Promise.all(types.map(type => this.schemaModel.findOne(type)))
 
     return schemata
   }
 
-  async formatCollection(entities) {
-    const schema = await this.getSchemata(entities)
-    const indexedSchemata = indexBy(createType, schema)
-    const data = entities.map(x => format(indexedSchemata[x.type], x))
-
-    return { data, schema }
-  }
-
-  async find(params) {
+  async find(params, castType) {
     const entities = await super.find(params)
-    const response = await this.formatCollection(entities)
+    let schema, data
 
-    return response
+    if (castType) {
+      schema = await this.schemaModel.findOne(splitType(castType))
+      data = entities.map(formatEntity(schema))
+    } else {
+      schema = await this.extractSchemata(entities)
+      data = formatCollection(schema, entities)
+    }
+
+    return { data, schema: enforceArray(schema) }
   }
 
   async findAll(params) {
     const entities = await super.findAll(params)
-    const response = await this.formatCollection(entities)
+    const schema = await this.extractSchemata(entities)
+    const data = formatCollection(schema, entities)
 
-    return response
+    return { data, schema }
   }
 
   async findOne(id, version) {
@@ -54,17 +63,18 @@ class EntityModel extends VersionedStorage {
     }
 
     const schema = await this.schemaModel.findOne(splitType(entity.type))
-    const data = format(schema, entity)
+    const data = formatEntity(schema, entity)
 
     return { data, schema }
   }
 
   async create(body) {
     const entities = enforceArray(body)
-    const response = await this.formatCollection(entities)
-    response.data = await super.createAll(response.data)
+    const schema = await this.extractSchemata(entities)
+    const collection = formatCollection(schema, entities)
+    const data = await super.createAll(collection)
 
-    return response
+    return { data, schema }
   }
 
   async update(id, newBody) {
@@ -76,7 +86,7 @@ class EntityModel extends VersionedStorage {
     }
 
     // @todo support schema migrations
-    const data = await super.update(found.data, format(found.schema, newBody))
+    const data = await super.update(found.data, formatEntity(found.schema, newBody))
 
     return { data, schema: found.schema }
   }

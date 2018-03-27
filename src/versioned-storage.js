@@ -1,6 +1,6 @@
 import uuidv5 from 'uuid/v5'
-import createDb from '../adapters/db'
-import { exclude, head, maybe, map } from '../utils'
+import createDb from './adapters/db'
+import { exclude, head, maybe, map } from './utils'
 
 const asLatest = (data = {}) => ({ ...data, is_latest: 1, is_deleted: 0 })
 const asFirst = (data = {}) => ({ ...data, version: 1, is_latest: 1, is_deleted: 0 })

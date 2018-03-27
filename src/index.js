@@ -3,9 +3,9 @@ import logger from 'logops'
 import server from './adapters/http-server'
 import { getFileNames, readJsonFile } from './adapters/filesystem'
 import { BadRequestError, ConflictError } from './errors'
-import { flatten } from './utils'
-import EntityModel from './model/entity'
-import SchemaModel from './model/schema'
+import { flatten, exclude } from './utils'
+import EntityModel from './entity'
+import SchemaModel from './schema'
 
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
 const readDirectory = directory => flatten(getFileNames(directory).map(readJsonFile))
@@ -24,7 +24,7 @@ const allSchemaVersions = (req, res) => schemaModel.findAll(req.params)
 const createSchema      = (req, res) => schemaModel.create(req.body).then(x => { res.status(201); return x })
 const updateSchema      = (req, res) => schemaModel.update(req.params.id, req.body)
 
-const findEntities      = (req, res) => entityModel.find(req.params)
+const findEntities      = (req, res) => entityModel.find(exclude(['castType'], req.params), req.params.castType)
 const createEntity      = (req, res) => entityModel.create(req.body).then(x => { res.status(201); return x })
 const updateEntity      = (req, res) => entityModel.update(req.params.id, req.body)
 const getEntity         = (req, res) => entityModel.findOne(req.params.id, req.params.v)
@@ -67,6 +67,10 @@ server.mount('get',  '/entity/:id',            getEntity)
 server.mount('get',  '/entity/:id/versions',   allEntityVersions)
 server.mount('get',  '/entity/:id/version/:v', getEntity)
 server.mount('get',  '/entity/:id/v/:v',       getEntity)
+
+// Entity casting
+server.mount('get',  '/entities/as/:castType', findEntities)
+// server.mount('get',  '/entity/:id/as/:type',   getEntity)
 
 // Connect to databases then start web-server
 Promise
