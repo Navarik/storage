@@ -33,19 +33,12 @@ class EntityModel extends VersionedStorage {
     return schemata
   }
 
-  async find(params, castType) {
+  async find(params) {
     const entities = await super.find(params)
-    let schema, data
+    const schema = await this.extractSchemata(entities)
+    const data = formatCollection(schema, entities)
 
-    if (castType) {
-      schema = await this.schemaModel.findOne(splitType(castType))
-      data = entities.map(formatEntity(schema))
-    } else {
-      schema = await this.extractSchemata(entities)
-      data = formatCollection(schema, entities)
-    }
-
-    return { data, schema: enforceArray(schema) }
+    return { data, schema }
   }
 
   async findAll(params) {

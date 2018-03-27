@@ -5,6 +5,7 @@ import { getFileNames, readJsonFile } from './adapters/filesystem'
 import { BadRequestError, ConflictError } from './errors'
 import { flatten, exclude } from './utils'
 import EntityModel from './entity'
+import formatEntity from './entity/format'
 import SchemaModel from './schema'
 
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
@@ -24,11 +25,27 @@ const allSchemaVersions = (req, res) => schemaModel.findAll(req.params)
 const createSchema      = (req, res) => schemaModel.create(req.body).then(x => { res.status(201); return x })
 const updateSchema      = (req, res) => schemaModel.update(req.params.id, req.body)
 
-const findEntities      = (req, res) => entityModel.find(exclude(['castType'], req.params), req.params.castType)
+const findEntities      = (req, res) => entityModel.find(req.params)
 const createEntity      = (req, res) => entityModel.create(req.body).then(x => { res.status(201); return x })
 const updateEntity      = (req, res) => entityModel.update(req.params.id, req.body)
 const getEntity         = (req, res) => entityModel.findOne(req.params.id, req.params.v)
 const allEntityVersions = (req, res) => entityModel.findAll(req.params)
+
+const castEntities = async (req, res) => {
+  const entities = await entityModel.find(exclude(['castTypeId']))
+  const targetSchema = await schemaModel.get(req.params.castTypeId)
+  const data = entities.data.map(formatEntity(targetSchema))
+
+  return { data, schema: [targetSchema] }
+}
+
+const castEntity = async (req, res) => {
+  const entity = await entityModel.findOne(req.params.id)
+  const targetSchema = await schemaModel.get(req.params.castTypeId)
+  const data = formatEntity(targetSchema, entity.data)
+
+  return { data, schema: [targetSchema] }
+}
 
 // Healthchecks
 server.addHealthCheck(schemaModel.isConnected, 'Schema core down')
@@ -69,8 +86,8 @@ server.mount('get',  '/entity/:id/version/:v', getEntity)
 server.mount('get',  '/entity/:id/v/:v',       getEntity)
 
 // Entity casting
-server.mount('get',  '/entities/as/:castType', findEntities)
-// server.mount('get',  '/entity/:id/as/:type',   getEntity)
+server.mount('get',  '/entities/as/:castTypeId',   castEntities)
+server.mount('get',  '/entity/:id/as/:castTypeId', castEntity)
 
 // Connect to databases then start web-server
 Promise
