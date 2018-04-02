@@ -37,6 +37,9 @@ server.use(bodyParser.json())
 // Logging
 server.use(expressLogging(logger))
 
+// Misc
+server.disable('x-powered-by')
+
 // Maintanance endpoints
 server.get('/health', (req, res) => {
   const failedChecks = healthChecks.filter(check => !check.func())
