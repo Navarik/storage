@@ -14,20 +14,22 @@ class VersionedStorage {
     this.idGenerator = config.idGenerator
   }
 
-  addId(data) {
+  newDocument(data) {
     if (data.id) {
-      return id
+      return data
     }
 
     return {
       ...data,
+      created_at: Date.now(),
       id: this.idGenerator(data, data.id)
     }
   }
 
-  addVersionId(data) {
+  newVersion(data) {
     return {
       ...data,
+      modified_at: Date.now(),
       version_id: uuidv5(JSON.stringify(data), data.id)
     }
   }
@@ -69,14 +71,14 @@ class VersionedStorage {
 
   createAll(body) {
     return this.db
-      .insert(body.map(item => asFirst(this.addVersionId(this.addId(item)))))
+      .insert(body.map(item => asFirst(this.newVersion(this.newDocument(item)))))
       .then(map(format))
   }
 
   update(oldData, newData) {
     return this.db
-      .update({ id: oldData.id }, { ...oldData, is_latest: 0 })
-      .then(() => this.db.insert(asLatest(this.addVersionId({
+      .update({ id: oldData.id }, { ...oldData, is_latest: 0 }, { multi: true })
+      .then(() => this.db.insert(asLatest(this.newVersion({
         ...newData,
         id: oldData.id,
         version: oldData.version + 1
