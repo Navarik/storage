@@ -9,6 +9,8 @@ const enforceSchema = curry((schema, data) => {
   result.version = data.version
   result.id = data.id
   result.version_id = data.version_id
+  result.created_at = data.created_at
+  result.modified_at = data.modified_at
 
   return result
 })
