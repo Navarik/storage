@@ -43,7 +43,7 @@ npm run local
 * `POST /schemata` - creates new schema
 * `GET /schema/<name>[/version/<version>]` - returns a schema object for the given name/version
 * `PUT /schema/<name>` - creates a new version of an existing schema
-* `GET /entities` - returns a list of existing data objects
+* `GET /entities?<field>=<value>[&<field>=<value>...]` - returns a list of existing data objects matcing the search query
 * `POST /entities` - creates a new data object
 * `GET /entity/<id>[/version/<version>]` - returns a data object for the given name/version
 * `PUT /entity/<id>` - creates a new version of an existing entity object
