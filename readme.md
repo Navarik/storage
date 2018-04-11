@@ -38,7 +38,7 @@ npm run local
 
 ## API
 
-* `GET /namespaces` - returns the list of all the created schema namespaces
+* `GET /schemata/namespaces` - returns the list of all the created schema namespaces
 * `GET /schemata` - returns a list of existing schemata
 * `POST /schemata` - creates new schema
 * `GET /schema/<name>[/version/<version>]` - returns a schema object for the given name/version
