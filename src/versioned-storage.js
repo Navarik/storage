@@ -66,6 +66,10 @@ class VersionedStorage {
   }
 
   create(body) {
+    return body instanceof Array ? this.createAll(body) : this.createOne(body)
+  }
+
+  createOne(body) {
     return this.createAll([body]).then(head)
   }
 

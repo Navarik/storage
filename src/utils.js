@@ -11,7 +11,7 @@ export const indexBy = curry((f, xs) => xs.reduce((acc, x) => ({ ...acc, [f(x)]:
 export const head = xs => xs && Object.values(xs)[0]
 export const empty = x => Object.keys(x).length === 0
 export const maybe = f => x => (x === undefined ? undefined : f(x))
-
+export const enforceArray = x => (x instanceof Array ? x : [x])
 export const get = curry((path, data) => objectPath.get(data, path))
 
 export { unique, diff, map, flatten, exclude, curry, pipe }

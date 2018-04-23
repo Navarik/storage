@@ -2,10 +2,8 @@ import 'babel-polyfill'
 import logger from 'logops'
 import server from './adapters/http-server'
 import { getFileNames, readJsonFile } from './adapters/filesystem'
-import { BadRequestError, ConflictError } from './errors'
-import { flatten, exclude } from './utils'
+import { flatten } from './utils'
 import EntityModel from './entity'
-import formatEntity from './entity/format'
 import SchemaModel from './schema'
 
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
@@ -13,7 +11,7 @@ const readDirectory = directory => flatten(getFileNames(directory).map(readJsonF
 
 // Models
 const schemaModel = new SchemaModel({ rootUuid: UUID_ROOT })
-const entityModel = new EntityModel({}, schemaModel)
+const entityModel = new EntityModel({})
 
 // Controllers
 const getNamespaces     = (req, res) => schemaModel.getNamespaces(req.params)
@@ -25,26 +23,41 @@ const allSchemaVersions = (req, res) => schemaModel.findAll(req.params)
 const createSchema      = (req, res) => schemaModel.create(req.body).then(x => { res.status(201); return x })
 const updateSchema      = (req, res) => schemaModel.update(req.params.id, req.body)
 
-const findEntities      = (req, res) => entityModel.find(req.params)
-const createEntity      = (req, res) => entityModel.create(req.body).then(x => { res.status(201); return x })
-const updateEntity      = (req, res) => entityModel.update(req.params.id, req.body)
-const getEntity         = (req, res) => entityModel.findOne(req.params.id, req.params.v)
-const allEntityVersions = (req, res) => entityModel.findAll(req.params)
+const findEntities = async (req, res) => {
+  const entities = await entityModel.find(req.params)
+  const response = await schemaModel.format(entities)
 
-const castEntities = async (req, res) => {
-  const entities = await entityModel.find(exclude(['castTypeId']))
-  const targetSchema = await schemaModel.get(req.params.castTypeId)
-  const data = entities.data.map(formatEntity(targetSchema))
-
-  return { data, schema: [targetSchema] }
+  return response
 }
 
-const castEntity = async (req, res) => {
-  const entity = await entityModel.findOne(req.params.id)
-  const targetSchema = await schemaModel.get(req.params.castTypeId)
-  const data = formatEntity(targetSchema, entity.data)
+const getEntity = async (req, res) => {
+  const entity = await entityModel.findOne(req.params, req.params.v)
+  const response = await schemaModel.format(entity)
 
-  return { data, schema: [targetSchema] }
+  return response
+}
+
+const allEntityVersions = async (req, res) => {
+  const entity = await entityModel.findAll(req.params)
+  const response = await schemaModel.format(entity)
+
+  return response
+}
+
+const createEntity = async (req, res) => {
+  const response = await schemaModel.format(req.body)
+  response.data = await entityModel.create(response.data)
+
+  res.status(201)
+
+  return response
+}
+
+const updateEntity = async (req, res) => {
+  const response = await schemaModel.format(req.body)
+  response.data = await entityModel.update(req.params.id, response.data)
+
+  return response
 }
 
 // Healthchecks
@@ -84,10 +97,6 @@ server.mount('get',  '/entity/:id',            getEntity)
 server.mount('get',  '/entity/:id/versions',   allEntityVersions)
 server.mount('get',  '/entity/:id/version/:v', getEntity)
 server.mount('get',  '/entity/:id/v/:v',       getEntity)
-
-// Entity casting
-server.mount('get',  '/entities/as/:castTypeId',   castEntities)
-server.mount('get',  '/entity/:id/as/:castTypeId', castEntity)
 
 // Connect to databases then start web-server
 Promise
