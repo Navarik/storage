@@ -1,15 +1,13 @@
 import avro from 'avsc'
-import curry from 'curry'
-import { indexBy} from './utils'
-import { split, combine } from './type-naming'
+import { indexBy, curry } from './utils'
 
-const createType = combine('.')
+const createType = schema => `${schema.namespace}.${schema.name}`
 
 export const formatEntity = curry((schema, data) => {
   const type = avro.Type.forSchema(schema)
   const result = type.fromBuffer(type.toBuffer(data))
 
-  result.type = `${schema.namespace}.${schema.name}`
+  result.type = createType(schema)
   result.version = data.version
   result.id = data.id
   result.version_id = data.version_id
