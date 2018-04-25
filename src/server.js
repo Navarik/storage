@@ -1,16 +1,25 @@
 import server from './adapters/http-server'
 
 const createServer = (controller) => {
-  const { schemaModel, entityModel } = controller
-
   // Healthchecks
-  server.addHealthCheck(schemaModel.isConnected, 'Schema core down')
-  server.addHealthCheck(entityModel.isConnected, 'Entity core down')
+  server.addHealthCheck(() => true, 'Imposibiru')
 
   // Constroller
   const create = handler => async (req, res) => {
     const result = await handler(req.body)
     res.status(201)
+
+    return result
+  }
+
+  const update = handler => async (req, res) => {
+    const result = await handler(req.params.id, req.body)
+
+    return result
+  }
+
+  const read = handler => async (req, res) => {
+    const result = await handler(req.params)
 
     return result
   }
@@ -41,13 +50,13 @@ const createServer = (controller) => {
   server.mount('put',  '/schema/:id',            controller.updateSchema)
 
   // Entity management
-  server.mount('post', '/entities', create(controller.createEntity))
-  server.mount('get',  '/entities',              controller.findEntities)
-  server.mount('put',  '/entity/:id',            controller.updateEntity)
-  server.mount('get',  '/entity/:id',            controller.getEntity)
-  server.mount('get',  '/entity/:id/versions',   controller.allEntityVersions)
-  server.mount('get',  '/entity/:id/version/:v', controller.getEntity)
-  server.mount('get',  '/entity/:id/v/:v',       controller.getEntity)
+  server.mount('post', '/entities', create(controller.create))
+  server.mount('get', '/entities', read(controller.findLatest))
+  server.mount('put', '/entity/:id', update(controller.update))
+  server.mount('get', '/entity/:id', read(controller.getLatest))
+  server.mount('get', '/entity/:id/versions', read(controller.findVersions))
+  server.mount('get', '/entity/:id/version/:version', read(controller.getVersion))
+  server.mount('get', '/entity/:id/v/:version', read(controller.getVersion))
 
   // Connect to databases then start web-server
   return () => server.start(process.env.PORT)
