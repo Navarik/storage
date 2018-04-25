@@ -1,5 +1,5 @@
 import avro from 'avsc'
-import { maybe, indexBy, map, unique, pipe } from './utils'
+import { maybe, map, unique } from '../utils'
 
 const registry = {}
 const createType = schema => `${schema.namespace}.${schema.name}`
@@ -32,9 +32,10 @@ const formatCollection = (collection) => {
   return response
 }
 
-export const register = (schema) => (schema instanceof Array
-  ? map(register, schema)
-  : registry[createType(schema)] = avro.Type.forSchema(schema, { registry })
+export const add = (schema) => (
+  schema instanceof Array
+    ? map(add, schema)
+    : registry[createType(schema)] = avro.Type.forSchema(schema, { registry })
 )
 
 export const get = (type) => {

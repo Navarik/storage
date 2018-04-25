@@ -1,5 +1,5 @@
-import { on, off, send } from './adapters/queue'
 import uuidv4 from 'uuid/v4'
+import { on, off, send } from '../adapters/queue'
 
 const CHANGE_EVENT = 'change'
 const versions = {}

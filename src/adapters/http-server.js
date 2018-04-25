@@ -4,27 +4,6 @@ import bodyParser from 'body-parser'
 import expressLogging from 'express-logging'
 import cors from 'cors'
 
-const controller = handler => (req, res) => {
-  const params = { ...(req.params || {}), ...(req.query || {}) }
-
-  return handler({ params, body: req.body }, res)
-    .then(data => {
-      if (data === undefined) {
-        res.status(404).send()
-      } else {
-        res.send(data)
-      }
-    })
-    .catch(err => {
-      if (err.code) {
-        res.status(err.code).send({ message: err.message })
-      } else {
-        logger.error(err)
-        res.status(500).send({ message: 'System error', details: err.message })
-      }
-    })
-}
-
 const server = express()
 const healthChecks = []
 
@@ -56,7 +35,6 @@ server.get('/health', (req, res) => {
 
 // Module API
 server.addHealthCheck = (func, message) => healthChecks.push({ func, message })
-server.mount = (method, route, handler) => server[method](route, controller(handler))
 
 server.start = (port) => server.listen(port, () =>
   logger.info(`Server listening on port ${port}`)
