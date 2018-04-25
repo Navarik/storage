@@ -23,15 +23,15 @@ const controller = handler => (req, res) => {
 }
 
 // Constroller
-server.mountCreate = (route, handler) => server.post(route, controller(
+server.create = (route, handler) => server.post(route, controller(
   (req, res) => handler(req.body).then(x => { res.status(201); return x })
 ))
 
-server.mountUpdate = (route, handler) => server.put(route, controller(
+server.update = (route, handler) => server.put(route, controller(
   (req, res) => handler(req.params.id, req.body)
 ))
 
-server.mountRead = (route, handler) => server.get(route, controller(
+server.read = (route, handler) => server.get(route, controller(
   (req, res) => handler(req.params)
 ))
 

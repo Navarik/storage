@@ -13,5 +13,6 @@ export const empty = x => Object.keys(x).length === 0
 export const maybe = f => x => (x === undefined ? undefined : f(x))
 export const enforceArray = x => (x instanceof Array ? x : [x])
 export const get = curry((path, data) => objectPath.get(data, path))
+const liftToArray = func => x => (x instanceof Array ? map(func, x) : func(x))
 
-export { unique, diff, map, flatten, exclude, curry, pipe }
+export { unique, diff, map, flatten, exclude, curry, pipe, liftToArray }

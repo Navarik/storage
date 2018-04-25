@@ -1,5 +1,6 @@
 import fs from 'fs'
 import logger from 'logops'
+import { flatten } from '../utils'
 
 export const getFileNames = directory => fs
   .readdirSync(directory)
@@ -14,3 +15,6 @@ export const readJsonFile = (fileName) => {
     process.exit(1)
   }
 }
+
+export const readJsonDirectory = directory =>
+  flatten(getFileNames(directory).map(readJsonFile))

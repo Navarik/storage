@@ -1,8 +1,8 @@
 import avro from 'avsc'
-import { maybe, map, unique } from '../utils'
+import { maybe, map, unique, liftToArray } from '../utils'
 
 const registry = {}
-const createType = schema => `${schema.namespace}.${schema.name}`
+const typeName = schema => `${schema.namespace}.${schema.name}`
 
 const formatEntity = (entity) => {
   const schema = get(entity.type)
@@ -32,13 +32,17 @@ const formatCollection = (collection) => {
   return response
 }
 
-export const add = (schema) => (
-  schema instanceof Array
-    ? map(add, schema)
-    : registry[createType(schema)] = avro.Type.forSchema(schema, { registry })
+const add = liftToArray(schema =>
+  registry[typeName(schema)] = avro.Type.forSchema(schema, { registry })
 )
 
-export const get = (type) => {
+const update = (schema) => {
+  const type = typeName(schema)
+  delete registry[type]
+  registry[type] = avro.Type.forSchema(schema, { registry })
+}
+
+const get = (type) => {
   if (!registry[type]) {
     throw new Error(`Schema not found: ${type}`)
   }
@@ -46,9 +50,13 @@ export const get = (type) => {
   return registry[type]
 }
 
-export const format = maybe(data => (
+const format = maybe(data => (
   data instanceof Array
     ? formatCollection(data)
     : formatEntity(data)
   )
 )
+
+const schemaRegistry = { add, update, get, format, typeName }
+
+export default schemaRegistry
