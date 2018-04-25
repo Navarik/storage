@@ -1,9 +1,8 @@
 import uuidv5 from 'uuid/v5'
 import { head, liftToArray, map, get, unique } from './utils'
-import Metadata from './metadata'
 import SearchIndex from './ports/search-index'
 import schemaRegistry from './ports/schema-registry'
-import * as changeLog from './ports/change-log'
+import ChangeLog from './ports/change-log'
 
 // Configuration
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
@@ -13,9 +12,10 @@ const searchIndex = new SearchIndex({
   format: liftToArray(schema => schemaRegistry.get(schemaRegistry.typeName(schema)))
 })
 
-const metadata = new Metadata({
+const changeLog = new ChangeLog({
   // Generate same ID for the same schema names
-  idGenerator: body => uuidv5(schemaRegistry.typeName(body), UUID_ROOT)
+  idGenerator: body => uuidv5(schemaRegistry.typeName(body), UUID_ROOT),
+  topic: 'entity'
 })
 
 // Queries
@@ -47,11 +47,9 @@ const searchableFormat = schema => {
 }
 
 export const create = liftToArray(async (body) => {
-  await schemaRegistry.add(body) // 'version' is not avro-compliant
+  await schemaRegistry.add(body)
 
-  const schema = metadata.signNewDocument({ ...body, version: 1 })
-  await changeLog.record(schema)
-
+  const schema = await changeLog.logNew(body)
   await searchIndex.add(searchableFormat(schema))
 
   return schema
@@ -60,15 +58,7 @@ export const create = liftToArray(async (body) => {
 export const update = async (id, body) => {
   await schemaRegistry.update(body) // 'version' is not avro-compliant
 
-  const previous = changeLog.latestVersion(id)
-  const next = {
-    id: previous.id,
-    created_at: previous.created_at,
-    ...body
-  }
-
-  const schema = metadata.signNewVersion({ ...next, version: previous.version + 1 })
-  await changeLog.record(schema)
+  const schema = await changeLog.logChange({ ...body, id })
   await searchIndex.add(searchableFormat(schema))
 
   return schema

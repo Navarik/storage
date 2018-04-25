@@ -1,30 +1,48 @@
-import uuidv4 from 'uuid/v4'
-import { on, off, send } from '../adapters/queue'
+import uuidv5 from 'uuid/v5'
+import { on, off, send, request } from '../adapters/queue'
 
-const CHANGE_EVENT = 'change'
-const versions = {}
-
-export const latestVersion = id => versions[id] || {}
-
-on(CHANGE_EVENT, ({ payload }) => versions[payload.id] = payload)
-
-export const record = (payload) => {
-  const requestId = uuidv4()
-  const result = new Promise((resolve, reject) => {
-    const resolver = x => {
-      if (x.requestId === requestId) {
-        off(CHANGE_EVENT, resolver)
-        resolve(x.payload)
-      }
+class ChangeLog {
+  constructor(config = {}) {
+    if (!config.topic) {
+      throw new Error('[ChangeLog]: Topic name must be specified')
     }
 
-    on(CHANGE_EVENT, resolver)
-  })
+    this.idGenerator = config.idGenerator
+    this.topic = config.topic
+    this.versions = {}
 
-  send(CHANGE_EVENT, { requestId, payload })
+    on(this.topic, ({ payload }) => this.versions[payload.id] = payload)
+  }
 
-  return result
+  latestVersion(id) {
+    return this.versions[id]
+  }
+
+  logChange(data) {
+    const previous = this.latestVersion(data.id) || {}
+    const document = { ...previous, ...data, version: (previous.version || 0) + 1 }
+
+    return request(this.topic, {
+      ...document,
+      version_id: uuidv5(JSON.stringify(document), document.id)
+    })
+  }
+
+  logNew(data) {
+    if (data.id) {
+      throw new Error(`[ChangeLog]: Cannot re-create existing document (id: ${data.id})`)
+    }
+
+    return this.logChange({ ...data, id: this.idGenerator(data) })
+  }
+
+  observe(func) {
+    on(this.topic, func)
+  }
+
+  unobserve(func) {
+    off(this.topic, func)
+  }
 }
 
-export const observe = func => on(CHANGE_EVENT, func)
-export const unobserve = func => off(CHANGE_EVENT, func)
+export default ChangeLog

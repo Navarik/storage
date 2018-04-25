@@ -1,11 +1,11 @@
 import createDatabase from '../adapters/db'
-import { exclude, map, liftToArray } from '../utils'
+import { exclude, map, liftToArray, isPlaneObject } from '../utils'
 
 const defaultFormatter = liftToArray(exclude(['_id']))
 
 const stringifyFields = map(value => (
-  typeof value === 'object' && value !== null
-    ? map(stringifyFields, value)
+  (value instanceof Array || isPlaneObject(value))
+    ? stringifyFields(value)
     : String(value)
 ))
 
@@ -25,7 +25,9 @@ class SearchIndex {
   }
 
   add(document) {
-    const searchable = stringifyFields(document)
+// const searchable = stringifyFields(document)
+// console.log(searchable)
+    const searchable = document
 
     return Promise.all([
       this.versions.insert(searchable),
