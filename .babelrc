@@ -1,6 +1,7 @@
 {
   "presets": [
-    "env"
+    "env",
+    "flow"
   ],
   "plugins": [
     "transform-object-rest-spread"

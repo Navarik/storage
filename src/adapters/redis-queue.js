@@ -1,3 +1,4 @@
+// @flow
 import Queue from 'bee-queue'
 import redis from 'redis'
 
@@ -15,7 +16,7 @@ class RedisQueueAdapter {
     return this.client !== null
   }
 
-  getQueue(name) {
+  getQueue(name: string) {
     if (!this.queues[name]) {
       this.queues[name] = new Queue(name, { redis: this.client })
     }
@@ -23,12 +24,19 @@ class RedisQueueAdapter {
     return this.queues[name]
   }
 
-  on(name, handler) {
+  on(name: string, handler) {
     return this.getQueue(name).process(job => Promise.resolve(handler(job.data)))
   }
 
-  send(name, payload) {
+  send(name: string, payload) {
     return this.getQueue(name).createJob(payload).save()
+  }
+
+  getLog(name: string) {
+    return this.getQueue(name)
+      .getJobs('succeeded', { size: 1000000000 })
+      .then(jobs => jobs.map(job => job.data.payload))
+      // @todo .payload doesn't belong here: it's originated in Transaction manager
   }
 }
 

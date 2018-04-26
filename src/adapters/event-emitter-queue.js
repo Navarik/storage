@@ -1,3 +1,4 @@
+// @flow
 import eventEmitter from 'event-emitter'
 
 class EventEmitterQueueAdapter {
@@ -13,12 +14,16 @@ class EventEmitterQueueAdapter {
     return true
   }
 
-  on(name, handler) {
+  on(name: string, handler) {
     return this.emitter.on(name, handler)
   }
 
-  send(name, payload) {
+  send(name: string, payload) {
     return this.emitter.emit(name, payload)
+  }
+
+  getLog(name: string) {
+    return []
   }
 }
 

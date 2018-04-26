@@ -1,13 +1,7 @@
 import createDatabase from '../adapters/db'
-import { exclude, map, liftToArray, isPlaneObject } from '../utils'
+import { exclude, liftToArray } from '../utils'
 
 const defaultFormatter = liftToArray(exclude(['_id']))
-
-const stringifyFields = map(value => (
-  (value instanceof Array || isPlaneObject(value))
-    ? stringifyFields(value)
-    : String(value)
-))
 
 class SearchIndex {
   constructor(config = {}) {
@@ -24,9 +18,14 @@ class SearchIndex {
     return this.versions.findOne({ id }).then(x => this.format(x))
   }
 
+  init(latest, versions) {
+    return Promise.all([
+      this.versions.insert(versions),
+      this.latest.insert(latest)
+    ])
+  }
+
   add(document) {
-// const searchable = stringifyFields(document)
-// console.log(searchable)
     const searchable = document
 
     return Promise.all([

@@ -1,5 +1,6 @@
 import uuidv5 from 'uuid/v5'
 import TransactionManager from './transaction-manager'
+import { sort } from '../utils'
 
 class ChangeLog {
   constructor(config = {}) {
@@ -18,12 +19,27 @@ class ChangeLog {
     this.transactionManager = new TransactionManager({
       queue: this.queue,
       commitTopic: this.topic,
-      onCommit: payload => this.versions[payload.id] = payload
+      onCommit: payload => this.registerAsLatest(payload)
     })
+  }
+
+  registerAsLatest(payload) {
+    this.versions[payload.id] = payload
   }
 
   latestVersion(id) {
     return this.versions[id]
+  }
+
+  async reconstruct() {
+    let log = await this.queue.getLog(this.topic)
+    log = sort(log, 'version')
+
+    for (let record of log) {
+      this.registerAsLatest(record)
+    }
+
+    return { log, latest: Object.values(this.versions) }
   }
 
   logChange(data) {
