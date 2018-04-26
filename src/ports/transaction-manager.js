@@ -1,12 +1,18 @@
 import uuidv4 from 'uuid/v4'
 
+const noop = () => { }
+
 class TransactionManager {
-  constructor({ queue, commitTopic }) {
+  constructor({ queue, commitTopic, onCommit }) {
     this.transactions = {}
     this.queue = queue
     this.commitTopic = commitTopic
+    this.onCommit = onCommit || noop
 
-    this.queue.on(this.commitTopic, message => this.resolve(message))
+    this.queue.on(this.commitTopic, message => {
+      this.resolve(message)
+      this.onCommit(message.payload)
+    })
   }
 
   resolve({ transactionId, payload }) {

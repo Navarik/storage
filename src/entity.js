@@ -1,6 +1,6 @@
 import uuidv4 from 'uuid/v4'
 import { head } from './utils'
-import EventEmitterQueueAdapter from './adapters/event-emitter-queue'
+import RedisQueueAdapter from './adapters/redis-queue'
 import SearchIndex from './ports/search-index'
 import schemaRegistry from './ports/schema-registry'
 import ChangeLog from './ports/change-log'
@@ -14,7 +14,10 @@ const changeLog = new ChangeLog({
   // Random unique identifier
   idGenerator: () => uuidv4(),
   topic: 'entity',
-  queue: new EventEmitterQueueAdapter()
+  queue: new RedisQueueAdapter({
+    host: process.env.REDIS_HOST || 'localhost',
+    port: process.env.REDIS_PORT || 6379
+  })
 })
 
 export const configure = () => {}

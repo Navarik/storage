@@ -17,10 +17,9 @@ class ChangeLog {
     this.versions = {}
     this.transactionManager = new TransactionManager({
       queue: this.queue,
-      commitTopic: this.topic
+      commitTopic: this.topic,
+      onCommit: payload => this.versions[payload.id] = payload
     })
-
-    this.queue.on(this.topic, ({ payload }) => this.versions[payload.id] = payload)
   }
 
   latestVersion(id) {

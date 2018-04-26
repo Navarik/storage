@@ -24,15 +24,11 @@ class RedisQueueAdapter {
   }
 
   on(name, handler) {
-    return this.getQueue(name)
-      .process(job => Promise.resolve(handler(job)))
+    return this.getQueue(name).process(job => Promise.resolve(handler(job.data)))
   }
 
   send(name, payload) {
-    return this.getQueue(name)
-      .createJob(payload)
-      .save()
-      .then(job => ({ job_id: job.id, data: job.data, status: job.status }))
+    return this.getQueue(name).createJob(payload).save()
   }
 }
 
