@@ -8,7 +8,10 @@ import schemaRegistry from './schema-registry'
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
 const idGenerator = body => uuidv5(schemaRegistry.typeName(body), UUID_ROOT)
 
-const presentationFormat = liftToArray(schema => schemaRegistry.get(schemaRegistry.typeName(schema)))
+const presentationFormat = liftToArray(schema =>
+  schemaRegistry.get(schemaRegistry.typeName(schema))
+)
+
 const searchableFormat = liftToArray(schema => {
   const result = {
     id: schema.id,
@@ -25,7 +28,8 @@ const searchableFormat = liftToArray(schema => {
 
 const schemaModel = (config) => {
   const searchIndex = new SearchIndex({
-    format: presentationFormat
+    formatOut: presentationFormat,
+    formatIn: searchableFormat
   })
 
   const changeLog = new ChangeLog({
@@ -54,7 +58,7 @@ const schemaModel = (config) => {
     await schemaRegistry.add(body)
 
     const schema = await changeLog.logNew(body)
-    await searchIndex.add(searchableFormat(schema))
+    await searchIndex.add(schema)
 
     return schema
   })
@@ -63,7 +67,7 @@ const schemaModel = (config) => {
     await schemaRegistry.update(body)
 
     const schema = await changeLog.logChange({ ...body, id })
-    await searchIndex.add(searchableFormat(schema))
+    await searchIndex.add(schema)
 
     return schema
   }

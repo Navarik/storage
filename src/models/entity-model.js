@@ -5,7 +5,7 @@ import schemaRegistry from './schema-registry'
 
 const entityModel = (config) => {
   const searchIndex = new SearchIndex({
-    format: data => schemaRegistry.format(data)
+    formatOut: data => schemaRegistry.format(data)
   })
 
   const changeLog = new ChangeLog({
