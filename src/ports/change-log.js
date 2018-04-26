@@ -1,5 +1,5 @@
 import uuidv5 from 'uuid/v5'
-import { on, off, send, request } from '../adapters/queue'
+import TransactionManager from './transaction-manager'
 
 class ChangeLog {
   constructor(config = {}) {
@@ -7,11 +7,20 @@ class ChangeLog {
       throw new Error('[ChangeLog]: Topic name must be specified')
     }
 
+    if (!config.queue) {
+      throw new Error('[ChangeLog]: Queue adapter must be specified')
+    }
+
+    this.queue = config.queue
     this.idGenerator = config.idGenerator
     this.topic = config.topic
     this.versions = {}
+    this.transactionManager = new TransactionManager({
+      queue: this.queue,
+      commitTopic: this.topic
+    })
 
-    on(this.topic, ({ payload }) => this.versions[payload.id] = payload)
+    this.queue.on(this.topic, ({ payload }) => this.versions[payload.id] = payload)
   }
 
   latestVersion(id) {
@@ -20,12 +29,17 @@ class ChangeLog {
 
   logChange(data) {
     const previous = this.latestVersion(data.id) || {}
-    const document = { ...previous, ...data, version: (previous.version || 0) + 1 }
-
-    return request(this.topic, {
+    const document = {
+      ...previous,
+      ...data,
+      version: (previous.version || 0) + 1
+    }
+    const signedDocument = {
       ...document,
       version_id: uuidv5(JSON.stringify(document), document.id)
-    })
+    }
+
+    return this.transactionManager.execute(this.topic, signedDocument)
   }
 
   logNew(data) {
@@ -37,11 +51,11 @@ class ChangeLog {
   }
 
   observe(func) {
-    on(this.topic, func)
+    this.queue.on(this.topic, func)
   }
 
   unobserve(func) {
-    off(this.topic, func)
+    this.queue.off(this.topic, func)
   }
 }
 

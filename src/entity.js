@@ -1,5 +1,6 @@
 import uuidv4 from 'uuid/v4'
 import { head } from './utils'
+import EventEmitterQueueAdapter from './adapters/event-emitter-queue'
 import SearchIndex from './ports/search-index'
 import schemaRegistry from './ports/schema-registry'
 import ChangeLog from './ports/change-log'
@@ -12,8 +13,11 @@ const searchIndex = new SearchIndex({
 const changeLog = new ChangeLog({
   // Random unique identifier
   idGenerator: () => uuidv4(),
-  topic: 'entity'
+  topic: 'entity',
+  queue: new EventEmitterQueueAdapter()
 })
+
+export const configure = () => {}
 
 // Queries
 export const findLatest = params => searchIndex.findLatest(params)

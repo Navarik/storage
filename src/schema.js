@@ -1,5 +1,6 @@
 import uuidv5 from 'uuid/v5'
 import { head, liftToArray, map, get, unique } from './utils'
+import EventEmitterQueueAdapter from './adapters/event-emitter-queue'
 import SearchIndex from './ports/search-index'
 import schemaRegistry from './ports/schema-registry'
 import ChangeLog from './ports/change-log'
@@ -15,8 +16,11 @@ const searchIndex = new SearchIndex({
 const changeLog = new ChangeLog({
   // Generate same ID for the same schema names
   idGenerator: body => uuidv5(schemaRegistry.typeName(body), UUID_ROOT),
-  topic: 'entity'
+  topic: 'entity',
+  queue: new EventEmitterQueueAdapter()
 })
+
+export const configure = () => { }
 
 // Queries
 export const findLatest = params => searchIndex.findLatest(params)
