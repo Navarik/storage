@@ -1,0 +1,15 @@
+[ignore]
+<PROJECT_ROOT>/node_modules/bcryptjs/src/bower.json
+<PROJECT_ROOT>/node_modules/protobufjs/src/bower.json
+<PROJECT_ROOT>/dist/.*
+<PROJECT_ROOT>/test/.*
+
+[include]
+
+[libs]
+
+[lints]
+
+[options]
+
+[strict]

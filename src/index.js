@@ -1,97 +1,67 @@
 import 'babel-polyfill'
-import logger from 'logops'
-import server from './adapters/http-server'
-import { getFileNames, readJsonFile } from './adapters/filesystem'
-import { BadRequestError, ConflictError } from './errors'
-import { flatten, exclude } from './utils'
-import EntityModel from './entity'
-import formatEntity from './entity/format'
-import SchemaModel from './schema'
+import { readJsonDirectory } from './adapters/filesystem'
+import RedisQueueAdapter from './adapters/redis-queue'
+import { schemaModel, entityModel } from './models'
+import server from './ports/rest-server'
 
-const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
-const readDirectory = directory => flatten(getFileNames(directory).map(readJsonFile))
+const queue = new RedisQueueAdapter({
+  host: process.env.REDIS_HOST || 'localhost',
+  port: process.env.REDIS_PORT || 6379
+})
 
-// Models
-const schemaModel = new SchemaModel({ rootUuid: UUID_ROOT })
-const entityModel = new EntityModel({}, schemaModel)
+const schema = new schemaModel({ queue })
+const entity = new entityModel({ queue })
 
-// Controllers
-const getNamespaces     = (req, res) => schemaModel.getNamespaces(req.params)
-const findSchemata      = (req, res) => schemaModel.find(req.params)
-const findOneSchema     = (req, res) => schemaModel.findOne(req.params, req.params.version)
-const getSchema         = (req, res) => schemaModel.get(req.params.id)
-const getSchemaVersion  = (req, res) => schemaModel.getVersion(req.params.vid)
-const allSchemaVersions = (req, res) => schemaModel.findAll(req.params)
-const createSchema      = (req, res) => schemaModel.create(req.body).then(x => { res.status(201); return x })
-const updateSchema      = (req, res) => schemaModel.update(req.params.id, req.body)
+const initializeSchema = () => (
+  process.env.SCHEMA_SOURCE
+    ? schema.create(readJsonDirectory(process.env.SCHEMA_SOURCE))
+    : schema.restoreState()
+)
 
-const findEntities      = (req, res) => entityModel.find(req.params)
-const createEntity      = (req, res) => entityModel.create(req.body).then(x => { res.status(201); return x })
-const updateEntity      = (req, res) => entityModel.update(req.params.id, req.body)
-const getEntity         = (req, res) => entityModel.findOne(req.params.id, req.params.v)
-const allEntityVersions = (req, res) => entityModel.findAll(req.params)
-
-const castEntities = async (req, res) => {
-  const entities = await entityModel.find(exclude(['castTypeId']))
-  const targetSchema = await schemaModel.get(req.params.castTypeId)
-  const data = entities.data.map(formatEntity(targetSchema))
-
-  return { data, schema: [targetSchema] }
-}
-
-const castEntity = async (req, res) => {
-  const entity = await entityModel.findOne(req.params.id)
-  const targetSchema = await schemaModel.get(req.params.castTypeId)
-  const data = formatEntity(targetSchema, entity.data)
-
-  return { data, schema: [targetSchema] }
-}
+const initializeData = () => (
+  process.env.DATA_SOURCE
+    ? entity.create(readJsonDirectory(process.env.DATA_SOURCE))
+    : entity.restoreState()
+)
 
 // Healthchecks
-server.addHealthCheck(schemaModel.isConnected, 'Schema core down')
-server.addHealthCheck(entityModel.isConnected, 'Entity core down')
+server.addHealthCheck(queue.isConnected, 'Queue down')
 
 // Mount business logic
 // Schema lists
-server.mount('get', '/schemas',                       findSchemata)
-server.mount('get', '/schemata',                      findSchemata)
-server.mount('get', '/schemas/namespaces',            getNamespaces)
-server.mount('get', '/schemata/namespaces',           getNamespaces)
-server.mount('get', '/schemas/namespace/:namespace',  findSchemata)
-server.mount('get', '/schemata/namespace/:namespace', findSchemata)
+server.read('/schemas', schema.findLatest)
+server.read('/schemata', schema.findLatest)
+server.read('/schemas/namespaces', schema.getNamespaces)
+server.read('/schemata/namespaces', schema.getNamespaces)
+server.read('/schemas/namespace/:namespace', schema.findLatest)
+server.read('/schemata/namespace/:namespace', schema.findLatest)
 
 // Schema ID lookups
-server.mount('get', '/schema/:id',                    getSchema)
-server.mount('get', '/schema/:id/versions',           allSchemaVersions)
-server.mount('get', '/schema_version/:vid',           getSchemaVersion)
+server.read('/schema/:id', schema.getLatest)
+server.read('/schema/:id/versions', schema.findVersions)
+server.read('/schema/:id/versions/:version', schema.getVersion)
 
 // Single Schema search
-server.mount('get', '/schema/:namespace/:name',                  findOneSchema)
-server.mount('get', '/schema/:namespace/:name/versions',         allSchemaVersions)
-server.mount('get', '/schema/:namespace/:name/version/:version', findOneSchema)
-server.mount('get', '/schema/:namespace/:name/v/:version',       findOneSchema)
+server.read('/schema/:namespace/:name', schema.findOneLatest)
+server.read('/schema/:namespace/:name/versions', schema.findVersions)
+server.read('/schema/:namespace/:name/version/:version', schema.findOneVersion)
+server.read('/schema/:namespace/:name/v/:version', schema.findOneVersion)
 
 // Schema creation/update
-server.mount('post', '/schemas',               createSchema)
-server.mount('post', '/schemata',              createSchema)
-server.mount('put',  '/schema/:id',            updateSchema)
+server.create('/schemas', schema.create)
+server.create('/schemata', schema.create)
+server.update('/schema/:id', schema.update)
 
 // Entity management
-server.mount('post', '/entities',              createEntity)
-server.mount('get',  '/entities',              findEntities)
-server.mount('put',  '/entity/:id',            updateEntity)
-server.mount('get',  '/entity/:id',            getEntity)
-server.mount('get',  '/entity/:id/versions',   allEntityVersions)
-server.mount('get',  '/entity/:id/version/:v', getEntity)
-server.mount('get',  '/entity/:id/v/:v',       getEntity)
+server.read('/entities', entity.findLatest)
+server.create('/entities', entity.create)
+server.read('/entity/:id', entity.getLatest)
+server.update('/entity/:id', entity.update)
+server.read('/entity/:id/versions', entity.findVersions)
+server.read('/entity/:id/version/:version', entity.getVersion)
+server.read('/entity/:id/v/:version', entity.getVersion)
 
-// Entity casting
-server.mount('get',  '/entities/as/:castTypeId',   castEntities)
-server.mount('get',  '/entity/:id/as/:castTypeId', castEntity)
-
-// Connect to databases then start web-server
-Promise
-  .all([ schemaModel.connect(), entityModel.connect() ])
-  .then(() => (process.env.SEED_SCHEMATA && schemaModel.createAll(readDirectory(process.env.SEED_SCHEMATA))))
-  .then(() => (process.env.SEED_DATA && entityModel.create(readDirectory(process.env.SEED_DATA))))
+queue.connect()
+  .then(initializeSchema)
+  .then(initializeData)
   .then(() => server.start(process.env.PORT))
