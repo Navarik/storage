@@ -1,6 +1,7 @@
 import uuidv4 from 'uuid/v4'
 import SearchIndex from '../ports/search-index'
 import ChangeLog from '../ports/change-log'
+import DataSource from '../ports/data-source'
 import schemaRegistry from './schema-registry'
 
 const entityModel = (config) => {
@@ -15,9 +16,17 @@ const entityModel = (config) => {
     queue: config.queue
   })
 
-  const restoreState = async () => {
-    const { log, latest } = await changeLog.reconstruct()
-    await searchIndex.init(latest, log)
+  const dataSource = new DataSource({
+    adapters: config.dataSources
+  })
+
+  const restoreState = async (path) => {
+    if (path) {
+      await create(dataSource.read(path))
+    } else {
+      const { log, latest } = await changeLog.reconstruct()
+      await searchIndex.init(latest, log)
+    }
   }
 
   // Commands

@@ -1,3 +1,6 @@
+# Keep
+!.gitkeep
+
 # OSX
 #
 .DS_Store
@@ -21,3 +24,6 @@ buck-out/
 # Triton _env file
 #
 _env
+
+# Temporary stuff
+tmp/*

@@ -1,28 +1,22 @@
 import 'babel-polyfill'
-import { readJsonDirectory } from './adapters/filesystem'
+import FilesystemDatasourceAdapter from './adapters/filesystem'
+import GitDatasourceAdapter from './adapters/git'
 import RedisQueueAdapter from './adapters/redis-queue'
 import { schemaModel, entityModel } from './models'
 import server from './ports/rest-server'
+
+const dataSources = {
+  file: new FilesystemDatasourceAdapter({ root: './' }),
+  git: new GitDatasourceAdapter({ workingDirectory: './tmp' }),
+}
 
 const queue = new RedisQueueAdapter({
   host: process.env.REDIS_HOST || 'localhost',
   port: process.env.REDIS_PORT || 6379
 })
 
-const schema = new schemaModel({ queue })
-const entity = new entityModel({ queue })
-
-const initializeSchema = () => (
-  process.env.SCHEMA_SOURCE
-    ? schema.create(readJsonDirectory(process.env.SCHEMA_SOURCE))
-    : schema.restoreState()
-)
-
-const initializeData = () => (
-  process.env.DATA_SOURCE
-    ? entity.create(readJsonDirectory(process.env.DATA_SOURCE))
-    : entity.restoreState()
-)
+const schema = new schemaModel({ queue, dataSources })
+const entity = new entityModel({ queue, dataSources })
 
 // Healthchecks
 server.addHealthCheck(queue.isConnected, 'Queue down')
@@ -62,6 +56,6 @@ server.read('/entity/:id/version/:version', entity.getVersion)
 server.read('/entity/:id/v/:version', entity.getVersion)
 
 queue.connect()
-  .then(initializeSchema)
-  .then(initializeData)
+  .then(() => schema.restoreState(process.env.SCHEMA_SOURCE))
+  .then(() => entity.restoreState(process.env.DATA_SOURCE))
   .then(() => server.start(process.env.PORT))
