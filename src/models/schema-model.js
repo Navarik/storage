@@ -2,6 +2,7 @@ import uuidv5 from 'uuid/v5'
 import { head, liftToArray, map, get, unique } from '../utils'
 import SearchIndex from '../ports/search-index'
 import ChangeLog from '../ports/change-log'
+import DataSource from '../ports/data-source'
 import schemaRegistry from './schema-registry'
 
 // Ischema ID's: Generate same ID for the same schema names
@@ -38,11 +39,19 @@ const schemaModel = (config) => {
     queue: config.queue
   })
 
-  const restoreState = async () => {
-    const { log, latest } = await changeLog.reconstruct()
+  const dataSource = new DataSource({
+    adapters: config.dataSources
+  })
 
-    await schemaRegistry.add(latest)
-    await searchIndex.init(latest, log)
+  const restoreState = async (path) => {
+    if (path) {
+      const data = await dataSource.read(path)
+      await create(data)
+    } else {
+      const { log, latest } = await changeLog.reconstruct()
+      await schemaRegistry.add(latest)
+      await searchIndex.init(latest, log)
+    }
   }
 
   // Queries

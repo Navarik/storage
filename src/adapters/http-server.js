@@ -43,8 +43,11 @@ const server = {
 
 server.addHealthCheck = (func, message) => healthChecks.push({ func, message })
 
-server.start = (port) => expressApp.listen(port, () =>
-  logger.info(`Server listening on port ${port}`)
+server.start = (port) => new Promise((resolve, reject) =>
+  expressApp.listen(port, () => {
+    logger.info(`Server listening on port ${port}`)
+    resolve()
+  })
 )
 
 export default server
