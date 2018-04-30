@@ -7,12 +7,12 @@ import server from './ports/rest-server'
 
 const dataSources = {
   file: new FilesystemDatasourceAdapter({ root: './', format: 'json' }),
-  git: new GitDatasourceAdapter({ workingDirectory: './tmp', format: 'json' }),
+  git: new GitDatasourceAdapter({ workingDirectory: process.env.TEMP_DIRECTORY, format: 'json' }),
 }
 
 const queue = new RedisQueueAdapter({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT
 })
 
 const schema = new schemaModel({ queue, dataSources })

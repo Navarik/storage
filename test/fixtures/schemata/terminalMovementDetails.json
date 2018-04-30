@@ -1,0 +1,15 @@
+{
+  "namespace": "ow",
+  "type": "record",
+  "name": "terminalMovementDetails",
+  "fields": [
+    {
+      "name": "hasActiveShoreTank",
+      "type": [
+        "null",
+        "boolean"
+      ],
+      "default": null
+    }
+  ]
+}

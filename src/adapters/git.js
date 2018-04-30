@@ -5,6 +5,8 @@ import { flatten } from '../utils'
 import parse from './content-parser'
 import FilesystemDatasourceAdapter from './filesystem'
 
+const CHECKOUT_LOCATION = 'storage_source'
+
 class GitDatasourceAdapter {
   constructor({ workingDirectory, format }) {
     this.git = createGit(workingDirectory)
@@ -16,8 +18,8 @@ class GitDatasourceAdapter {
     const uri = `${location.protocols[1]}://${location.resource}${location.pathname}`
 
     return new Promise((resolve, reject) => {
-      this.git.clone(uri, 'source', [], () => {
-        resolve(this.fs.readAllFiles({ pathname: 'source' }))
+      this.git.clone(uri, CHECKOUT_LOCATION, [], () => {
+        resolve(this.fs.readAllFiles({ pathname: CHECKOUT_LOCATION }))
       })
     })
   }

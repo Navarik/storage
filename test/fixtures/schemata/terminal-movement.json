@@ -1,0 +1,139 @@
+{
+  "namespace": "ow",
+  "name": "terminalMovement",
+  "description": "Terminal Movement",
+  "type": "record",
+  "fields": [
+    {
+      "name": "taskId",
+      "type": "string"
+    },
+    {
+      "name": "movements",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "movement",
+          "fields": [
+            {
+              "name": "operationDate",
+              "type": "string"
+            },
+            {
+              "name": "sourceObjectType",
+              "type": "string"
+            },
+            {
+              "name": "sources",
+              "type": {
+                "type": "array",
+                "items": "string"
+              }
+            },
+            {
+              "name": "destinationObjectType",
+              "type": "string"
+            },
+            {
+              "name": "destinations",
+              "type": {
+                "type": "array",
+                "items": "string"
+              }
+            },
+            {
+              "name": "movementType",
+              "type": {
+                "name": "movementType",
+                "type": "enum",
+                "symbols": ["Source", "Destination"]
+              }
+            },
+            {
+              "name": "products",
+              "type": {
+                "type": "array",
+                "items": "string"
+              }
+            },
+            {
+              "name": "terminalMovementDetails",
+              "type": "ow.terminalMovementDetails",
+              "default": null
+            },
+            {
+              "name": "shoreTankMovementDetails",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "shoreTankMovementDetails",
+                  "fields": [
+                    {
+                      "name": "isActive",
+                      "type": ["null", "boolean"],
+                      "default": null
+                    }
+                  ]
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "baselineUom",
+              "type": "string"
+            },
+            {
+              "name": "apiGravity",
+              "type": ["null", "string"],
+              "default": null
+            },
+            {
+              "name": "density",
+              "type": ["null", "string"],
+              "default": null
+            },
+            {
+              "name": "measurements",
+              "type": {
+                "type": "array",
+                "name": "measurements",
+                "items": {
+                  "type": "record",
+                  "name": "measurement",
+                  "fields": [
+                    {
+                      "name": "measurement",
+                      "type": "string"
+                    },
+                    {
+                      "name": "before",
+                      "type": ["null", "string"],
+                      "default": null
+                    },
+                    {
+                      "name": "after",
+                      "type": ["null", "string"],
+                      "default": null
+                    },
+                    {
+                      "name": "delta",
+                      "type": ["null", "string"],
+                      "default": null
+                    },
+                    {
+                      "name": "uom",
+                      "type": "string"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "default": []
+    }
+  ]
+}
