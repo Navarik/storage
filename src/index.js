@@ -6,8 +6,8 @@ import { schemaModel, entityModel } from './models'
 import server from './ports/rest-server'
 
 const dataSources = {
-  file: new FilesystemDatasourceAdapter({ root: './' }),
-  git: new GitDatasourceAdapter({ workingDirectory: './tmp' }),
+  file: new FilesystemDatasourceAdapter({ root: './', format: 'json' }),
+  git: new GitDatasourceAdapter({ workingDirectory: './tmp', format: 'json' }),
 }
 
 const queue = new RedisQueueAdapter({

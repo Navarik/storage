@@ -45,7 +45,8 @@ const schemaModel = (config) => {
 
   const restoreState = async (path) => {
     if (path) {
-      await create(dataSource.read(path))
+      const data = await dataSource.read(path)
+      await create(data)
     } else {
       const { log, latest } = await changeLog.reconstruct()
       await schemaRegistry.add(latest)
