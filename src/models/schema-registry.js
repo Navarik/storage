@@ -6,10 +6,13 @@ const registry = {}
 const typeName = schema => `${schema.namespace}.${schema.name}`
 
 const formatEntity = (entity) => {
+  let schema
+
   try {
-    const schema = get(entity.type)
+    schema = get(entity.type)
   } catch (e) {
     logger.error({ message: `Schema not found for ${entity.type}`, details: entity })
+    throw e
   }
 
   const data = schema.fromBuffer(schema.toBuffer(entity))
