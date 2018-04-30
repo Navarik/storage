@@ -1,11 +1,17 @@
 import avro from 'avsc'
+import logger from 'logops'
 import { maybe, map, unique, liftToArray } from '../utils'
 
 const registry = {}
 const typeName = schema => `${schema.namespace}.${schema.name}`
 
 const formatEntity = (entity) => {
-  const schema = get(entity.type)
+  try {
+    const schema = get(entity.type)
+  } catch (e) {
+    logger.error({ message: `Schema not found for ${entity.type}`, details: entity })
+  }
+
   const data = schema.fromBuffer(schema.toBuffer(entity))
 
   data.type = entity.type
@@ -33,7 +39,7 @@ const formatCollection = (collection) => {
 }
 
 const add = liftToArray(schema =>
-  registry[typeName(schema)] = avro.Type.forSchema(schema, { registry })
+  avro.Type.forSchema(schema, { registry })
 )
 
 const update = (schema) => {
