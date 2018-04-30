@@ -5,7 +5,7 @@ import fileExtension from 'file-extension'
 import { flatten } from '../utils'
 import parse from './content-parser'
 
-const readFile = (path) => {
+export const readFile = path => {
   try {
     const content = fs.readFileSync(path, 'utf8')
     return parse(fileExtension(path), content)
@@ -16,7 +16,9 @@ const readFile = (path) => {
   }
 }
 
-const getFileNames = (directory = '') => flatten(
+export const clean = directory => del.sync([`${directory}/*`, '!.gitkeep'])
+
+export const getFileNames = directory => flatten(
   fs
     .readdirSync(directory)
     .filter(name => name[0] !== '.')
@@ -29,23 +31,3 @@ const getFileNames = (directory = '') => flatten(
       return `${directory}/${name}`
     })
   )
-
-  class FilesystemDatasourceAdapter {
-    constructor({ root, format }) {
-      this.root = root
-      this.format = format
-    }
-
-    clean() {
-      del.sync([`${this.root}/*`, '!.gitkeep'])
-    }
-
-    readAllFiles(location) {
-      const directory = `${this.root}/${location.pathname}`
-      return getFileNames(directory)
-        .filter(name => (!this.format || fileExtension(name) === this.format))
-        .map(name => readFile(name))
-  }
-}
-
-export default FilesystemDatasourceAdapter

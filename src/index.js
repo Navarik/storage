@@ -1,12 +1,12 @@
 import 'babel-polyfill'
-import FilesystemDatasourceAdapter from './adapters/filesystem'
-import GitDatasourceAdapter from './adapters/git'
+import FilesystemDatasourceAdapter from './adapters/filesystem-datasource'
+import GitDatasourceAdapter from './adapters/git-datasource'
 import RedisQueueAdapter from './adapters/redis-queue'
 import { schemaModel, entityModel } from './models'
 import server from './ports/rest-server'
 
 const dataSources = {
-  file: new FilesystemDatasourceAdapter({ root: './', format: 'json' }),
+  file: new FilesystemDatasourceAdapter({ format: 'json' }),
   git: new GitDatasourceAdapter({ workingDirectory: process.env.TEMP_DIRECTORY, format: 'json' }),
 }
 
