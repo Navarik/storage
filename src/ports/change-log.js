@@ -58,6 +58,10 @@ class ChangeLog {
   }
 
   logNew(data) {
+    if (data instanceof Array) {
+      return Promise.all(data.map(x => this.logNew(x)))
+    }
+
     if (data.id) {
       throw new Error(`[ChangeLog]: Cannot re-create existing document (id: ${data.id})`)
     }

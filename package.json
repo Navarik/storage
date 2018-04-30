@@ -33,7 +33,7 @@
     "object-path": "^0.11.4",
     "parse-path": "^3.0.3",
     "poly-exclude": "^1.0.4",
-    "poly-map": "^1.1.0",
+    "poly-map": "^2.0.0",
     "redis": "^2.8.0",
     "simple-git": "^1.92.0",
     "uuid": "^3.2.1"
