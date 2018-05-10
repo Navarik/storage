@@ -30,7 +30,9 @@ const searchableFormat = liftToArray(schema => {
 const schemaModel = (config) => {
   const searchIndex = new SearchIndex({
     formatOut: presentationFormat,
-    formatIn: searchableFormat
+    formatIn: searchableFormat,
+    namespace: 'schema',
+    adapter: config.searchIndex
   })
 
   const changeLog = new ChangeLog({

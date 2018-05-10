@@ -1,46 +1,53 @@
-import createDatabase from '../adapters/db'
+// @flow
 import { exclude, liftToArray } from '../utils'
 
-const defaultFormatter = liftToArray(exclude(['_id']))
-const identity = x => x
+import type { SearchIndexAdapterInterface, IndexInterface, Formatter, Identifier, Collection } from '../flowtypes'
+
+const defaultFormatter: Formatter = liftToArray(exclude(['_id']))
+const identity = <T>(x: T): T => x
 
 class SearchIndex {
-  constructor(config = {}) {
+  versions: IndexInterface
+  latest: IndexInterface
+  formatIn: Formatter
+  formatOut: Formatter
+
+  constructor(config: Object = {}) {
     this.formatIn = config.formatIn || identity
     this.formatOut = config.formatOut || defaultFormatter
-    this.versions = createDatabase()
-    this.latest = createDatabase()
-  }
+    this.versions = config.adapter.getIndex(`${config.namespace}.versions`)
+    this.latest = config.adapter.getIndex(`${config.namespace}.latest`)
+}
 
-  getLatest(id) {
+  getLatest(id: Identifier) {
     return this.latest.findOne({ id }).then(x => this.formatOut(x))
   }
 
-  getVersion(id, version) {
+  getVersion(id: Identifier, version: number) {
     return this.versions.findOne({ id }).then(x => this.formatOut(x))
   }
 
-  init(latest, versions) {
+  init(latest: Collection, versions: Collection) {
     return Promise.all([
       this.versions.insert(this.formatIn(versions)),
       this.latest.insert(this.formatIn(latest))
     ])
   }
 
-  add(document) {
+  add(document: Object) {
     const searchable = this.formatIn(document)
 
     return Promise.all([
-      this.versions.insert(searchable),
-      this.latest.update({ id: searchable.id }, searchable, { upsert: true, multi: true })
+      this.versions.insert([searchable]),
+      this.latest.update({ id: searchable.id }, searchable)
     ])
   }
 
-  findLatest(params) {
+  findLatest(params: Object) {
     return this.latest.find(params).then(xs => xs || []).then(xs => this.formatOut(xs))
   }
 
-  findVersions(params) {
+  findVersions(params: Object) {
     return this.versions.find(params).then(xs => xs || []).then(xs => this.formatOut(xs))
   }
 }
