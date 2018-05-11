@@ -62,11 +62,11 @@ describe("Schema creation flow", () => {
 
   it("correctly creates new schemata", forAll(fixtures, canCreate))
 
-  // it("doesn't allow duplicates", (done) => {
-  //   Promise.all(fixtures.map(fixture => schema.create(fixture)
-  //     .then(() => done("Expected error didn't happen"))
-  //   )).catch(() => done())
-  // })
+  it("doesn't allow duplicates", (done) => {
+    Promise.all(fixtures.map(fixture => schema.create(fixture)
+      .then(() => done("Expected error didn't happen"))
+    )).catch(() => done())
+  })
 
   // it("has only one schema with given name and namespace", forAll(fixtures, canFindOnlyOne))
 
