@@ -60,9 +60,9 @@ describe("Schema creation flow", () => {
 
   it("doesn't have schemata before they are created", forAll(fixtures, cannotFind))
 
-  // it("correctly creates new schemata", forAll(fixtures, canCreate))
+  it("correctly creates new schemata", forAll(fixtures, canCreate))
 
-  // it("doesn't allow creating duplicates", (done) => {
+  // it("doesn't allow duplicates", (done) => {
   //   Promise.all(fixtures.map(fixture => schema.create(fixture)
   //     .then(() => done("Expected error didn't happen"))
   //   )).catch(() => done())

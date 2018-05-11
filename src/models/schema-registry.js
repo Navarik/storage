@@ -3,11 +3,12 @@ import avro from 'avsc'
 import logger from 'logops'
 import { maybe, map, unique, liftToArray } from '../utils'
 
+import registry from './built-in-types.json'
+
 import type { AvroSchema } from '../flowtypes'
 
 type AvroSchemaObject = Object
 
-const registry = {}
 const typeName = (schema: AvroSchema): string => `${schema.namespace}.${schema.name}`
 
 const format = maybe(liftToArray((data) => {
@@ -39,7 +40,7 @@ const add = liftToArray((schema: AvroSchema): AvroSchema => {
   const formatted = ({
     ...schema,
     type: 'record',
-    description: '',
+    description: schema.description || '',
     fields: schema.fields || []
   })
 

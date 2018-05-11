@@ -75,7 +75,7 @@
       },
       {
         "name": "quantity",
-        "type": "number",
+        "type": "system.number",
         "description": "Quantity"
       },
       {
@@ -85,7 +85,7 @@
       },
       {
         "name": "eta",
-        "type": "date",
+        "type": "system.date",
         "description": "Eta"
       },
       {
@@ -113,22 +113,22 @@
       },
       {
         "name": "timestamp",
-        "type": "datetime",
+        "type": "system.datetime",
         "description": "Sent At"
       },
       {
         "name": "job_order",
-        "type": "number",
+        "type": "system.number",
         "description": "Job order"
       },
       {
         "name": "chat_group",
-        "type": "number",
+        "type": "system.number",
         "description": "Chat Group"
       },
       {
         "name": "text",
-        "type": "text",
+        "type": "string",
         "description": "Message Text"
       }
     ]
@@ -151,7 +151,18 @@
       },
       {
         "name": "participants",
-        "type": "array",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "fields": [
+              {
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          }
+        },
         "description": "Participats"
       }
     ]
@@ -169,7 +180,7 @@
       },
       {
         "name": "timestamp",
-        "type": "datetime",
+        "type": "system.datetime",
         "description": "Sent At"
       },
       {

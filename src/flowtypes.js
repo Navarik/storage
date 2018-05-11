@@ -24,6 +24,7 @@ export type AvroSchema = {
   namespace: string,
   name: string,
   type: string,
+  description: '',
   fields: Array<Object>
 }
 

@@ -1,0 +1,30 @@
+{
+  "system.number": {
+    "name": "number",
+    "namespace": "system",
+    "description": "Numeric value",
+    "type": ["int", "double"],
+    "fields": []
+  },
+  "system.date": {
+    "name": "date",
+    "namespace": "system",
+    "description": "Date value",
+    "type": "int",
+    "logicalType": "date"
+  },
+  "system.time": {
+    "name": "time",
+    "namespace": "system",
+    "description": "Time value",
+    "type": "int",
+    "logicalType": "time-millis"
+  },
+  "system.datetime": {
+    "name": "datetime",
+    "namespace": "system",
+    "description": "Date & Time value",
+    "type": "int",
+    "logicalType": "timestamp-millis"
+  }
+}
