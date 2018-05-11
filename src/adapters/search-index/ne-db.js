@@ -2,7 +2,7 @@
 import Database from 'nedb'
 import logger from 'logops'
 import { enforceArray, map, head } from '../../utils'
-import InMemoryIndex from './in-memory-index'
+import NeDbIndex from './ne-db-index'
 
 import type { SearchIndexAdapterInterface } from '../../flowtypes'
 
@@ -27,7 +27,7 @@ class NeDbSearchIndexAdapter implements SearchIndexAdapterInterface {
     if (!this.clients[name]) {
       const client = new Database()
 
-      this.clients[name] = new InMemoryIndex({
+      this.clients[name] = new NeDbIndex({
         find: promisify((...args) => client.find(...args)),
         insert: promisify((...args) => client.insert(...args)),
         update: promisify((...args) => client.update(...args))

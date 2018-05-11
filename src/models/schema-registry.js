@@ -1,70 +1,66 @@
+//@flow
 import avro from 'avsc'
 import logger from 'logops'
 import { maybe, map, unique, liftToArray } from '../utils'
 
-const registry = {}
-const typeName = schema => `${schema.namespace}.${schema.name}`
+import type { AvroSchema } from '../flowtypes'
 
-const formatEntity = (entity) => {
+type AvroSchemaObject = Object
+
+const registry = {}
+const typeName = (schema: AvroSchema): string => `${schema.namespace}.${schema.name}`
+
+const format = maybe(liftToArray((data) => {
   let schema
 
   try {
-    schema = get(entity.type)
+    schema = get(data.type)
   } catch (e) {
-    logger.error({ message: `Schema not found for ${entity.type}`, details: entity })
+    logger.error({ message: `Schema not found for ${data.type}`, details: data })
     throw e
   }
 
-  const data = schema.fromBuffer(schema.toBuffer(entity))
+  const response = {
+    id: data.id,
+    version: data.version,
+    version_id: data.version_id,
+    type: data.type,
+    created_at: data.created_at,
+    modified_at: data.modified_at,
 
-  data.type = entity.type
-  data.version = entity.version
-  data.id = entity.id
-  data.version_id = entity.version_id
-  data.created_at = entity.created_at
-  data.modified_at = entity.modified_at
-
-  return { data, schema }
-}
-
-const formatCollection = (collection) => {
-  const entities = map(formatEntity, collection)
-  const response = { data: [], schema: [] }
-
-  for (let next of entities) {
-    response.data.push(next.data)
-    response.schema.push(next.schema)
+    payload: schema.fromBuffer(schema.toBuffer(data)),
+    schema
   }
 
-  response.schema = unique(response.schema)
-
   return response
-}
+}))
 
-const add = liftToArray(schema =>
-  avro.Type.forSchema(schema, { registry })
-)
+const add = liftToArray((schema: AvroSchema): AvroSchema => {
+  const formatted = ({
+    ...schema,
+    type: 'record',
+    description: '',
+    fields: schema.fields || []
+  })
 
-const update = (schema) => {
+  avro.Type.forSchema(formatted, { registry })
+
+  return formatted
+})
+
+const update = (schema: AvroSchema): void => {
   const type = typeName(schema)
   delete registry[type]
   registry[type] = avro.Type.forSchema(schema, { registry })
 }
 
-const get = (type) => {
+const get = (type: string): AvroSchemaObject => {
   if (!registry[type]) {
     throw new Error(`Schema not found: ${type}`)
   }
 
   return registry[type]
 }
-
-const format = maybe(data => (
-  data instanceof Array
-    ? formatCollection(data)
-    : formatEntity(data)
-  )
-)
 
 const schemaRegistry = { add, update, get, format, typeName }
 

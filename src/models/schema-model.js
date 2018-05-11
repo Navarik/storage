@@ -1,9 +1,12 @@
+//@flow
 import uuidv5 from 'uuid/v5'
 import { head, liftToArray, map, get, unique } from '../utils'
 import SearchIndex from '../ports/search-index'
 import ChangeLog from '../ports/change-log'
 import DataSource from '../ports/data-source'
 import schemaRegistry from './schema-registry'
+
+import type { Collection, Identifier, AvroSchema, SchemaRecord, QueueAdapterInterface, SearchIndexAdapterInterface, DataSourceAdapterInterface } from '../flowtypes'
 
 // Ischema ID's: Generate same ID for the same schema names
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
@@ -13,25 +16,32 @@ const presentationFormat = liftToArray(schema =>
   schemaRegistry.get(schemaRegistry.typeName(schema))
 )
 
-const searchableFormat = liftToArray(schema => {
+const searchableFormat = liftToArray((schema: SchemaRecord) => {
   const result = {
     id: schema.id,
-    name: schema.name,
-    namespace: schema.namespace,
+    name: schema.payload.name,
+    namespace: schema.payload.namespace,
   }
 
-  for (let field of schema.fields) {
+  for (let field of schema.payload.fields) {
     result[field.name] = String(field.type)
   }
 
   return result
 })
 
-const schemaModel = (config) => {
+type SchemaConfiguration = {
+  searchIndex: SearchIndexAdapterInterface,
+  queue: QueueAdapterInterface,
+  dataSources: DataSourceAdapterInterface
+}
+
+type SearchQuery = (params: Object) => Promise<Array<SchemaRecord>>
+type IdLookup = (id: Identifier) => Promise<?SchemaRecord>
+
+const schemaModel = (config: SchemaConfiguration) => {
   const searchIndex = new SearchIndex({
-    formatOut: presentationFormat,
-    formatIn: searchableFormat,
-    namespace: 'schema',
+    bucket: 'schema',
     adapter: config.searchIndex
   })
 
@@ -57,21 +67,26 @@ const schemaModel = (config) => {
   }
 
   // Queries
-  const getNamespaces = params =>
+  const getNamespaces = () =>
     searchIndex.findLatest({}).then(map(get('namespace'))).then(unique)
 
-  const findOneLatest = params => searchIndex.findLatest(params).then(head)
+  const findLatest: SearchQuery = (params) =>searchIndex.findLatest(params)
 
-  const findOneVersion = params => searchIndex.findVersions(params).then(head)
+  const findVersions: SearchQuery = (params) => searchIndex.findVersions(params)
+
+  const getLatest: IdLookup = (id) => Promise.resolve(changeLog.getLatestVersion(id))
 
   // Commands
-  const create = liftToArray(async (body) => {
-    await schemaRegistry.add(body)
+  const create = liftToArray(async (body: AvroSchema): Promise<SchemaRecord> => {
+    if (!body.name || !body.namespace) {
+      throw new Error('[Schema] Schema namespace and name must be provided')
+    }
 
-    const schema = await changeLog.logNew(body)
-    await searchIndex.add(schema)
+    const schema = schemaRegistry.add(body)
+    const schemaRecord = await changeLog.logNew('schema', schema)
+    await searchIndex.add(searchableFormat(schemaRecord))
 
-    return schema
+    return schemaRecord
   })
 
   const update = async (id, body) => {
@@ -85,13 +100,10 @@ const schemaModel = (config) => {
 
 // API
   return {
-    findLatest: params => searchIndex.findLatest(params),
-    findVersions: params => searchIndex.findVersions(params),
-    getLatest: params => searchIndex.getLatest(params.id),
-    getVersion: params => searchIndex.getVersion(params.id, params.version),
     getNamespaces,
-    findOneLatest,
-    findOneVersion,
+    getLatest,
+    findLatest,
+    findVersions,
     create,
     update,
     restoreState

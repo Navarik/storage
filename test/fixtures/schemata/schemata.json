@@ -4,7 +4,6 @@
     "namespace": "profile",
     "description": "User",
     "type": "record",
-    "version": 1,
     "fields": [
       {
         "name": "email",
@@ -38,7 +37,6 @@
     "namespace": "document",
     "description": "Job Order",
     "type": "record",
-    "version": 1,
     "fields": [
       {
         "name": "status",
@@ -107,7 +105,6 @@
     "namespace": "chat",
     "description": "Text Message",
     "type": "record",
-    "version": 1,
     "fields": [
       {
         "name": "sender",
@@ -141,7 +138,6 @@
     "namespace": "chat",
     "description": "Chat Group",
     "type": "record",
-    "version": 1,
     "fields": [
       {
         "name": "name",
@@ -165,7 +161,6 @@
     "namespace": "timelog",
     "description": "Vessel Arrived",
     "type": "record",
-    "version": 1,
     "fields": [
       {
         "name": "sender",

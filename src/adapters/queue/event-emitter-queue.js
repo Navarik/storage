@@ -1,7 +1,11 @@
 // @flow
 import eventEmitter from 'event-emitter'
 
-class EventEmitterQueueAdapter {
+import type { QueueAdapterInterface, Observer, QueueMessage } from '../../flowtypes'
+
+class EventEmitterQueueAdapter implements QueueAdapterInterface {
+  emitter: Object
+
   constructor() {
     this.emitter = eventEmitter()
   }
@@ -14,16 +18,16 @@ class EventEmitterQueueAdapter {
     return true
   }
 
-  on(name: string, handler) {
-    return this.emitter.on(name, handler)
+  on(topic: string, handler: Observer) {
+    this.emitter.on(topic, handler)
   }
 
-  send(name: string, payload) {
-    return this.emitter.emit(name, payload)
+  send(topic: string, message: QueueMessage) {
+    this.emitter.emit(topic, message)
   }
 
-  getLog(name: string) {
-    return []
+  getLog(topic: string) {
+    return Promise.resolve([])
   }
 }
 
