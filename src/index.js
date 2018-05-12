@@ -45,7 +45,7 @@ const configure = ({ queue = 'default', index = 'default' }) => {
   return {
     schema,
     entity,
-    connect: () => Promise.all([entityQueue.connect(), schemaQueue.connect()])
+    connect: () => schema.init().then(entity.init)
   }
 }
   // queue.connect()

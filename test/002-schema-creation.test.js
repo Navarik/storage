@@ -15,19 +15,27 @@ const cannotCreate = given => done => {
     .catch(() => done())
 }
 
-export const canCreate = (given, expected) => async () => {
-  const response = await storage.schema.create(given)
-  expect(response).to.be.an('object')
-  expect(response.type).to.be('schema')
-  expect(response.version).to.be(1)
-  expect(response.payload).to.be.an('object')
-  expect(response.payload).to.be.eql(expected || given)
+const expectSchema = (given, expected) =>{
+  expect(given).to.be.an('object')
+  expect(given.type).to.be('schema')
+  expect(given.version).to.be(1)
+  expect(given.payload).to.be.an('object')
+  expect(given.payload).to.have.keys(['name', 'namespace', 'type', 'description', 'fields'])
+  expect(given.payload).to.be.eql(expected)
 }
 
-export const cannotFind = given => async () => {
-  let response
+export const canCreate = (given, expected) => async () => {
+  const response = await storage.schema.create(given)
+  expectSchema(response, expected || given)
 
-  response = await storage.schema.findLatest({ name: given.name, namespace: given.namespace })
+  const searchResponse = await storage.schema.findLatest({ name: given.name, namespace: given.namespace })
+  expect(searchResponse).to.be.an('array')
+  expect(searchResponse).to.have.length(1)
+  expectSchema(searchResponse[0], expected || given)
+}
+
+export const cannotFind = (schema) => async () => {
+  const response = await storage.schema.findLatest({ name: schema.name, namespace: schema.namespace })
   expect(response).to.be.an('array')
   expect(response).to.be.empty()
 }
@@ -63,15 +71,13 @@ describe("Schema creation flow", () => {
   it("correctly creates new schemata", forAll(fixtures, canCreate))
 
   it("doesn't allow duplicates", (done) => {
-    Promise.all(fixtures.map(fixture => schema.create(fixture)
+    Promise.all(fixtures.map(fixture => storage.schema.create(fixture)
       .then(() => done("Expected error didn't happen"))
     )).catch(() => done())
   })
 
-  // it("has only one schema with given name and namespace", forAll(fixtures, canFindOnlyOne))
-
-  // it("correct number of schemata has been created", async function () {
-  //   const response = await schema.find()
+  // it("correct number of schemata has been created", async () => {
+  //   const response = await storage.schema.findLatest()
   //   expect(response).to.be.an('array')
   //   expect(response).to.have.length(fixtures.length)
   // })

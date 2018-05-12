@@ -16,19 +16,14 @@ const presentationFormat = liftToArray(schema =>
   schemaRegistry.get(schemaRegistry.typeName(schema))
 )
 
-const searchableFormat = liftToArray((schema: SchemaRecord) => {
-  const result = {
+const searchableFormat = liftToArray((schema: SchemaRecord) => ({
     id: schema.id,
     name: schema.payload.name,
     namespace: schema.payload.namespace,
-  }
-
-  for (let field of schema.payload.fields) {
-    result[field.name] = String(field.type)
-  }
-
-  return result
-})
+    description: schema.payload.description,
+    fields: schema.payload.fields.map(get('name'))
+  })
+)
 
 type SchemaConfiguration = {
   searchIndex: SearchIndexAdapterInterface,
@@ -55,22 +50,30 @@ const schemaModel = (config: SchemaConfiguration) => {
     adapters: config.dataSources
   })
 
-  const restoreState = async (path) => {
-    if (path) {
-      const data = await dataSource.read(path)
-      await create(data)
-    } else {
-      const { log, latest } = await changeLog.reconstruct()
-      await schemaRegistry.add(latest)
-      await searchIndex.init(latest, log)
+  const init = async () => {
+    if (!config.queue.isConnected()) {
+      await config.queue.connect()
     }
+
+    const { log, latest } = await changeLog.reconstruct()
+    await searchIndex.init(latest, log)
+    // if (path) {
+    //   const data = await dataSource.read(path)
+    //   await create(data)
+    // } else {
+    //   const { log, latest } = await changeLog.reconstruct()
+    //   await schemaRegistry.add(latest)
+    //   await searchIndex.init(latest, log)
+    // }
   }
 
   // Queries
   const getNamespaces = () =>
     searchIndex.findLatest({}).then(map(get('namespace'))).then(unique)
 
-  const findLatest: SearchQuery = (params) =>searchIndex.findLatest(params)
+  const findLatest: SearchQuery = (params) =>
+    searchIndex.findLatest(params)
+      .then(map(({ id }) => changeLog.getLatestVersion(id)))
 
   const findVersions: SearchQuery = (params) => searchIndex.findVersions(params)
 
@@ -92,7 +95,7 @@ const schemaModel = (config: SchemaConfiguration) => {
   const update = async (id, body) => {
     await schemaRegistry.update(body)
 
-    const schema = await changeLog.logChange({ ...body, id })
+    const schema = await changeLog.logChange(id, body)
     await searchIndex.add(schema)
 
     return schema
@@ -106,7 +109,7 @@ const schemaModel = (config: SchemaConfiguration) => {
     findVersions,
     create,
     update,
-    restoreState
+    init
   }
 }
 

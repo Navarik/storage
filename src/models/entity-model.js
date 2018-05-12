@@ -22,14 +22,13 @@ const entityModel = (config) => {
     adapters: config.dataSources
   })
 
-  const restoreState = async (path) => {
-    if (path) {
-      const data = await dataSource.read(path)
-      await create(data)
-    } else {
-      const { log, latest } = await changeLog.reconstruct()
-      await searchIndex.init(latest, log)
+  const init = async () => {
+    if (!config.queue.isConnected()) {
+      await config.queue.connect()
     }
+
+    const { log, latest } = await changeLog.reconstruct()
+    await searchIndex.init(latest, log)
   }
 
   // Commands
@@ -59,7 +58,7 @@ const entityModel = (config) => {
     getVersion: params => searchIndex.getVersion(params.id, params.version),
     create,
     update,
-    restoreState
+    init
   }
 }
 
