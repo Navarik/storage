@@ -1,40 +1,47 @@
 //@flow
 import Database from 'nedb'
 import logger from 'logops'
-import { enforceArray, map, head } from '../../utils'
-import NeDbIndex from './ne-db-index'
+import NeDbClient from './ne-db-client'
 
-import type { SearchIndexAdapterInterface } from '../../flowtypes'
+import type { SearchIndexAdapterInterface, Collection } from '../../flowtypes'
 
-const databaseError = (err: string): Error => {
-  logger.error(`[NeDB] Database error: ${err}`)
-
-  return new Error(err)
+export interface DBClientInterface {
+  find(searchParameters: Object): Promise<Collection>;
+  insert(documents: Collection): Promise<number>;
+  update(searchParams: Object, document: Object): Promise<number>;
 }
 
-const promisify = func => (...args) => new Promise((resolve, reject) =>
-  func(...args, (err, res) => (err ? reject(databaseError(err)) : resolve(res)))
-)
-
 class NeDbSearchIndexAdapter implements SearchIndexAdapterInterface {
-  clients: { [string]: Object }
+  collections: { [string]: DBClientInterface }
 
   constructor() {
-    this.clients = {}
+    this.collections = {}
   }
 
-  getIndex(name: string) {
-    if (!this.clients[name]) {
-      const client = new Database()
-
-      this.clients[name] = new NeDbIndex({
-        find: promisify((...args) => client.find(...args)),
-        insert: promisify((...args) => client.insert(...args)),
-        update: promisify((...args) => client.update(...args))
-      })
+  getCollection(name: string) {
+    if (!this.collections[name]) {
+      this.collections[name] = new NeDbClient()
     }
 
-    return this.clients[name]
+    return this.collections[name]
+  }
+
+  find(collectionName: string, searchParams: Object) {
+    return this.getCollection(collectionName).find(searchParams)
+  }
+
+  insert(collectionName: string, documents: Collection) {
+    return this.getCollection(collectionName).insert(documents)
+  }
+
+  update(collectionName: string, searchParams: Object, document: Object) {
+    return this.getCollection(collectionName).update(searchParams, document)
+  }
+
+  reset() {
+    this.collections = {}
+
+    return Promise.resolve(true)
   }
 }
 

@@ -49,7 +49,7 @@ export const cannotFindVersions = given => async () => {
 }
 
 describe("Schema format", () => {
-  before(() => storage.connect())
+  before(() => storage.init())
 
   it("can't create empty schema", cannotCreate({}))
 
@@ -64,7 +64,7 @@ describe("Schema format", () => {
 })
 
 describe("Schema creation flow", () => {
-  before(() => storage.connect())
+  before(() => storage.init())
 
   it("doesn't have schemata before they are created", forAll(fixtures, cannotFind))
 
@@ -76,14 +76,14 @@ describe("Schema creation flow", () => {
     )).catch(() => done())
   })
 
-  // it("correct number of schemata has been created", async () => {
-  //   const response = await storage.schema.findLatest()
-  //   expect(response).to.be.an('array')
-  //   expect(response).to.have.length(fixtures.length)
-  // })
+  it("correct number of schemata has been created", async () => {
+    const response = await storage.schema.findLatest()
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(fixtures.length)
+  })
 
-  // it("created namespaces are visible", async function () {
-  //   const response = await schema.namespaces()
-  //   fixtures.forEach(fixture => expect(response).to.contain(fixture.namespace))
-  // })
+  it("created namespaces are visible", async () => {
+    const response = await storage.schema.getNamespaces()
+    fixtures.forEach(fixture => expect(response).to.contain(fixture.namespace))
+  })
 })

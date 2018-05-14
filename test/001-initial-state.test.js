@@ -7,7 +7,7 @@ const storage = createStorage({
 })
 
 describe("Initial state", () => {
-  before(() => storage.connect())
+  before(() => storage.init())
 
   it("should have no namespaces", async () => {
     const response = await storage.schema.getNamespaces()

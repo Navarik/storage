@@ -1,45 +1,41 @@
 // @flow
-import { exclude, liftToArray, identity } from '../utils'
+import { exclude, liftToArray, identity, map, groupBy, arraySort, head } from '../utils'
 
-import type { SearchIndexAdapterInterface, IndexInterface, Identifier, Collection } from '../flowtypes'
+import type { SearchIndexInterface, SearchIndexAdapterInterface, Identifier, Collection } from '../flowtypes'
 
-class SearchIndex {
-  versions: IndexInterface
-  latest: IndexInterface
+class SearchIndex implements SearchIndexInterface {
+  adapter: SearchIndexAdapterInterface
 
   constructor(config: Object = {}) {
-    this.versions = config.adapter.getIndex(`${config.bucket}.versions`)
-    this.latest = config.adapter.getIndex(`${config.bucket}.latest`)
+    this.adapter = config.adapter
   }
 
-  getLatest(id: Identifier) {
-    return this.latest.findOne({ id })
-  }
+  init(log: Collection) {
+    const versions = groupBy(log, 'id')
+    const latest = map(xs => head(arraySort(xs, 'version')), Object.values(versions))
 
-  getVersion(id: Identifier, version: number) {
-    return this.versions.findOne({ id })
-  }
-
-  init(latest: Collection, versions: Collection) {
-    return Promise.all([
-      this.versions.insert(versions),
-      this.latest.insert(latest)
-    ])
+    return this.adapter
+      .reset()
+      .then(() => Promise.all([
+        this.adapter.insert('versions', log),
+        this.adapter.insert('latest', latest)
+      ])
+    )
   }
 
   add(document: Object) {
     return Promise.all([
-      this.versions.insert([document]),
-      this.latest.update({ id: document.id }, document)
+      this.adapter.insert('versions', [document]),
+      this.adapter.update('latest', { id: document.id }, document)
     ])
   }
 
   findLatest(params: Object) {
-    return this.latest.find(params).then(xs => xs || [])
+    return this.adapter.find('latest', params).then(xs => xs || [])
   }
 
   findVersions(params: Object) {
-    return this.versions.find(params).then(xs => xs || [])
+    return this.adapter.find('versions', params).then(xs => xs || [])
   }
 }
 

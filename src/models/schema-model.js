@@ -1,16 +1,14 @@
 //@flow
 import uuidv5 from 'uuid/v5'
 import { head, liftToArray, map, get, unique } from '../utils'
-import SearchIndex from '../ports/search-index'
 import ChangeLog from '../ports/change-log'
-import DataSource from '../ports/data-source'
 import schemaRegistry from './schema-registry'
 
-import type { Collection, Identifier, AvroSchema, SchemaRecord, QueueAdapterInterface, SearchIndexAdapterInterface, DataSourceAdapterInterface } from '../flowtypes'
+import type { Collection, Identifier, AvroSchema, SchemaRecord, ChangelogInterface, SearchIndexInterface, DataSourceInterface } from '../flowtypes'
 
 // Ischema ID's: Generate same ID for the same schema names
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
-const idGenerator = body => uuidv5(schemaRegistry.typeName(body), UUID_ROOT)
+const generateId = body => uuidv5(schemaRegistry.typeName(body), UUID_ROOT)
 
 const presentationFormat = liftToArray(schema =>
   schemaRegistry.get(schemaRegistry.typeName(schema))
@@ -26,45 +24,21 @@ const searchableFormat = liftToArray((schema: SchemaRecord) => ({
 )
 
 type SchemaConfiguration = {
-  searchIndex: SearchIndexAdapterInterface,
-  queue: QueueAdapterInterface,
-  dataSources: DataSourceAdapterInterface
+  searchIndex: SearchIndexInterface,
+  changeLog: ChangelogInterface,
+  dataSource: DataSourceInterface
 }
 
 type SearchQuery = (params: Object) => Promise<Array<SchemaRecord>>
 type IdLookup = (id: Identifier) => Promise<?SchemaRecord>
 
 const schemaModel = (config: SchemaConfiguration) => {
-  const searchIndex = new SearchIndex({
-    bucket: 'schema',
-    adapter: config.searchIndex
-  })
-
-  const changeLog = new ChangeLog({
-    idGenerator,
-    topic: 'schema',
-    queue: config.queue
-  })
-
-  const dataSource = new DataSource({
-    adapters: config.dataSources
-  })
+  const searchIndex = config.searchIndex
+  const changeLog = config.changeLog
 
   const init = async () => {
-    if (!config.queue.isConnected()) {
-      await config.queue.connect()
-    }
-
-    const { log, latest } = await changeLog.reconstruct()
-    await searchIndex.init(latest, log)
-    // if (path) {
-    //   const data = await dataSource.read(path)
-    //   await create(data)
-    // } else {
-    //   const { log, latest } = await changeLog.reconstruct()
-    //   await schemaRegistry.add(latest)
-    //   await searchIndex.init(latest, log)
-    // }
+    const log = await changeLog.reconstruct()
+    await searchIndex.init(log)
   }
 
   // Queries
@@ -86,7 +60,8 @@ const schemaModel = (config: SchemaConfiguration) => {
     }
 
     const schema = schemaRegistry.add(body)
-    const schemaRecord = await changeLog.logNew('schema', schema)
+    const id = generateId(body)
+    const schemaRecord = await changeLog.logNew('schema', id, schema)
     await searchIndex.add(searchableFormat(schemaRecord))
 
     return schemaRecord

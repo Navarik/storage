@@ -2,54 +2,74 @@ import 'babel-polyfill'
 import { GitDatasourceAdapter, FilesystemDatasourceAdapter } from './adapters/data-source'
 import { EventEmitterQueueAdapter } from './adapters/queue'
 import { NeDbSearchIndexAdapter } from './adapters/search-index'
+import SearchIndex from './ports/search-index'
+import DataSource from './ports/data-source'
+import ChangeLog from './ports/change-log'
 
 import { schemaModel, entityModel } from './models'
 
-const dataSources = {
-  file: new FilesystemDatasourceAdapter({ format: 'json' }),
-  git: new GitDatasourceAdapter({
-    workingDirectory: process.env.TEMP_DIRECTORY,
-    format: 'json'
-  }),
-}
+const dataSource = new DataSource({
+  adapters: {
+    file: new FilesystemDatasourceAdapter({ format: 'json' }),
+    git: new GitDatasourceAdapter({
+      workingDirectory: process.env.TEMP_DIRECTORY,
+      format: 'json'
+    })
+  }
+})
 
-const configureChangeLog = (conf) => (conf === 'default'
+const createChangelogAdapter = (conf) => (conf === 'default'
   ? new EventEmitterQueueAdapter()
   : conf
 )
 
-const configureSearchIndex = (conf) => (conf === 'default'
-  ? new NeDbSearchIndexAdapter()
-  : conf
-)
+const configureSearchIndex = (conf) => {
+  let adapter = conf
+  if (conf === 'default') {
+    adapter = new NeDbSearchIndexAdapter()
+  }
+
+  return new SearchIndex({ adapter })
+}
 
 const configure = ({ queue = 'default', index = 'default' }) => {
-  const schemaQueue = configureChangeLog(queue.schema || queue)
-  const entityQueue = configureChangeLog(queue.entity || queue)
+  const schemaChangeLog = new ChangeLog({
+    topic: 'schema',
+    adapter: createChangelogAdapter(queue.schema || queue)
+  })
+  const entityChangeLog = new ChangeLog({
+    topic: 'entity',
+    adapter: createChangelogAdapter(queue.entity || queue)
+  })
 
   const schemaSearchIndex = configureSearchIndex(index.schema || index)
   const entitySearchIndex = configureSearchIndex(index.entity || index)
 
   const schema = new schemaModel({
-    queue: schemaQueue,
+    changeLog: schemaChangeLog,
     searchIndex: schemaSearchIndex,
-    dataSources,
+    dataSource
   })
 
   const entity = new entityModel({
-    queue: entityQueue,
+    changeLog: entityChangeLog,
     searchIndex: entitySearchIndex,
-    dataSources,
+    dataSource
   })
 
   return {
     schema,
     entity,
-    connect: () => schema.init().then(entity.init)
+    init: async () => {
+      await Promise.all([
+        schemaChangeLog.adapter.connect(),
+        entityChangeLog.adapter.connect()
+      ])
+
+      await schema.init()
+      await entity.init()
+    }
   }
 }
-  // queue.connect()
-  //   .then(() => schema.restoreState(process.env.SCHEMA_SOURCE))
-  //   .then(() => entity.restoreState(process.env.DATA_SOURCE))
 
 export default configure

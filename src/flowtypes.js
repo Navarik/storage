@@ -52,23 +52,30 @@ export interface QueueAdapterInterface {
 export interface ChangelogInterface {
   getLatestVersion(id: Identifier): ChangeRecord;
   logChange(id: Identifier, payload: Object): Promise<ChangeRecord>;
-  logNew(type: string, payload: Object): Promise<ChangeRecord>;
+  logNew(type: string, id: Identifier, payload: Object): Promise<ChangeRecord>;
   observe(func: Observer): void;
-}
-
-export interface IndexInterface {
-  find(searchParams: Object): Promise<Collection>;
-  findOne(searchParams: Object): Promise<Object>;
-  insert(documents: Collection): Promise<number>;
-  update(searchParams: Object, document: Object): Promise<number>;
+  reconstruct(): Promise<Collection>;
 }
 
 export interface SearchIndexAdapterInterface {
-  constructor(config: Object): void;
-  getIndex(name: string): IndexInterface;
+  find(collectionName: string, searchParams: Object): Promise<Collection>;
+  insert(collectionName: string, documents: Collection): Promise<number>;
+  update(collectionName: string, searchParams: Object, document: Object): Promise<number>;
+  reset(): Promise<any>;
+}
+
+export interface SearchIndexInterface {
+  init(log: Collection): Promise<any>;
+  add(document: Object): Promise<any>;
+  findLatest(params: Object): Promise<Collection>;
+  findVersions(params: Object): Promise<Collection>;
 }
 
 export interface DataSourceAdapterInterface {
   constructor(config: Object): void;
   readAllFiles(location: Location): Promise<Collection>;
+}
+
+export interface DataSourceInterface {
+  read(path: string): Promise<Collection>;
 }

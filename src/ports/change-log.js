@@ -3,29 +3,21 @@ import uuidv5 from 'uuid/v5'
 import TransactionManager from './transaction-manager'
 import { sort } from '../utils'
 
-import type { IdGenerator, ChangelogInterface, ChangeRecord, QueueMessage, Identifier, QueueAdapterInterface, Observer } from '../flowtypes'
-
-type ChangeLogConfiguration = {
-  topic: string,
-  idGenerator: IdGenerator,
-  queue: QueueAdapterInterface
-}
+import type { ChangelogInterface, ChangeRecord, QueueMessage, Identifier, QueueAdapterInterface, Observer } from '../flowtypes'
 
 class ChangeLog implements ChangelogInterface {
   transactionManager: Object
   topic: string
-  idGenerator: IdGenerator
-  queue: QueueAdapterInterface
+  adapter: QueueAdapterInterface
   versions: { [Identifier]: ChangeRecord }
 
   constructor(config: Object = {}) {
-    this.queue = config.queue
-    this.idGenerator = config.idGenerator
+    this.adapter = config.adapter
     this.topic = config.topic
 
     this.versions = {}
     this.transactionManager = new TransactionManager({
-      queue: this.queue,
+      queue: this.adapter,
       commitTopic: this.topic,
       onCommit: payload => this.registerAsLatest(payload)
     })
@@ -44,14 +36,15 @@ class ChangeLog implements ChangelogInterface {
   }
 
   async reconstruct() {
-    let log = await this.queue.getLog(this.topic)
+    this.versions = {}
+    let log = await this.adapter.getLog(this.topic)
     log = sort(log, 'version')
 
     for (let record of log) {
       this.registerAsLatest(record)
     }
 
-    return { log, latest: Object.values(this.versions) }
+    return log
   }
 
   sign(document: QueueMessage): ChangeRecord {
@@ -81,12 +74,12 @@ class ChangeLog implements ChangelogInterface {
     return this.transactionManager.execute(this.topic, document)
   }
 
-  logNew(type: string, payload: Object) {
+  logNew(type: string, id: Identifier, payload: Object) {
     const now = new Date()
     const document = this.sign({
-      id: this.idGenerator(payload),
-      created_at: now.toISOString(),
+      id,
       type,
+      created_at: now.toISOString(),
       payload
     })
 
@@ -94,7 +87,7 @@ class ChangeLog implements ChangelogInterface {
   }
 
   observe(func: Observer) {
-    this.queue.on(this.topic, func)
+    this.adapter.on(this.topic, func)
   }
 }
 

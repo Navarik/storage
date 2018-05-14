@@ -28,6 +28,7 @@
     "file-extension": "^4.0.2",
     "forever-monitor": "^1.7.1",
     "function-pipe": "^1.0.0",
+    "group-by": "0.0.1",
     "logops": "^2.1.0",
     "nedb": "^1.8.0",
     "object-path": "^0.11.4",

@@ -1,41 +1,24 @@
 import uuidv4 from 'uuid/v4'
-import SearchIndex from '../ports/search-index'
-import ChangeLog from '../ports/change-log'
-import DataSource from '../ports/data-source'
 import schemaRegistry from './schema-registry'
 
+const generateId = body => uuidv4()
+
 const entityModel = (config) => {
-  const searchIndex = new SearchIndex({
-    formatOut: data => schemaRegistry.format(data),
-    namespace: 'entity',
-    adapter: config.searchIndex
-  })
-
-  const changeLog = new ChangeLog({
-    // Random unique identifier
-    idGenerator: () => uuidv4(),
-    topic: 'entity',
-    queue: config.queue
-  })
-
-  const dataSource = new DataSource({
-    adapters: config.dataSources
-  })
+  const searchIndex = config.searchIndex
+  const dataSource = config.dataSource
+  const changeLog = config.changeLog
 
   const init = async () => {
-    if (!config.queue.isConnected()) {
-      await config.queue.connect()
-    }
-
-    const { log, latest } = await changeLog.reconstruct()
-    await searchIndex.init(latest, log)
+    const log = await changeLog.reconstruct()
+    await searchIndex.init(log)
   }
 
   // Commands
   const create = async (body) => {
     const entity = schemaRegistry.format(body)
 
-    entity.data = await changeLog.logNew(entity.data)
+    const id = generateId()
+    entity.data = await changeLog.logNew(id, 'entity', entity.data)
     await searchIndex.add(entity.data)
 
     return entity
