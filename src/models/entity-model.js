@@ -14,12 +14,12 @@ const entityModel = (config) => {
   }
 
   // Commands
-  const create = async (body) => {
-    const entity = schemaRegistry.format(body)
+  const create = async (type, body) => {
+    const formatted = schemaRegistry.format(type, body)
 
     const id = generateId()
-    entity.data = await changeLog.logNew(id, 'entity', entity.data)
-    await searchIndex.add(entity.data)
+    const entity = await changeLog.logNew(type, id, formatted)
+    await searchIndex.add(entity)
 
     return entity
   }

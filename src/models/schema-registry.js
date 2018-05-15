@@ -1,7 +1,6 @@
 //@flow
 import avro from 'avsc'
-import logger from 'logops'
-import { maybe, map, unique, liftToArray } from '../utils'
+import { map, unique, liftToArray } from '../utils'
 
 import registry from './built-in-types.json'
 
@@ -17,30 +16,12 @@ const typeName = (schema: AvroSchema): string => {
   return `${schema.namespace}.${schema.name}`
 }
 
-const format = maybe(liftToArray((data) => {
-  let schema
-
-  try {
-    schema = get(data.type)
-  } catch (e) {
-    logger.error({ message: `Schema not found for ${data.type}`, details: data })
-    throw e
-  }
-
-  const response = {
-    id: data.id,
-    version: data.version,
-    version_id: data.version_id,
-    type: data.type,
-    created_at: data.created_at,
-    modified_at: data.modified_at,
-
-    payload: schema.fromBuffer(schema.toBuffer(data)),
-    schema
-  }
+const format = liftToArray((type, data) => {
+  const schema = get(type)
+  const response = schema.fromBuffer(schema.toBuffer(data))
 
   return response
-}))
+})
 
 const formatSchema = schema => ({
   ...schema,
@@ -73,7 +54,7 @@ const update = (schema: AvroSchema): AvroSchema => {
 
 const get = (type: string): AvroSchemaObject => {
   if (!registry[type]) {
-    throw new Error(`Schema not found: ${type}`)
+    throw new Error(`[SchemaRegistry] Schema not found for ${type}`)
   }
 
   return registry[type]

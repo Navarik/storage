@@ -16,9 +16,7 @@
         "isVarIncluded": false,
         "isTimeLogIncluded": false,
         "isVefLogIncluded": false,
-        "type": "ow.contract",
-        "version": 1,
-        "id": "9f730055-b281-47e1-afba-c1bfc0201519"
+        "type": "ow.contract"
     },
     {
         "taskId": "12345",
@@ -37,8 +35,6 @@
         "isVarIncluded": false,
         "isTimeLogIncluded": false,
         "isVefLogIncluded": false,
-        "type": "ow.contract",
-        "version": 1,
-        "id": "7ba7639e-3388-43b5-88bd-5fe77cd2a014"
+        "type": "ow.contract"
     }
 ]
