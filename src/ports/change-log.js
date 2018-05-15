@@ -5,16 +5,28 @@ import { sort } from '../utils'
 
 import type { ChangelogInterface, ChangeRecord, QueueMessage, Identifier, QueueAdapterInterface, Observer } from '../flowtypes'
 
+const sign = (id: Identifier, payload: ChangeRecord): Identifier => {
+  if (!id) {
+    throw new Error('[ChangeLog] Cannot sign document version: document does not have an ID')
+  }
+
+  const versionId = uuidv5(JSON.stringify(payload), id)
+
+  return versionId
+}
+
 class ChangeLog implements ChangelogInterface {
   transactionManager: Object
   topic: string
   adapter: QueueAdapterInterface
+  latest: { [Identifier]: ChangeRecord }
   versions: { [Identifier]: ChangeRecord }
 
   constructor(config: Object = {}) {
     this.adapter = config.adapter
     this.topic = config.topic
 
+    this.latest = {}
     this.versions = {}
     this.transactionManager = new TransactionManager({
       queue: this.adapter,
@@ -24,18 +36,20 @@ class ChangeLog implements ChangelogInterface {
   }
 
   registerAsLatest(payload: ChangeRecord) {
-    this.versions[payload.id] = payload
+    this.versions[payload.version_id] = payload
+    this.latest[payload.id] = payload
+  }
+
+  getVersion(versionId: Identifier) {
+    return this.versions[versionId]
   }
 
   getLatestVersion(id: Identifier) {
-    return this.versions[id]
-  }
-
-  getLatestVersionNumber(id: Identifier) {
-    return this.versions[id] ? this.versions[id].version : 0
+    return this.latest[id]
   }
 
   async reconstruct() {
+    this.latest = {}
     this.versions = {}
     let log = await this.adapter.getLog(this.topic)
     log = sort(log, 'version')
@@ -47,41 +61,45 @@ class ChangeLog implements ChangelogInterface {
     return log
   }
 
-  sign(document: QueueMessage): ChangeRecord {
-    if (!document.id) {
-      throw new Error('[ChangeLog] Cannot sign document version: document does not have an ID')
-    }
-
-    const version = this.getLatestVersionNumber(document.id) + 1
-    const now = new Date()
-    const signedDocument = {
-      ...document,
-      version,
-      modified_at: now.toISOString(),
-      version_id: uuidv5(JSON.stringify(document.payload), document.id)
-    }
-
-    return signedDocument
-  }
-
   logChange(id: Identifier, payload: Object) {
     const previous = this.getLatestVersion(id)
-    const document = this.sign({
-      ...previous,
+    if (!previous) {
+      throw new Error('[ChangeLog] Cannot create new version because the previous one does not exist')
+    }
+
+    const versionId = sign(id, payload)
+    if (previous.version_id === versionId) {
+      throw new Error('[ChangeLog] Cannot create new version because it is not different from the current one')
+    }
+
+    const versionNumber = previous.version + 1
+    const now = new Date()
+
+    const document = {
+      id,
+      type: previous.type,
+      created_at: previous.created_at,
+      version: versionNumber,
+      modified_at: now.toISOString(),
+      version_id: versionId,
       payload
-    })
+    }
 
     return this.transactionManager.execute(this.topic, document)
   }
 
   logNew(type: string, id: Identifier, payload: Object) {
     const now = new Date()
-    const document = this.sign({
+    const versionId = sign(id, payload)
+    const document = {
       id,
       type,
       created_at: now.toISOString(),
+      version: 1,
+      modified_at: now.toISOString(),
+      version_id: versionId,
       payload
-    })
+    }
 
     return this.transactionManager.execute(this.topic, document)
   }

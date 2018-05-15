@@ -50,6 +50,7 @@ export interface QueueAdapterInterface {
 }
 
 export interface ChangelogInterface {
+  getVersion(versionId: Identifier): ChangeRecord;
   getLatestVersion(id: Identifier): ChangeRecord;
   logChange(id: Identifier, payload: Object): Promise<ChangeRecord>;
   logNew(type: string, id: Identifier, payload: Object): Promise<ChangeRecord>;
@@ -58,9 +59,9 @@ export interface ChangelogInterface {
 }
 
 export interface SearchIndexAdapterInterface {
-  find(collectionName: string, searchParams: Object): Promise<Collection>;
-  insert(collectionName: string, documents: Collection): Promise<number>;
-  update(collectionName: string, searchParams: Object, document: Object): Promise<number>;
+  find(name: string, searchParams: Object): Promise<Collection>;
+  insert(name: string, documents: Collection): Promise<number>;
+  update(name: string, searchParams: Object, document: Object): Promise<number>;
   reset(): Promise<any>;
 }
 

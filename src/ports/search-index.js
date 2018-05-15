@@ -3,6 +3,8 @@ import { exclude, liftToArray, identity, map, groupBy, arraySort, head } from '.
 
 import type { SearchIndexInterface, SearchIndexAdapterInterface, Identifier, Collection } from '../flowtypes'
 
+const sortByVersionNumber = data => arraySort(data, 'version', { reverse: true })
+
 class SearchIndex implements SearchIndexInterface {
   adapter: SearchIndexAdapterInterface
 
@@ -11,8 +13,8 @@ class SearchIndex implements SearchIndexInterface {
   }
 
   init(log: Collection) {
-    const versions = groupBy(log, 'id')
-    const latest = map(xs => head(arraySort(xs, 'version')), Object.values(versions))
+    const versions = Object.values(groupBy(log, 'id'))
+    const latest = map(sortByVersionNumber, versions)
 
     return this.adapter
       .reset()

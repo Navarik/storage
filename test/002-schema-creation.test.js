@@ -1,52 +1,16 @@
 import expect from 'expect.js'
 import createStorage from '../src'
 import fixtures from './fixtures/schemata/schemata.json'
+import { expectSchema, createSteps } from './steps/schema'
 
 const storage = createStorage({
   queue: 'default',
   index: 'default'
 })
 
-export const forAll = (given, func) => () => Promise.all(given.map(x => func(x)()))
+const { cannotCreate, canCreate, cannotFind, canFind } = createSteps(storage)
 
-const cannotCreate = given => done => {
-  storage.schema.create(given)
-    .then(() => done("Expected error didn't happen"))
-    .catch(() => done())
-}
-
-const expectSchema = (given, expected) =>{
-  expect(given).to.be.an('object')
-  expect(given.type).to.be('schema')
-  expect(given.version).to.be(1)
-  expect(given.payload).to.be.an('object')
-  expect(given.payload).to.have.keys(['name', 'namespace', 'type', 'description', 'fields'])
-  expect(given.payload).to.be.eql(expected)
-}
-
-export const canCreate = (given, expected) => async () => {
-  const response = await storage.schema.create(given)
-  expectSchema(response, expected || given)
-
-  const searchResponse = await storage.schema.findLatest({ name: given.name, namespace: given.namespace })
-  expect(searchResponse).to.be.an('array')
-  expect(searchResponse).to.have.length(1)
-  expectSchema(searchResponse[0], expected || given)
-}
-
-export const cannotFind = (schema) => async () => {
-  const response = await storage.schema.findLatest({ name: schema.name, namespace: schema.namespace })
-  expect(response).to.be.an('array')
-  expect(response).to.be.empty()
-}
-
-export const cannotFindVersions = given => async () => {
-  let response
-
-  response = await storage.schema.findVersions({ name: given.name, namespace: given.namespace })
-  expect(response).to.be.an('array')
-  expect(response).to.be.empty()
-}
+const forAll = (given, func) => () => Promise.all(given.map(x => func(x)()))
 
 describe("Schema format", () => {
   before(() => storage.init())
@@ -81,6 +45,8 @@ describe("Schema creation flow", () => {
     expect(response).to.be.an('array')
     expect(response).to.have.length(fixtures.length)
   })
+
+  it("can find created schemata", forAll(fixtures, canFind))
 
   it("created namespaces are visible", async () => {
     const response = await storage.schema.getNamespaces()

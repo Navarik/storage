@@ -9,7 +9,13 @@ import type { AvroSchema } from '../flowtypes'
 
 type AvroSchemaObject = Object
 
-const typeName = (schema: AvroSchema): string => `${schema.namespace}.${schema.name}`
+const typeName = (schema: AvroSchema): string => {
+  if (!schema.name || !schema.namespace) {
+    throw new Error(`[SchemaRegistry] Both namespace and name must be provided, got name: ${schema.name}, namespace: ${schema.namespace}`)
+  }
+
+  return `${schema.namespace}.${schema.name}`
+}
 
 const format = maybe(liftToArray((data) => {
   let schema
@@ -36,23 +42,33 @@ const format = maybe(liftToArray((data) => {
   return response
 }))
 
+const formatSchema = schema => ({
+  ...schema,
+  type: 'record',
+  description: schema.description || '',
+  fields: schema.fields || []
+})
+
 const add = liftToArray((schema: AvroSchema): AvroSchema => {
-  const formatted = ({
-    ...schema,
-    type: 'record',
-    description: schema.description || '',
-    fields: schema.fields || []
-  })
+  const formatted = formatSchema(schema)
 
   avro.Type.forSchema(formatted, { registry })
 
   return formatted
 })
 
-const update = (schema: AvroSchema): void => {
-  const type = typeName(schema)
+const update = (schema: AvroSchema): AvroSchema => {
+  const formatted = formatSchema(schema)
+  const type = typeName(formatted)
+
+  if (!registry[type]){
+    throw new Error(`[SchemaRegistry] Cannot update non-existing schema: ${type}`)
+  }
+
   delete registry[type]
-  registry[type] = avro.Type.forSchema(schema, { registry })
+  registry[type] = avro.Type.forSchema(formatted, { registry })
+
+  return formatted
 }
 
 const get = (type: string): AvroSchemaObject => {
