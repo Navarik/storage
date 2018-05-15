@@ -16,25 +16,13 @@ describe("Initial state", () => {
   })
 
   it("should have no types", async () => {
-    const response = await storage.schema.findLatest()
-    expect(response).to.be.an('array')
-    expect(response).to.be.empty()
-  })
-
-  it("should have no type history", async () => {
-    const response = await storage.schema.findVersions()
+    const response = await storage.schema.find()
     expect(response).to.be.an('array')
     expect(response).to.be.empty()
   })
 
   it("should have no entities", async () => {
-    const response = await storage.entity.findLatest()
-    expect(response).to.be.an('array')
-    expect(response).to.be.empty()
-  })
-
-  it("should have no entity history", async () => {
-    const response = await storage.entity.findVersions()
+    const response = await storage.entity.find()
     expect(response).to.be.an('array')
     expect(response).to.be.empty()
   })

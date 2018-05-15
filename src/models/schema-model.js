@@ -4,11 +4,11 @@ import { head, liftToArray, map, get, unique, maybe } from '../utils'
 import ChangeLog from '../ports/change-log'
 import schemaRegistry from './schema-registry'
 
-import type { Identifier, AvroSchema, SchemaRecord, ChangelogInterface, SearchIndexInterface, DataSourceInterface } from '../flowtypes'
+import type { ModelInterface, Identifier, AvroSchema, SchemaRecord, ChangelogInterface, SearchIndexInterface, DataSourceInterface } from '../flowtypes'
 
 // Generate same IDs for the each name + namespace combination
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
-const generateId = body => uuidv5(schemaRegistry.typeName(body), UUID_ROOT)
+const generateId = name => uuidv5(name, UUID_ROOT)
 
 const searchableFormat = liftToArray((schema: SchemaRecord) => ({
     id: schema.id,
@@ -16,81 +16,89 @@ const searchableFormat = liftToArray((schema: SchemaRecord) => ({
     version_id: schema.version_id,
     name: schema.payload.name,
     namespace: schema.payload.namespace,
+    full_name: schemaRegistry.fullName(schema.payload),
     description: schema.payload.description,
     fields: schema.payload.fields.map(get('name'))
   })
 )
 
-type SchemaConfiguration = {
-  searchIndex: SearchIndexInterface,
-  changeLog: ChangelogInterface,
-  dataSource: DataSourceInterface
-}
+class SchemaModel implements ModelInterface {
+  searchIndex: SearchIndexInterface
+  changeLog: ChangelogInterface
 
-type SearchQuery = (params: Object) => Promise<Array<SchemaRecord>>
-type IdLookup = (id: Identifier) => Promise<?SchemaRecord>
+  constructor(config: Object) {
+    this.searchIndex = config.searchIndex
+    this.changeLog = config.changeLog
+  }
 
-const schemaModel = (config: SchemaConfiguration) => {
-  const searchIndex = config.searchIndex
-  const changeLog = config.changeLog
-
-  const init = async () => {
-    const log = await changeLog.reconstruct()
-    await searchIndex.init(log)
+  async init() {
+    const log = await this.changeLog.reconstruct()
+    await this.searchIndex.init(log)
   }
 
   // Queries
-  const getNamespaces = () =>
-    searchIndex
+  getNamespaces() {
+    return this.searchIndex
       .findLatest({})
       .then(map(get('namespace')))
       .then(unique)
+  }
 
-  const getLatest: IdLookup = (id) => Promise.resolve(changeLog.getLatestVersion(id))
+  get(name, version) {
+    const schema = schemaRegistry.get(name)
+    if (!schema) return Promise.resolve(undefined)
 
-  const getVersion = (id: Identifier, version: number) =>
-    searchIndex
+    // Avro is weird: after adding a new schema to the registry,
+    // it removes schema's namespace property and changes its name to 'namespace.name'
+    const id = generateId(schema.name)
+
+    if (!version) {
+      return Promise.resolve(this.changeLog.getLatestVersion(id))
+    }
+
+    return this.searchIndex
       .findVersions({ id, version })
       .then(head)
-      .then(maybe(x => changeLog.getVersion(x.version_id)))
+      .then(maybe(x => this.changeLog.getVersion(x.version_id)))
+  }
 
-  const findLatest: SearchQuery = (params) =>
-    searchIndex
+  find(params) {
+    return this.searchIndex
       .findLatest(params)
-      .then(map(({ id }) => changeLog.getLatestVersion(id)))
-
-  const findVersions: SearchQuery = (params) => searchIndex.findVersions(params)
+      .then(map(x => this.changeLog.getLatestVersion(x.id)))
+  }
 
   // Commands
-  const create = liftToArray(async (body: AvroSchema): Promise<SchemaRecord> => {
+  async create(body: AvroSchema) {
     const schema = schemaRegistry.add(body)
 
-    const id = generateId(schema)
-    const schemaRecord = await changeLog.logNew('schema', id, schema)
-    await searchIndex.add(searchableFormat(schemaRecord))
-
-    return schemaRecord
-  })
-
-  const update = async (id: Identifier, body: AvroSchema) => {
-    const schema = schemaRegistry.update(body)
-
-    const schemaRecord = await changeLog.logChange(id, schema)
-    await searchIndex.add(searchableFormat(schemaRecord))
+    const id = generateId(schemaRegistry.fullName(body))
+    const schemaRecord = await this.changeLog.logNew('schema', id, schema)
+    await this.searchIndex.add(searchableFormat(schemaRecord))
 
     return schemaRecord
   }
 
-// API
+  async update(id: Identifier, body: AvroSchema) {
+    const schema = schemaRegistry.update(body)
+
+    const schemaRecord = await this.changeLog.logChange(id, schema)
+    await this.searchIndex.add(searchableFormat(schemaRecord))
+
+    return schemaRecord
+  }
+}
+
+const schemaModel = (config: Object) => {
+  const model = new SchemaModel(config)
+
   return {
-    getNamespaces,
-    getLatest,
-    getVersion,
-    findLatest,
-    findVersions,
-    create,
-    update,
-    init
+    init: () => model.init(),
+    get: (name: string, version: ?string) => model.get(name, version),
+    find: (params: Object) => model.find(params),
+    create: (body: AvroSchema) => model.create(body),
+    // update,
+    getNamespaces: () => model.getNamespaces()
   }
 }
 

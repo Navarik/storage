@@ -52,8 +52,8 @@ export interface QueueAdapterInterface {
 export interface ChangelogInterface {
   getVersion(versionId: Identifier): ChangeRecord;
   getLatestVersion(id: Identifier): ChangeRecord;
-  logChange(id: Identifier, payload: Object): Promise<ChangeRecord>;
   logNew(type: string, id: Identifier, payload: Object): Promise<ChangeRecord>;
+  logChange(id: Identifier, payload: Object): Promise<ChangeRecord>;
   observe(func: Observer): void;
   reconstruct(): Promise<Collection>;
 }
@@ -79,4 +79,12 @@ export interface DataSourceAdapterInterface {
 
 export interface DataSourceInterface {
   read(path: string): Promise<Collection>;
+}
+
+export interface ModelInterface {
+  init(): Promise<void>;
+  get(name: Identifier, version: ?string): Promise<?ChangeRecord>;
+  find(params: Object): Promise<Array<ChangeRecord>>;
+  create(body: Object): Promise<ChangeRecord>;
+  update(id: Identifier, body: AvroSchema): Promise<ChangeRecord>;
 }

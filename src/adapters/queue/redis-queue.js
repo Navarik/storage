@@ -2,9 +2,14 @@
 import Queue from 'bee-queue'
 import redis from 'redis'
 
-class RedisQueueAdapter {
-  constructor(config) {
-    this.queues = {}
+import type { QueueAdapterInterface, Observer, QueueMessage } from '../../flowtypes'
+
+class RedisQueueAdapter implements QueueAdapterInterface {
+  client: Object
+  topics: { [string]: Object }
+
+  constructor(config: Object) {
+    this.topics = {}
     this.client = redis.createClient(config)
   }
 
@@ -17,18 +22,18 @@ class RedisQueueAdapter {
   }
 
   getQueue(name: string) {
-    if (!this.queues[name]) {
-      this.queues[name] = new Queue(name, { redis: this.client })
+    if (!this.topics[name]) {
+      this.topics[name] = new Queue(name, { redis: this.client })
     }
 
-    return this.queues[name]
+    return this.topics[name]
   }
 
-  on(name: string, handler) {
+  on(name: string, handler: Observer) {
     return this.getQueue(name).process(job => Promise.resolve(handler(job.data)))
   }
 
-  send(name: string, payload) {
+  send(name: string, payload: QueueMessage) {
     return this.getQueue(name).createJob(payload).save()
   }
 

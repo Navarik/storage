@@ -35,9 +35,8 @@ const entityModel = (config) => {
 
   // API
   return {
-    findLatest: params => searchIndex.findLatest(params),
-    findVersions: params => searchIndex.findVersions(params),
-    getLatest: params => searchIndex.getLatest(params.id),
+    find: params => searchIndex.findLatest(params),
+    get: id => searchIndex.getLatest(id),
     getVersion: params => searchIndex.getVersion(params.id, params.version),
     create,
     update,

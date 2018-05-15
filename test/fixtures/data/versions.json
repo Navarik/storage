@@ -1,0 +1,33 @@
+[
+  {
+    "version": 1,
+    "type": "user"
+  },
+  {
+    "id": 1,
+    "version": 2,
+    "type": "user",
+    "last_name": "Lisa",
+    "first_name": "King",
+    "email": "lking@test.abc"
+  },
+  {
+    "id": 1,
+    "version": 3,
+    "type": "user",
+    "role": "Scheduler",
+    "last_name": "Lisa",
+    "first_name": "King",
+    "company": "Alpha Oil Co",
+    "email": "lking@test.abc"
+  },
+  {
+    "id": 1,
+    "version": 4,
+    "type": "user",
+    "role": "Scheduler",
+    "last_name": "Doge",
+    "first_name": "WOW",
+    "company": "Such Much Co"
+  }
+]
