@@ -1,7 +1,8 @@
 import expect from 'expect.js'
+import curry from 'curry'
 import createStorage from '../src'
 import schemata from './fixtures/schemata/schemata.json'
-import fixtures from './fixtures/data/data.json'
+import fixturesEvents from './fixtures/data/events.json'
 import { expectEntity } from './steps/checks'
 import { forAll, forNone } from './steps/generic'
 
@@ -12,26 +13,26 @@ const storage = createStorage({
 
 // const { canCreate, canFind, canUpdate, cannotUpdate } = createSteps(storage)
 
-export const cannotCreate = (type, payload) => (done) => {
+export const cannotCreate = curry((type, payload) => (done) => {
   storage.entity.create(type, payload)
     .then(() => done("Expected error didn't happen"))
     .catch(() => done())
-}
+})
 
-export const canCreate = (type, payload) => async () => {
+export const canCreate = curry((type, payload) => async () => {
   const response = await storage.entity.create(type, payload)
   expectEntity(response)
   expect(response.type).to.eql(type)
   expect(response.version).to.eql(1)
   expect(response.payload).to.eql(payload)
-}
+})
 
-describe("Entity creation flow", () => {
+describe("Entity format and constraints", () => {
   before(() => storage.init().then(() => Promise.all(schemata.map(storage.schema.create))))
 
   it("can't create entity of unknown type", cannotCreate('wow.doge', {}))
   it("can't create empty entity", cannotCreate('profile.user', {}))
-  it("can't create malformatted entity", cannotCreate('profile.user', {
+  it("can't create malformed entity", cannotCreate('profile.user', {
     role: 100500,
     last_name: ["Lisa"],
     first_name: false,
@@ -48,11 +49,17 @@ describe("Entity creation flow", () => {
   }))
 })
 
-// // describe("", () => {
-// //   before(() => storage.init())
+describe("Entity creation flow", () => {
+  before(() => storage.init().then(() => Promise.all(schemata.map(storage.schema.create))))
 
-// //   it("doesn't have entities before they are created", isEmpty)
-// //   it("correctly creates new entities", forAll(fixtures, canCreate))
+  it("doesn't have entities before they are created", async () => {
+    const response = await storage.entity.find()
+    expect(response).to.be.an('array')
+    expect(response).to.be.empty()
+  })
+
+  it("correctly creates new entities (events)", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
+
 // //   it("can find created entities", forAll(fixtures, canFindOnlyOne))
 
 // //   it("correct number of entities has been created", async function () {
@@ -60,4 +67,4 @@ describe("Entity creation flow", () => {
 // //     expect(response).to.be.an('array')
 // //     expect(response).to.have.length(fixtures.length)
 // //   })
-// // })
+})

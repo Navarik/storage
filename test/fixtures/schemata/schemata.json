@@ -75,7 +75,7 @@
       },
       {
         "name": "quantity",
-        "type": "system.number",
+        "type": ["null", "int"],
         "description": "Quantity"
       },
       {
@@ -85,7 +85,8 @@
       },
       {
         "name": "eta",
-        "type": "system.date",
+        "type": "long",
+        "logicalType": "date",
         "description": "Eta"
       },
       {
@@ -113,17 +114,18 @@
       },
       {
         "name": "timestamp",
-        "type": "system.datetime",
+        "type": "long",
+        "logicalType": "timestamp-millis",
         "description": "Sent At"
       },
       {
         "name": "job_order",
-        "type": "system.number",
+        "type": ["null", "int"],
         "description": "Job order"
       },
       {
         "name": "chat_group",
-        "type": "system.number",
+        "type": ["null", "int"],
         "description": "Chat Group"
       },
       {
@@ -174,18 +176,24 @@
     "type": "record",
     "fields": [
       {
-        "name": "sender",
+        "name": "type",
         "type": "string",
+        "description": "Event type"
+      },
+      {
+        "name": "sender",
+        "type": "int",
         "description": "Message Sender"
       },
       {
         "name": "timestamp",
-        "type": "system.datetime",
+        "type": "long",
+        "logicalType": "timestamp-millis",
         "description": "Sent At"
       },
       {
         "name": "job_order",
-        "type": "string",
+        "type": "int",
         "description": "Job order"
       }
     ]

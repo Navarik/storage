@@ -1,7 +1,6 @@
 //@flow
 import avro from 'avsc'
 import { map, unique, liftToArray } from '../utils'
-import builtIns from './built-in-types.json'
 
 import type { AvroSchema } from '../flowtypes'
 
@@ -59,10 +58,7 @@ const get = (type: string): AvroSchemaObject => {
 
 const init = () => {
   Object.keys(registry).forEach(type => { delete registry[type] })
-  map(add, builtIns)
 }
-
-init()
 
 const schemaRegistry = { add, update, get, format, fullName, init }
 

@@ -1,32 +1,32 @@
 [
   {
     "type": "vessel_arrived",
-    "sender": "2",
-    "job_order": "13",
-    "timestamp": "2018 Jan 14 17:00"
+    "sender": 2,
+    "job_order": 13,
+    "timestamp": 1526501947125
   },
   {
     "type": "nor_tendered",
-    "sender": "1",
-    "job_order": "13",
-    "timestamp": "2018 Jan 15 7:13"
+    "sender": 1,
+    "job_order": 13,
+    "timestamp": 1526502063074
   },
   {
     "type": "nor_accepted",
-    "sender": "2",
-    "job_order": "13",
-    "timestamp": "2018 Jan 16 1:28"
+    "sender": 2,
+    "job_order": 13,
+    "timestamp": 1526502089487
   },
   {
     "type": "hoses_connected",
-    "sender": "3",
-    "job_order": "13",
-    "timestamp": "2018 Jan 17 0:35"
+    "sender": 3,
+    "job_order": 13,
+    "timestamp": 1526502107790
   },
   {
     "type": "commenced_loading",
-    "sender": "1",
-    "job_order": "13",
-    "timestamp": "2018 Jan 17 4:44"
+    "sender": 1,
+    "job_order": 13,
+    "timestamp": 1526502119224
   }
 ]
