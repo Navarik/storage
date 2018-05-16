@@ -26,7 +26,7 @@ export const canCreate = (type, payload) => async () => {
   expect(response.payload).to.eql(payload)
 }
 
-describe("Data format", () => {
+describe("Entity creation flow", () => {
   before(() => storage.init().then(() => Promise.all(schemata.map(storage.schema.create))))
 
   it("can't create entity of unknown type", cannotCreate('wow.doge', {}))
@@ -48,7 +48,7 @@ describe("Data format", () => {
   }))
 })
 
-// // describe("Entity creation flow", () => {
+// // describe("", () => {
 // //   before(() => storage.init())
 
 // //   it("doesn't have entities before they are created", isEmpty)
