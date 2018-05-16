@@ -64,11 +64,6 @@
         "description": "MoT Name"
       },
       {
-        "name": "mot_number",
-        "type": "string",
-        "description": "MoT Number"
-      },
-      {
         "name": "grade",
         "type": "string",
         "description": "Grade"
@@ -85,8 +80,7 @@
       },
       {
         "name": "eta",
-        "type": "long",
-        "logicalType": "date",
+        "type": "string",
         "description": "Eta"
       },
       {

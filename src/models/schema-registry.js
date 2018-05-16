@@ -16,6 +16,15 @@ const fullName = (schema: AvroSchema): string => {
   return `${schema.namespace}.${schema.name}`
 }
 
+const validate = (type: string, data: Object): Array<Object> => {
+  const errors = []
+  const schema = avro.Type.forSchema(type, { registry })
+
+  schema.isValid(data, { errorHook: (path) => { errors.push(path.join()) } })
+
+  return errors
+}
+
 const format = (type: string, data: Object): Object => {
   const schema = avro.Type.forSchema(type, { registry })
   const response = schema.fromBuffer(schema.toBuffer(data))
@@ -60,6 +69,6 @@ const init = () => {
   Object.keys(registry).forEach(type => { delete registry[type] })
 }
 
-const schemaRegistry = { add, update, get, format, fullName, init }
+const schemaRegistry = { add, update, get, format, fullName, init, validate }
 
 export default schemaRegistry

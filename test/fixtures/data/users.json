@@ -1,6 +1,5 @@
 [
   {
-    "type": "user",
     "role": "Scheduler",
     "last_name": "Lisa",
     "first_name": "King",
@@ -8,7 +7,6 @@
     "email": "lking@test.abc"
   },
   {
-    "type": "user",
     "role": "Inspection Hub Coordinator",
     "last_name": "Peter",
     "first_name": "Manning",
@@ -16,7 +14,6 @@
     "email": "pmanning@test.abc"
   },
   {
-    "type": "user",
     "role": "Field Inspector",
     "last_name": "Rachel",
     "first_name": "Fraser",

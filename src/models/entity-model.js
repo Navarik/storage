@@ -24,6 +24,11 @@ const entityModel = (config) => {
 
   // Commands
   const create = async (type, body) => {
+    const validationErrors = schemaRegistry.validate(type, body)
+    if (validationErrors.length) {
+      throw new Error(`[Entity] Invalid data in fields: ${validationErrors.join(', ')}`)
+    }
+
     const entity = schemaRegistry.format(type, body)
     const id = generateId()
 

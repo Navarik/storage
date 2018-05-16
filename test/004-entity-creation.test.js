@@ -3,6 +3,8 @@ import curry from 'curry'
 import createStorage from '../src'
 import schemata from './fixtures/schemata/schemata.json'
 import fixturesEvents from './fixtures/data/events.json'
+import fixturesJobs from './fixtures/data/job-orders.json'
+import fixturesUsers from './fixtures/data/users.json'
 import { expectEntity } from './steps/checks'
 import { forAll, forNone } from './steps/generic'
 
@@ -59,6 +61,8 @@ describe("Entity creation flow", () => {
   })
 
   it("correctly creates new entities (events)", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
+  it("correctly creates new entities (job orders)", forAll(fixturesJobs, canCreate('document.job_order')))
+  it("correctly creates new entities (job orders)", forAll(fixturesUsers, canCreate('profile.user')))
 
 // //   it("can find created entities", forAll(fixtures, canFindOnlyOne))
 
