@@ -17,10 +17,7 @@ export const expectSchema = (given) => {
   expect(given.payload.type).to.be('record')
 }
 
-export const expectEntity = (schema, given) => {
+export const expectEntity = (given) => {
   expectRecord(given)
-  expect(given.type).to.be(`${schema.namespace}.${schema.name}`)
-  expect(given.schema).to.be.an('object')
-  expect(given.schema).to.be.eql(schema)
   expect(given.payload).to.be.an('object')
 }

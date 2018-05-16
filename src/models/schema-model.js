@@ -32,6 +32,7 @@ class SchemaModel implements ModelInterface {
   }
 
   async init() {
+    schemaRegistry.init()
     const log = await this.changeLog.reconstruct()
     await this.searchIndex.init(log)
   }
@@ -79,9 +80,10 @@ class SchemaModel implements ModelInterface {
     return schemaRecord
   }
 
-  async update(id: Identifier, body: AvroSchema) {
+  async update(name, body: AvroSchema) {
     const schema = schemaRegistry.update(body)
 
+    const id = generateId(schemaRegistry.fullName(body))
     const schemaRecord = await this.changeLog.logChange(id, schema)
     await this.searchIndex.add(searchableFormat(schemaRecord))
 
@@ -97,7 +99,7 @@ const schemaModel = (config: Object) => {
     get: (name: string, version: ?string) => model.get(name, version),
     find: (params: Object) => model.find(params),
     create: (body: AvroSchema) => model.create(body),
-    // update,
+    update: (name: string, body: AvroSchema) => model.update(name, body),
     getNamespaces: () => model.getNamespaces()
   }
 }

@@ -1,42 +1,52 @@
-// import expect from 'expect.js'
-// import createStorage from '../src'
-// import fixtures from './fixtures/data/data.json'
-// // import { expectSchema, createSteps } from './steps/schema'
+import expect from 'expect.js'
+import createStorage from '../src'
+import schemata from './fixtures/schemata/schemata.json'
+import fixtures from './fixtures/data/data.json'
+import { expectEntity } from './steps/checks'
+import { forAll, forNone } from './steps/generic'
 
-// const storage = createStorage({
-//   queue: 'default',
-//   index: 'default'
-// })
+const storage = createStorage({
+  queue: 'default',
+  index: 'default'
+})
 
-// // const { canCreate, canFind, canUpdate, cannotUpdate } = createSteps(storage)
+// const { canCreate, canFind, canUpdate, cannotUpdate } = createSteps(storage)
 
-// const forAll = (given, func) => () => Promise.all(given.map(x => func(x)()))
+export const cannotCreate = (type, payload) => (done) => {
+  storage.entity.create(type, payload)
+    .then(() => done("Expected error didn't happen"))
+    .catch(() => done())
+}
 
-// export const cannotCreate = given => (done) => {
-//   storage.entity.create(given)
-//     .then(() => done("Expected error didn't happen"))
-//     .catch(() => done())
-// }
+export const canCreate = (type, payload) => async () => {
+  const response = await storage.entity.create(type, payload)
+  expectEntity(response)
+  expect(response.type).to.eql(type)
+  expect(response.version).to.eql(1)
+  expect(response.payload).to.eql(payload)
+}
 
-// export const canCreate = (type, payload) => async () => {
-//   const schema = await storage.schema.get(type)
-//   const response = await storage.entity.create(given)
-//   expectEntity(response, { type, payload })
+describe("Data format", () => {
+  before(() => storage.init().then(() => Promise.all(schemata.map(storage.schema.create))))
 
-//   const searchResponse = await storage.schema.findLatest({ name: given.name, namespace: given.namespace })
-//   expect(searchResponse).to.be.an('array')
-//   expect(searchResponse).to.have.length(1)
-//   expect(searchResponse[0].version).to.be(1)
-//   expectSchema(searchResponse[0], expected || given)
-// }
+  it("can't create entity of unknown type", cannotCreate('wow.doge', {}))
+  it("can't create empty entity", cannotCreate('profile.user', {}))
+  it("can't create malformatted entity", cannotCreate('profile.user', {
+    role: 100500,
+    last_name: ["Lisa"],
+    first_name: false,
+    company: "Alpha Oil Co",
+    email: "lking@test.abc"
+  }))
 
-// describe("Data format", () => {
-//   before(() => storage.init())
-
-//   it("can't create entity with id", cannotCreate({ id: 100500 }))
-//   // it("allows empty entities", canCreate({}, { type: 'entity', version: 1, id: 1 }))
-//   // it("allows entities without fields", canCreate({ type: 'doge' }, { type: 'doge', version: 1, id: 2 }))
-// })
+  it("can create properly structured entity", canCreate('profile.user', {
+    role: "Doge",
+    last_name: "Such",
+    first_name: "Much",
+    company: "Alpha Oil Co",
+    email: "lking@test.abc"
+  }))
+})
 
 // // describe("Entity creation flow", () => {
 // //   before(() => storage.init())

@@ -14,13 +14,15 @@ const { cannotCreate, canCreate, cannotFind, canFind } = createSchemaSteps(stora
 describe("Schema format", () => {
   before(() => storage.init())
 
-  const emptySchema = {}
-  const noNamespaceSchema = { name: 'test', fields: [{ name: 'test_field', type: 'string' }] }
-  const noFieldsSchema = { name: 'test', namespace: 'test' }
-
-  it("can't create empty schema", cannotCreate(emptySchema))
-  it("can't create schema without namespace", cannotCreate(noNamespaceSchema))
-  it("allows schemata without fields and description", canCreate(noFieldsSchema))
+  it("can't create empty schema", cannotCreate({}))
+  it("can't create schema without namespace", cannotCreate({
+    name: 'test',
+    fields: [{ name: 'test_field', type: 'string' }]
+  }))
+  it("allows schemata without fields and description", canCreate({
+    name: 'test',
+    namespace: 'test'
+  }))
 
   it("created schemata are normalized and default values are provided",
     canFind({ name: 'test', namespace: 'test', description: '', type: 'record', fields: [] })
@@ -43,17 +45,16 @@ describe("Schema creation", () => {
   it("doesn't have schemata before they are created", forAll(fixtures, cannotFind))
   it("correctly creates new schemata", forAll(fixtures, canCreate))
   it("doesn't allow duplicates", forNone(fixtures, canCreate))
+  it("can find created schemata", forAll(fixtures, canFind))
 
-  // it("correct number of schemata has been created", async () => {
-  //   const response = await storage.schema.findLatest()
-  //   expect(response).to.be.an('array')
-  //   expect(response).to.have.length(fixtures.length)
-  // })
+  it("correct number of schemata has been created", async () => {
+    const response = await storage.schema.find()
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(fixtures.length)
+  })
 
-  // it("can find created schemata", forAll(fixtures, canFind))
-
-  // it("created namespaces are visible", async () => {
-  //   const response = await storage.schema.getNamespaces()
-  //   fixtures.forEach(fixture => expect(response).to.contain(fixture.namespace))
-  // })
+  it("created namespaces are visible", async () => {
+    const response = await storage.schema.getNamespaces()
+    fixtures.forEach(fixture => expect(response).to.contain(fixture.namespace))
+  })
 })

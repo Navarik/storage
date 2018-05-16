@@ -14,6 +14,7 @@ const createSteps = storage => ({
 
     response = await storage.schema.create(schema)
     expectSchema(response)
+    expect(response.version).to.be(1)
     expect(response.payload.name).to.be(schema.name)
     expect(response.payload.namespace).to.be(schema.namespace)
     expect(response.payload.description).to.be(schema.description || '')
@@ -51,23 +52,20 @@ const createSteps = storage => ({
     expect(response).to.have.length(0)
   },
 
-  cannotUpdate: (given) => done => {
-    storage.schema.findLatest({ name: given.name, namespace: given.namespace })
-      .then(searchResponse => searchResponse[0].id)
-      .then(id => storage.schema.update(id, given))
+  cannotUpdate: (typeName, schema) => done => {
+    storage.schema.update(typeName, schema)
       .then(() => done("Expected error didn't happen"))
       .catch(() => done())
   },
 
-  canUpdate: (given) => async () => {
-    const searchResponse = await storage.schema.findLatest({ name: given.name, namespace: given.namespace })
-    expect(searchResponse).to.be.an('array')
-    expect(searchResponse).to.have.length(1)
-    const id = searchResponse[0].id
+  canUpdate: (typeName, schema) => async () => {
+    const previous = await storage.schema.get(typeName)
+    expectSchema(previous)
 
-    const response = await storage.schema.update(id, given)
-    expectSchema(response, given)
-    expect(response.version).to.be(searchResponse[0].version + 1)
+    const response = await storage.schema.update(typeName, schema)
+    expectSchema(response)
+    expect(response.payload).to.eql(schema)
+    expect(response.version).to.be(previous.version + 1)
   }
 })
 

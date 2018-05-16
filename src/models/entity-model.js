@@ -1,7 +1,16 @@
 import uuidv4 from 'uuid/v4'
+import { map, liftToArray } from '../utils'
 import schemaRegistry from './schema-registry'
 
 const generateId = body => uuidv4()
+
+const searchableFormat = liftToArray(data => ({
+  id: data.id,
+  version: data.version,
+  version_id: data.version_id,
+  type: data.type,
+  ...map(x => String(x), data.payload)
+}))
 
 const entityModel = (config) => {
   const searchIndex = config.searchIndex
@@ -15,13 +24,13 @@ const entityModel = (config) => {
 
   // Commands
   const create = async (type, body) => {
-    const formatted = schemaRegistry.format(type, body)
-
+    const entity = schemaRegistry.format(type, body)
     const id = generateId()
-    const entity = await changeLog.logNew(type, id, formatted)
-    await searchIndex.add(entity)
 
-    return entity
+    const entityRecord = await changeLog.logNew(type, id, entity)
+    await searchIndex.add(searchableFormat(entityRecord))
+
+    return entityRecord
   }
 
   const update = async (id, body) => {
@@ -36,8 +45,8 @@ const entityModel = (config) => {
   // API
   return {
     find: params => searchIndex.findLatest(params),
-    get: id => searchIndex.getLatest(id),
-    getVersion: params => searchIndex.getVersion(params.id, params.version),
+    get: (id, version) => searchIndex.getLatest(id),
+    // getVersion: params => searchIndex.getVersion(params.id, params.version),
     create,
     update,
     init

@@ -30,7 +30,6 @@ export type AvroSchema = {
 
 export type ChangeRecord = LogRecord<Object>
 export type SchemaRecord = LogRecord<AvroSchema>
-export type EntityRecord = LogRecord<Object>
 
 export type Location = {
   pathname: string,
