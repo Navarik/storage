@@ -1,33 +1,30 @@
 [
   {
-    "version": 1,
-    "type": "user"
-  },
-  {
-    "id": 1,
-    "version": 2,
-    "type": "user",
-    "last_name": "Lisa",
-    "first_name": "King",
-    "email": "lking@test.abc"
-  },
-  {
-    "id": 1,
-    "version": 3,
-    "type": "user",
     "role": "Scheduler",
-    "last_name": "Lisa",
-    "first_name": "King",
+    "first_name": "Lisa",
+    "last_name": "Doge",
+    "company": "Alpha Oil Co",
+    "email": "lking100500@test.abc"
+  },
+  {
+    "role": "Scheduler",
+    "first_name": "Lisa",
+    "last_name": "King",
+    "company": "Alpha Oil Co",
+    "email": "lking100500@test.abc"
+  },
+  {
+    "role": "Scheduler",
+    "first_name": "Lisa",
+    "last_name": "King",
     "company": "Alpha Oil Co",
     "email": "lking@test.abc"
   },
   {
-    "id": 1,
-    "version": 4,
-    "type": "user",
-    "role": "Scheduler",
-    "last_name": "Doge",
-    "first_name": "WOW",
-    "company": "Such Much Co"
+    "role": "Manager",
+    "first_name": "Lisa",
+    "last_name": "King",
+    "company": "Alpha Oil Co",
+    "email": "lking@test.abc"
   }
 ]

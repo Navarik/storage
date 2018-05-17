@@ -1,5 +1,5 @@
 import uuidv4 from 'uuid/v4'
-import { map, liftToArray } from '../utils'
+import { map, liftToArray, head, maybe } from '../utils'
 import schemaRegistry from './schema-registry'
 
 const generateId = body => uuidv4()
@@ -7,7 +7,7 @@ const stringifyProperties = map(x => String(x))
 
 const searchableFormat = liftToArray(data => ({
   id: data.id,
-  version: data.version,
+  version: String(data.version),
   version_id: data.version_id,
   type: data.type,
   ...stringifyProperties(data.payload)
@@ -66,12 +66,19 @@ const entityModel = (config) => {
   }
 
   const update = async (id, body) => {
-    const entity = schemaRegistry.format(body)
+    const { type } = changeLog.getLatestVersion(id)
 
-    entity.data = await changeLog.logChange({ ...entity.data, id })
-    await searchIndex.add(entity.data)
+    const validationErrors = schemaRegistry.validate(type, body)
+    if (validationErrors.length) {
+      throw new Error(`[Entity] Invalid value provided for: ${validationErrors.join(', ')}`)
+    }
 
-    return entity
+    const entity = schemaRegistry.format(type, body)
+
+    const entityRecord = await changeLog.logChange(id, entity)
+    await searchIndex.add(searchableFormat(entityRecord))
+
+    return entityRecord
   }
 
   // API
