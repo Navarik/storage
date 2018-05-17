@@ -103,13 +103,12 @@
     "fields": [
       {
         "name": "sender",
-        "type": "string",
+        "type": "int",
         "description": "Message Sender"
       },
       {
         "name": "timestamp",
-        "type": "long",
-        "logicalType": "timestamp-millis",
+        "type": "string",
         "description": "Sent At"
       },
       {
@@ -170,7 +169,7 @@
     "type": "record",
     "fields": [
       {
-        "name": "type",
+        "name": "event_type",
         "type": "string",
         "description": "Event type"
       },

@@ -27,7 +27,7 @@ const validate = (type: string, data: Object): Array<Object> => {
 
 const format = (type: string, data: Object): Object => {
   const schema = avro.Type.forSchema(type, { registry })
-  const response = schema.fromBuffer(schema.toBuffer(data))
+  const response = { ...schema.fromBuffer(schema.toBuffer(data)) }
 
   return response
 }

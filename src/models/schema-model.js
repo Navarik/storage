@@ -63,10 +63,11 @@ class SchemaModel implements ModelInterface {
       .then(maybe(x => this.changeLog.getVersion(x.version_id)))
   }
 
-  find(params) {
-    return this.searchIndex
-      .findLatest(params)
-      .then(map(x => this.changeLog.getLatestVersion(x.id)))
+  async find(params) {
+    const found = await this.searchIndex.findLatest(params)
+    const schemas = found.map(x => this.changeLog.getLatestVersion(x.id))
+
+    return schemas
   }
 
   // Commands

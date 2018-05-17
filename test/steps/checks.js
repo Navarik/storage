@@ -9,7 +9,6 @@ export const expectRecord = (given) => {
 export const expectSchema = (given) => {
   expectRecord(given)
   expect(given.type).to.be('schema')
-  expect(given.payload).to.be.an('object')
   expect(given.payload.fields).to.be.an('array')
   expect(given.payload.name).to.be.a('string')
   expect(given.payload.namespace).to.be.a('string')
@@ -19,5 +18,4 @@ export const expectSchema = (given) => {
 
 export const expectEntity = (given) => {
   expectRecord(given)
-  expect(given.payload).to.be.an('object')
 }
