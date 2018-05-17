@@ -11,7 +11,18 @@ const createSteps = storage => ({
   }),
 
   canCreate: curry((type, payload) => async () => {
-    const response = await storage.entity.create(type, payload)
+    let response
+
+    // Create entity
+    response = await storage.entity.create(type, payload)
+    expectEntity(response)
+    expect(response.type).to.eql(type)
+    expect(response.version).to.eql(1)
+    expect(response.payload).to.eql(payload)
+
+    // Try to read it back by ID
+    const id = response.id
+    response = await storage.entity.get(id)
     expectEntity(response)
     expect(response.type).to.eql(type)
     expect(response.version).to.eql(1)

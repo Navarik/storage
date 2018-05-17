@@ -23,11 +23,23 @@ const entityModel = (config) => {
     await searchIndex.init(log)
   }
 
+  // Queries
   const find = async (params) => {
     const found = await searchIndex.findLatest(stringifyProperties(params))
     const entities = found.map(x => changeLog.getLatestVersion(x.id))
 
     return entities
+  }
+
+  const get = (id, version) => {
+    if (!version) {
+      return Promise.resolve(changeLog.getLatestVersion(id))
+    }
+
+    return searchIndex
+      .findVersions(stringifyProperties({ id, version }))
+      .then(head)
+      .then(maybe(x => changeLog.getVersion(x.version_id)))
   }
 
   // Commands
@@ -65,8 +77,7 @@ const entityModel = (config) => {
   // API
   return {
     find,
-    get: (id, version) => searchIndex.getLatest(id),
-    // getVersion: params => searchIndex.getVersion(params.id, params.version),
+    get,
     create,
     update,
     init,
