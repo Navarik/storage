@@ -1,5 +1,7 @@
 // @flow
-import { exclude, liftToArray, identity, map, groupBy, arraySort, head } from '../utils'
+import arraySort from 'array-sort'
+import groupBy from 'group-by'
+import map from 'poly-map'
 
 import type { SearchIndexInterface, SearchIndexAdapterInterface, Identifier, Collection } from '../flowtypes'
 

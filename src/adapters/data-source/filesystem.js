@@ -2,8 +2,8 @@
 import fs from 'fs'
 import logger from 'logops'
 import del from 'del'
+import flatten from 'array-flatten'
 import fileExtension from 'file-extension'
-import { flatten } from '../../utils'
 import parse from './content-parser'
 
 import type { Collection } from '../../flowtypes'

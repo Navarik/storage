@@ -1,6 +1,7 @@
 //@flow
 import uuidv5 from 'uuid/v5'
-import { head, liftToArray, map, get, unique, maybe } from '../utils'
+import unique from 'array-unique'
+import { head, liftToArray, map, get, maybe } from '../utils'
 import ChangeLog from '../ports/change-log'
 import schemaRegistry from './schema-registry'
 

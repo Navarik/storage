@@ -1,7 +1,7 @@
 //@flow
 import uuidv5 from 'uuid/v5'
+import arraySort from 'array-sort'
 import TransactionManager from './transaction-manager'
-import { sort } from '../utils'
 
 import type { ChangelogInterface, ChangeRecord, QueueMessage, Identifier, QueueAdapterInterface, Observer, Collection } from '../flowtypes'
 
@@ -53,7 +53,7 @@ class ChangeLog implements ChangelogInterface {
     this.versions = {}
 
     let log = await this.adapter.getLog(this.topic)
-    log = sort(log, 'version')
+    log = arraySort(log, 'version')
 
     for (let record of log) {
       this.registerAsLatest(record)

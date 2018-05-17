@@ -1,7 +1,8 @@
 //@flow
 import Database from 'nedb'
 import logger from 'logops'
-import { map, maybe, exclude } from '../../utils'
+import exclude from 'poly-exclude'
+import { map, maybe } from '../../utils'
 
 import type { Collection } from '../../flowtypes'
 import { DBClientInterface } from './ne-db'

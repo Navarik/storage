@@ -1,6 +1,6 @@
 //@flow
 import avro from 'avsc'
-import { map, unique, liftToArray } from '../utils'
+import map from 'poly-map'
 
 import type { AvroSchema } from '../flowtypes'
 

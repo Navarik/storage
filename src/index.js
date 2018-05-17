@@ -34,7 +34,15 @@ const configureSearchIndex = (conf) => {
   return new SearchIndex({ adapter })
 }
 
-const configure = ({ queue = 'default', index = 'default' }) => {
+type ModuleConfiguration = {
+  queue: ?string | { schema: string, entity: string },
+  index: ?string | { schema: string, entity: string }
+}
+
+const configure = (config: ModuleConfiguration) => {
+  const queue = config.queue || 'default'
+  const index = config.index || 'default'
+
   const schemaChangeLog = new ChangeLog({
     topic: 'schema',
     adapter: createChangelogAdapter(queue.schema || queue)
