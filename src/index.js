@@ -1,61 +1,97 @@
+// @flow
 import 'babel-polyfill'
-import FilesystemDatasourceAdapter from './adapters/filesystem-datasource'
-import GitDatasourceAdapter from './adapters/git-datasource'
-import RedisQueueAdapter from './adapters/redis-queue'
-import { schemaModel, entityModel } from './models'
-import server from './ports/rest-server'
+import { GitDatasourceAdapter, FilesystemDatasourceAdapter } from './adapters/data-source'
+import { EventEmitterQueueAdapter } from './adapters/queue'
+import { NeDbSearchIndexAdapter } from './adapters/search-index'
+import SearchIndex from './ports/search-index'
+import DataSource from './ports/data-source'
+import ChangeLog from './ports/change-log'
 
-const dataSources = {
-  file: new FilesystemDatasourceAdapter({ format: 'json' }),
-  git: new GitDatasourceAdapter({ workingDirectory: process.env.TEMP_DIRECTORY, format: 'json' }),
-}
+import { SchemaModel, EntityModel } from './models'
+import type { AvroSchema, Identifier } from './flowtypes'
 
-const queue = new RedisQueueAdapter({
-  host: process.env.REDIS_HOST,
-  port: process.env.REDIS_PORT
+const dataSource = new DataSource({
+  adapters: {
+    file: new FilesystemDatasourceAdapter({ format: 'json' }),
+    git: new GitDatasourceAdapter({
+      workingDirectory: process.env.TEMP_DIRECTORY,
+      format: 'json'
+    })
+  }
 })
 
-const schema = new schemaModel({ queue, dataSources })
-const entity = new entityModel({ queue, dataSources })
+const createChangelogAdapter = (conf) => (conf === 'default'
+  ? new EventEmitterQueueAdapter()
+  : conf
+)
 
-// Healthchecks
-server.addHealthCheck(queue.isConnected, 'Queue down')
+const configureSearchIndex = (conf) => {
+  let adapter = conf
+  if (conf === 'default') {
+    adapter = new NeDbSearchIndexAdapter()
+  }
 
-// Mount business logic
-// Schema lists
-server.read('/schemas', schema.findLatest)
-server.read('/schemata', schema.findLatest)
-server.read('/schemas/namespaces', schema.getNamespaces)
-server.read('/schemata/namespaces', schema.getNamespaces)
-server.read('/schemas/namespace/:namespace', schema.findLatest)
-server.read('/schemata/namespace/:namespace', schema.findLatest)
+  return new SearchIndex({ adapter })
+}
 
-// Schema ID lookups
-server.read('/schema/:id', schema.getLatest)
-server.read('/schema/:id/versions', schema.findVersions)
-server.read('/schema/:id/versions/:version', schema.getVersion)
+type ModuleConfiguration = {
+  queue: ?string | { schema: string, entity: string },
+  index: ?string | { schema: string, entity: string }
+}
 
-// Single Schema search
-server.read('/schema/:namespace/:name', schema.findOneLatest)
-server.read('/schema/:namespace/:name/versions', schema.findVersions)
-server.read('/schema/:namespace/:name/version/:version', schema.findOneVersion)
-server.read('/schema/:namespace/:name/v/:version', schema.findOneVersion)
+const configure = (config: ModuleConfiguration) => {
+  const queue = config.queue || 'default'
+  const index = config.index || 'default'
 
-// Schema creation/update
-server.create('/schemas', schema.create)
-server.create('/schemata', schema.create)
-server.update('/schema/:id', schema.update)
+  const schemaChangeLog = new ChangeLog({
+    topic: 'schema',
+    adapter: createChangelogAdapter(queue.schema || queue)
+  })
+  const entityChangeLog = new ChangeLog({
+    topic: 'entity',
+    adapter: createChangelogAdapter(queue.entity || queue)
+  })
 
-// Entity management
-server.read('/entities', entity.findLatest)
-server.create('/entities', entity.create)
-server.read('/entity/:id', entity.getLatest)
-server.update('/entity/:id', entity.update)
-server.read('/entity/:id/versions', entity.findVersions)
-server.read('/entity/:id/version/:version', entity.getVersion)
-server.read('/entity/:id/v/:version', entity.getVersion)
+  const schemaSearchIndex = configureSearchIndex(index.schema || index)
+  const entitySearchIndex = configureSearchIndex(index.entity || index)
 
-queue.connect()
-  .then(() => schema.restoreState(process.env.SCHEMA_SOURCE))
-  .then(() => entity.restoreState(process.env.DATA_SOURCE))
-  .then(() => server.start(process.env.PORT))
+  const schema = new SchemaModel({
+    changeLog: schemaChangeLog,
+    searchIndex: schemaSearchIndex
+  })
+
+  const entity = new EntityModel({
+    changeLog: entityChangeLog,
+    searchIndex: entitySearchIndex
+  })
+
+  return {
+    getNamespaces: () => schema.getNamespaces(),
+    getSchema: (name: string, version: ?string) => schema.get(name, version),
+    findSchema: (params: Object) => schema.find(params),
+    createSchema: (body: AvroSchema) => schema.create('schema', body),
+    updateSchema: (name: string, body: AvroSchema) => schema.update(name, body),
+
+    find: (params: Object) => entity.find(params),
+    get: (name: string, version: ?string) => entity.get(name, version),
+    create: (type: string, body: Object) => entity.create(type, body),
+    update: (id: Identifier, body: Object) => entity.update(id, body),
+
+    validate: (type: string, body: Object) => entity.validate(type, body),
+
+    init: async (sources: { schemata?: string, data?: string } = {}) => {
+      await Promise.all([
+        schemaChangeLog.adapter.connect(),
+        entityChangeLog.adapter.connect()
+      ])
+
+      const schemaSource = await dataSource.read(sources.schemata)
+      const entitySource = await dataSource.read(sources.data)
+
+      await schema.init(schemaSource)
+      await entity.init(entitySource)
+    }
+  }
+}
+
+export default configure

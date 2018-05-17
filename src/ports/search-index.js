@@ -1,47 +1,45 @@
-import createDatabase from '../adapters/db'
-import { exclude, liftToArray } from '../utils'
+// @flow
+import arraySort from 'array-sort'
+import groupBy from 'group-by'
+import map from 'poly-map'
 
-const defaultFormatter = liftToArray(exclude(['_id']))
-const identity = x => x
+import type { SearchIndexInterface, SearchIndexAdapterInterface, Identifier, Collection } from '../flowtypes'
 
-class SearchIndex {
-  constructor(config = {}) {
-    this.formatIn = config.formatIn || identity
-    this.formatOut = config.formatOut || defaultFormatter
-    this.versions = createDatabase()
-    this.latest = createDatabase()
+const sortByVersionNumber = data => arraySort(data, 'version', { reverse: true })
+
+class SearchIndex implements SearchIndexInterface {
+  adapter: SearchIndexAdapterInterface
+
+  constructor(config: Object = {}) {
+    this.adapter = config.adapter
   }
 
-  getLatest(id) {
-    return this.latest.findOne({ id }).then(x => this.formatOut(x))
+  init(log: Collection) {
+    const versions = Object.values(groupBy(log, 'id'))
+    const latest = map(sortByVersionNumber, versions)
+
+    return this.adapter
+      .reset()
+      .then(() => Promise.all([
+        this.adapter.insert('versions', log),
+        this.adapter.insert('latest', latest)
+      ])
+    )
   }
 
-  getVersion(id, version) {
-    return this.versions.findOne({ id }).then(x => this.formatOut(x))
-  }
-
-  init(latest, versions) {
+  add(document: Object) {
     return Promise.all([
-      this.versions.insert(this.formatIn(versions)),
-      this.latest.insert(this.formatIn(latest))
+      this.adapter.insert('versions', [document]),
+      this.adapter.update('latest', { id: document.id }, document)
     ])
   }
 
-  add(document) {
-    const searchable = this.formatIn(document)
-
-    return Promise.all([
-      this.versions.insert(searchable),
-      this.latest.update({ id: searchable.id }, searchable, { upsert: true, multi: true })
-    ])
+  findLatest(params: Object) {
+    return this.adapter.find('latest', params).then(xs => xs || [])
   }
 
-  findLatest(params) {
-    return this.latest.find(params).then(xs => xs || []).then(xs => this.formatOut(xs))
-  }
-
-  findVersions(params) {
-    return this.versions.find(params).then(xs => xs || []).then(xs => this.formatOut(xs))
+  findVersions(params: Object) {
+    return this.adapter.find('versions', params).then(xs => xs || [])
   }
 }
 

@@ -1,11 +1,16 @@
+//@flow
 import parsePath from 'parse-path'
 
-class DataSoure {
-  constructor({ adapters }) {
-    this.adapters = adapters
+import type { DataSourceInterface, DataSourceAdapterInterface } from '../flowtypes'
+
+class DataSoure implements DataSourceInterface {
+  adapters: { [string]: DataSourceAdapterInterface }
+
+  constructor(config: Object) {
+    this.adapters = config.adapters
   }
 
-  getAdapter(protocol) {
+  getAdapter(protocol: string): DataSourceAdapterInterface {
     if (!this.adapters[protocol]) {
       throw new Error(`[DataSource] datasources of type ${protocol} are not supported`)
     }
@@ -13,9 +18,13 @@ class DataSoure {
     return this.adapters[protocol]
   }
 
-  read(path) {
+  read(path: ?string) {
     const parsed = parsePath(path)
     const adapter = this.getAdapter(parsed.protocol)
+
+    if (!path) {
+      return Promise.resolve(undefined)
+    }
 
     return adapter.readAllFiles(parsed)
   }

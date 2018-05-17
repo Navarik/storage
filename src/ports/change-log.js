@@ -1,80 +1,112 @@
+//@flow
 import uuidv5 from 'uuid/v5'
+import arraySort from 'array-sort'
 import TransactionManager from './transaction-manager'
-import { sort } from '../utils'
 
-class ChangeLog {
-  constructor(config = {}) {
-    if (!config.topic) {
-      throw new Error('[ChangeLog]: Topic name must be specified')
-    }
+import type { ChangelogInterface, ChangeRecord, QueueMessage, Identifier, QueueAdapterInterface, Observer, Collection } from '../flowtypes'
 
-    if (!config.queue) {
-      throw new Error('[ChangeLog]: Queue adapter must be specified')
-    }
+const sign = (id: Identifier, payload: ChangeRecord): Identifier => {
+  if (!id) {
+    throw new Error('[ChangeLog] Cannot sign document version: document does not have an ID')
+  }
 
-    this.queue = config.queue
-    this.idGenerator = config.idGenerator
+  const versionId = uuidv5(JSON.stringify(payload), id)
+
+  return versionId
+}
+
+class ChangeLog implements ChangelogInterface {
+  transactionManager: Object
+  topic: string
+  adapter: QueueAdapterInterface
+  latest: { [Identifier]: ChangeRecord }
+  versions: { [Identifier]: ChangeRecord }
+
+  constructor(config: Object = {}) {
+    this.adapter = config.adapter
     this.topic = config.topic
+
+    this.latest = {}
     this.versions = {}
     this.transactionManager = new TransactionManager({
-      queue: this.queue,
+      queue: this.adapter,
       commitTopic: this.topic,
       onCommit: payload => this.registerAsLatest(payload)
     })
   }
 
-  registerAsLatest(payload) {
-    this.versions[payload.id] = payload
+  registerAsLatest(payload: ChangeRecord) {
+    this.versions[payload.version_id] = payload
+    this.latest[payload.id] = payload
   }
 
-  latestVersion(id) {
-    return this.versions[id]
+  getVersion(versionId: Identifier) {
+    return this.versions[versionId]
+  }
+
+  getLatestVersion(id: Identifier) {
+    return this.latest[id]
   }
 
   async reconstruct() {
-    let log = await this.queue.getLog(this.topic)
-    log = sort(log, 'version')
+    this.latest = {}
+    this.versions = {}
+
+    let log = await this.adapter.getLog(this.topic)
+    log = arraySort(log, 'version')
 
     for (let record of log) {
       this.registerAsLatest(record)
     }
 
-    return { log, latest: Object.values(this.versions) }
+    return log
   }
 
-  logChange(data) {
-    const previous = this.latestVersion(data.id) || {}
+  logChange(id: Identifier, payload: Object) {
+    const previous = this.getLatestVersion(id)
+    if (!previous) {
+      throw new Error('[ChangeLog] Cannot create new version because the previous one does not exist')
+    }
+
+    const versionId = sign(id, payload)
+    if (previous.version_id === versionId) {
+      throw new Error('[ChangeLog] Cannot create new version because it is not different from the current one')
+    }
+
+    const versionNumber = previous.version + 1
+    const now = new Date()
+
     const document = {
-      ...previous,
-      ...data,
-      version: (previous.version || 0) + 1
-    }
-    const signedDocument = {
-      ...document,
-      version_id: uuidv5(JSON.stringify(document), document.id)
+      id,
+      type: previous.type,
+      created_at: previous.created_at,
+      version: versionNumber,
+      modified_at: now.toISOString(),
+      version_id: versionId,
+      payload
     }
 
-    return this.transactionManager.execute(this.topic, signedDocument)
+    return this.transactionManager.execute(this.topic, document)
   }
 
-  logNew(data) {
-    if (data instanceof Array) {
-      return Promise.all(data.map(x => this.logNew(x)))
+  logNew(type: string, id: Identifier, payload: Object) {
+    const now = new Date()
+    const versionId = sign(id, payload)
+    const document = {
+      id,
+      type,
+      created_at: now.toISOString(),
+      version: 1,
+      modified_at: now.toISOString(),
+      version_id: versionId,
+      payload
     }
 
-    if (data.id) {
-      throw new Error(`[ChangeLog]: Cannot re-create existing document (id: ${data.id})`)
-    }
-
-    return this.logChange({ ...data, id: this.idGenerator(data) })
+    return this.transactionManager.execute(this.topic, document)
   }
 
-  observe(func) {
-    this.queue.on(this.topic, func)
-  }
-
-  unobserve(func) {
-    this.queue.off(this.topic, func)
+  observe(func: Observer) {
+    this.adapter.on(this.topic, func)
   }
 }
 

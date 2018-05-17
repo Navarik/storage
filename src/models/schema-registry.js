@@ -1,71 +1,77 @@
+//@flow
 import avro from 'avsc'
-import logger from 'logops'
-import { maybe, map, unique, liftToArray } from '../utils'
+import map from 'poly-map'
+
+import type { AvroSchema } from '../flowtypes'
+
+type AvroType = Object
 
 const registry = {}
-const typeName = schema => `${schema.namespace}.${schema.name}`
 
-const formatEntity = (entity) => {
-  let schema
-
-  try {
-    schema = get(entity.type)
-  } catch (e) {
-    logger.error({ message: `Schema not found for ${entity.type}`, details: entity })
-    throw e
+const fullName = (schema: AvroSchema): string => {
+  if (!schema.name || !schema.namespace) {
+    throw new Error(`[SchemaRegistry] Both namespace and name must be provided, got name: ${schema.name}, namespace: ${schema.namespace}`)
   }
 
-  const data = schema.fromBuffer(schema.toBuffer(entity))
-
-  data.type = entity.type
-  data.version = entity.version
-  data.id = entity.id
-  data.version_id = entity.version_id
-  data.created_at = entity.created_at
-  data.modified_at = entity.modified_at
-
-  return { data, schema }
+  return `${schema.namespace}.${schema.name}`
 }
 
-const formatCollection = (collection) => {
-  const entities = map(formatEntity, collection)
-  const response = { data: [], schema: [] }
+const validate = (type: string, data: Object): Array<Object> => {
+  const errors = []
+  const schema = avro.Type.forSchema(type, { registry })
 
-  for (let next of entities) {
-    response.data.push(next.data)
-    response.schema.push(next.schema)
-  }
+  schema.isValid(data, { errorHook: (path) => { errors.push(path.join()) } })
 
-  response.schema = unique(response.schema)
+  return errors
+}
+
+const format = (type: string, data: Object): Object => {
+  const schema = avro.Type.forSchema(type, { registry })
+  const response = { ...schema.fromBuffer(schema.toBuffer(data)) }
 
   return response
 }
 
-const add = liftToArray(schema =>
-  avro.Type.forSchema(schema, { registry })
-)
+const formatSchema = schema => ({
+  ...schema,
+  type: 'record',
+  description: schema.description || '',
+  fields: schema.fields || []
+})
 
-const update = (schema) => {
-  const type = typeName(schema)
-  delete registry[type]
-  registry[type] = avro.Type.forSchema(schema, { registry })
+const add = (schema: AvroSchema): AvroSchema => {
+  const formatted = formatSchema(schema)
+
+  avro.Type.forSchema(formatted, { registry })
+
+  return formatted
 }
 
-const get = (type) => {
-  if (!registry[type]) {
-    throw new Error(`Schema not found: ${type}`)
+const update = (schema: AvroSchema): AvroSchema => {
+  const formatted = formatSchema(schema)
+  const type = fullName(formatted)
+
+  if (!registry[type]){
+    throw new Error(`[SchemaRegistry] Cannot update non-existing schema: ${type}`)
   }
 
+  delete registry[type]
+  avro.Type.forSchema(formatted, { registry })
+
+  return formatted
+}
+
+const get = (type: string): AvroType => {
   return registry[type]
 }
 
-const format = maybe(data => (
-  data instanceof Array
-    ? formatCollection(data)
-    : formatEntity(data)
-  )
-)
+const init = (source: ?Array<AvroSchema>) => {
+  Object.keys(registry).forEach(type => { delete registry[type] })
+  if (source) {
+    source.forEach(add)
+  }
+}
 
-const schemaRegistry = { add, update, get, format, typeName }
+const schemaRegistry = { add, update, get, format, fullName, init, validate }
 
 export default schemaRegistry

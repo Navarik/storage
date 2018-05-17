@@ -1,0 +1,83 @@
+[
+  {
+    "name": "user",
+    "namespace": "version_test",
+    "description": "",
+    "type": "record",
+    "fields": []
+  },
+  {
+    "name": "user",
+    "namespace": "version_test",
+    "description": "",
+    "type": "record",
+    "fields": [
+      {
+        "name": "email",
+        "type": "string",
+        "description": "Email"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "description": "Name"
+      }
+    ]
+  },
+  {
+    "name": "user",
+    "namespace": "version_test",
+    "description": "User",
+    "type": "record",
+    "fields": [
+      {
+        "name": "email",
+        "type": "string",
+        "description": "Email"
+      },
+      {
+        "name": "last_name",
+        "type": "string",
+        "description": "Last Name"
+      },
+      {
+        "name": "first_name",
+        "type": "string",
+        "description": "First Name"
+      }
+    ]
+  },
+  {
+    "name": "user",
+    "namespace": "version_test",
+    "description": "User",
+    "type": "record",
+    "fields": [
+      {
+        "name": "email",
+        "type": "string",
+        "description": "Email"
+      },
+      {
+        "name": "role",
+        "type": "string",
+        "description": "Role"
+      },
+      {
+        "name": "company",
+        "type": "string",
+        "description": "Company"
+      },
+      {
+        "name": "last_name",
+        "type": "string",
+        "description": "Last Name"
+      },
+      {
+        "name": "first_name",
+        "type": "string",
+        "description": "First Name"
+      }
+    ]
+  }
+]

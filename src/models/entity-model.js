@@ -1,64 +1,101 @@
+//@flow
 import uuidv4 from 'uuid/v4'
-import SearchIndex from '../ports/search-index'
-import ChangeLog from '../ports/change-log'
-import DataSource from '../ports/data-source'
+import { map, liftToArray, head, maybe } from '../utils'
 import schemaRegistry from './schema-registry'
 
-const entityModel = (config) => {
-  const searchIndex = new SearchIndex({
-    formatOut: data => schemaRegistry.format(data)
-  })
+import type { ModelInterface, Identifier, ChangelogInterface, SearchIndexInterface, Collection } from '../flowtypes'
 
-  const changeLog = new ChangeLog({
-    // Random unique identifier
-    idGenerator: () => uuidv4(),
-    topic: 'entity',
-    queue: config.queue
-  })
+const generateId = body => uuidv4()
+const stringifyProperties = map(x => String(x))
 
-  const dataSource = new DataSource({
-    adapters: config.dataSources
-  })
+const searchableFormat = liftToArray(data => ({
+  id: data.id,
+  version: String(data.version),
+  version_id: data.version_id,
+  type: data.type,
+  ...stringifyProperties(data.payload)
+}))
 
-  const restoreState = async (path) => {
-    if (path) {
-      const data = await dataSource.read(path)
-      await create(data)
-    } else {
-      const { log, latest } = await changeLog.reconstruct()
-      await searchIndex.init(latest, log)
+class EntityModel implements ModelInterface {
+  searchIndex: SearchIndexInterface
+  changeLog: ChangelogInterface
+
+  constructor(config: Object) {
+    this.searchIndex = config.searchIndex
+    this.changeLog = config.changeLog
+  }
+
+  async init(source: ?Collection) {
+    const log = await (source
+      ? Promise.all(source.map(entity =>
+        this.changeLog.logNew(entity.type, generateId(), entity.payload)
+      ))
+      : this.changeLog.reconstruct()
+    )
+
+    await this.searchIndex.init(log.map(searchableFormat))
+  }
+
+  // Queries
+  async find(params: Object) {
+    const found = await this.searchIndex.findLatest(stringifyProperties(params))
+    const entities = found.map(x => this.changeLog.getLatestVersion(x.id))
+
+    return entities
+  }
+
+  async get(id: Identifier, version: ?string) {
+    if (!version) {
+      return this.changeLog.getLatestVersion(id)
     }
+
+    const searchQuery = stringifyProperties({ id, version })
+    const versions = await this.searchIndex.findVersions(searchQuery)
+    if (versions.length === 0) {
+      return undefined
+    }
+
+    return this.changeLog.getVersion(versions[0].version_id)
   }
 
   // Commands
-  const create = async (body) => {
-    const entity = schemaRegistry.format(body)
+  validate(type: string, body: Object) {
+    const validationErrors = schemaRegistry.validate(type, body)
+    const isValid = (validationErrors.length === 0)
 
-    entity.data = await changeLog.logNew(entity.data)
-    await searchIndex.add(entity.data)
-
-    return entity
+    return isValid
   }
 
-  const update = async (id, body) => {
-    const entity = schemaRegistry.format(body)
+  async create(type: string, body: Object) {
+    const validationErrors = schemaRegistry.validate(type, body)
+    if (validationErrors.length) {
+      throw new Error(`[Entity] Invalid value provided for: ${validationErrors.join(', ')}`)
+    }
 
-    entity.data = await changeLog.logChange({ ...entity.data, id })
-    await searchIndex.add(entity.data)
+    const entity = schemaRegistry.format(type, body)
+    const id = generateId()
 
-    return entity
+    const entityRecord = await this.changeLog.logNew(type, id, entity)
+    await this.searchIndex.add(searchableFormat(entityRecord))
+
+    return entityRecord
   }
 
-  // API
-  return {
-    findLatest: params => searchIndex.findLatest(params),
-    findVersions: params => searchIndex.findVersions(params),
-    getLatest: params => searchIndex.getLatest(params.id),
-    getVersion: params => searchIndex.getVersion(params.id, params.version),
-    create,
-    update,
-    restoreState
+  async update(id: Identifier, body: Object) {
+    const { type } = this.changeLog.getLatestVersion(id)
+
+    const validationErrors = schemaRegistry.validate(type, body)
+    if (validationErrors.length) {
+      throw new Error(`[Entity] Invalid value provided for: ${validationErrors.join(', ')}`)
+    }
+
+    const entity = schemaRegistry.format(type, body)
+
+    const entityRecord = await this.changeLog.logChange(id, entity)
+    await this.searchIndex.add(searchableFormat(entityRecord))
+
+    return entityRecord
   }
 }
 
-export default entityModel
+export default EntityModel

@@ -1,0 +1,30 @@
+[
+  {
+    "role": "Scheduler",
+    "first_name": "Lisa",
+    "last_name": "Doge",
+    "company": "Alpha Oil Co",
+    "email": "lking100500@test.abc"
+  },
+  {
+    "role": "Scheduler",
+    "first_name": "Lisa",
+    "last_name": "King",
+    "company": "Alpha Oil Co",
+    "email": "lking100500@test.abc"
+  },
+  {
+    "role": "Scheduler",
+    "first_name": "Lisa",
+    "last_name": "King",
+    "company": "Alpha Oil Co",
+    "email": "lking@test.abc"
+  },
+  {
+    "role": "Manager",
+    "first_name": "Lisa",
+    "last_name": "King",
+    "company": "Alpha Oil Co",
+    "email": "lking@test.abc"
+  }
+]

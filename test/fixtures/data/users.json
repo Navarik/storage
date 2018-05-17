@@ -1,0 +1,23 @@
+[
+  {
+    "role": "Scheduler",
+    "last_name": "Lisa",
+    "first_name": "King",
+    "company": "Alpha Oil Co",
+    "email": "lking@test.abc"
+  },
+  {
+    "role": "Inspection Hub Coordinator",
+    "last_name": "Peter",
+    "first_name": "Manning",
+    "company": "Sierra Inspection Systems",
+    "email": "pmanning@test.abc"
+  },
+  {
+    "role": "Field Inspector",
+    "last_name": "Rachel",
+    "first_name": "Fraser",
+    "company": "Sierra Inspection Systems",
+    "email": "rfraser@test.abc"
+  }
+]
