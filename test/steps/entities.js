@@ -5,7 +5,7 @@ import { expectEntity } from './checks'
 
 const createSteps = storage => ({
   cannotCreate: curry((type, payload) => (done) => {
-    storage.entity.create(type, payload)
+    storage.create(type, payload)
       .then(() => done("Expected error didn't happen"))
       .catch(() => done())
   }),
@@ -14,7 +14,7 @@ const createSteps = storage => ({
     let response
 
     // Create entity
-    response = await storage.entity.create(type, payload)
+    response = await storage.create(type, payload)
     expectEntity(response)
     expect(response.type).to.eql(type)
     expect(response.version).to.eql(1)
@@ -22,7 +22,7 @@ const createSteps = storage => ({
 
     // Try to read it back by ID
     const id = response.id
-    response = await storage.entity.get(id)
+    response = await storage.get(id)
     expectEntity(response)
     expect(response.type).to.eql(type)
     expect(response.version).to.eql(1)
@@ -30,16 +30,16 @@ const createSteps = storage => ({
   }),
 
   cannotUpdate: (id, payload) => done => {
-    storage.entity.update(id, payload)
+    storage.update(id, payload)
       .then(() => done("Expected error didn't happen"))
       .catch(() => done())
   },
 
   canUpdate: (id, payload) => async () => {
-    const previous = await storage.entity.get(id)
+    const previous = await storage.get(id)
     expectEntity(previous)
 
-    const response = await storage.entity.update(id, payload)
+    const response = await storage.update(id, payload)
     expectEntity(response)
     expect(response.payload).to.eql(payload)
     expect(response.version).to.be(previous.version + 1)

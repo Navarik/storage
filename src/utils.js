@@ -20,8 +20,6 @@ export const head = <T: any>(xs: Iterable<T>): ?T => {
   for (let x of xs) return x
 }
 
-export const enforceArra = x => (x instanceof Array ? x : [x])
-
 type LiftToArray = <A: any|Array<any>, B: any|Array<any>>(f: A => B) => (A => B)
 export const liftToArray: LiftToArray = (func) => x => (x instanceof Array ? map(func, x) : func(x))
 

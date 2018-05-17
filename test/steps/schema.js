@@ -4,7 +4,7 @@ import { expectSchema } from './checks'
 
 const createSteps = storage => ({
   cannotCreate: (given) => done => {
-    storage.schema.create(given)
+    storage.createSchema(given)
       .then(() => done("Expected error didn't happen"))
       .catch(() => done())
   },
@@ -12,7 +12,7 @@ const createSteps = storage => ({
   canCreate: schema => async () => {
     let response
 
-    response = await storage.schema.create(schema)
+    response = await storage.createSchema(schema)
     expectSchema(response)
     expect(response.version).to.be(1)
     expect(response.payload.name).to.be(schema.name)
@@ -26,12 +26,12 @@ const createSteps = storage => ({
 
     // Get by type name
     const typeName = `${schema.namespace}.${schema.name}`
-    response = await storage.schema.get(typeName)
+    response = await storage.getSchema(typeName)
     expectSchema(response)
     expect(response.payload).to.eql(schema)
 
     // Find using name and namespace in a query
-    response = await storage.schema.find({ name: schema.name, namespace: schema.namespace })
+    response = await storage.findSchema({ name: schema.name, namespace: schema.namespace })
     expect(response).to.be.an('array')
     expect(response).to.have.length(1)
     expectSchema(response[0])
@@ -43,26 +43,26 @@ const createSteps = storage => ({
 
     // Get by type name
     const typeName = `${schema.namespace}.${schema.name}`
-    response = await storage.schema.get(typeName)
+    response = await storage.getSchema(typeName)
     expect(response).to.be(undefined)
 
     // Find using name and namespace in a query
-    response = await storage.schema.find({ name: schema.name, namespace: schema.namespace })
+    response = await storage.findSchema({ name: schema.name, namespace: schema.namespace })
     expect(response).to.be.an('array')
     expect(response).to.have.length(0)
   },
 
   cannotUpdate: (typeName, schema) => done => {
-    storage.schema.update(typeName, schema)
+    storage.updateSchema(typeName, schema)
       .then(() => done("Expected error didn't happen"))
       .catch(() => done())
   },
 
   canUpdate: (typeName, schema) => async () => {
-    const previous = await storage.schema.get(typeName)
+    const previous = await storage.getSchema(typeName)
     expectSchema(previous)
 
-    const response = await storage.schema.update(typeName, schema)
+    const response = await storage.updateSchema(typeName, schema)
     expectSchema(response)
     expect(response.payload).to.eql(schema)
     expect(response.version).to.be(previous.version + 1)

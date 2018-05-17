@@ -4,7 +4,7 @@ import { map, unique, liftToArray } from '../utils'
 
 import type { AvroSchema } from '../flowtypes'
 
-type AvroSchemaObject = Object
+type AvroType = Object
 
 const registry = {}
 
@@ -61,12 +61,15 @@ const update = (schema: AvroSchema): AvroSchema => {
   return formatted
 }
 
-const get = (type: string): AvroSchemaObject => {
+const get = (type: string): AvroType => {
   return registry[type]
 }
 
-const init = () => {
+const init = (source: ?Array<AvroSchema>) => {
   Object.keys(registry).forEach(type => { delete registry[type] })
+  if (source) {
+    source.forEach(add)
+  }
 }
 
 const schemaRegistry = { add, update, get, format, fullName, init, validate }

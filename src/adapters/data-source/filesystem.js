@@ -38,7 +38,7 @@ export const getFileNames = (directory: string): Array<string> =>
 
 export function readAllFiles(path: string, format: ?string): Collection {
   const result = []
-  const names = getFileNames(location.pathname)
+  const names = getFileNames(path)
 
   for (let name of names) {
     if (!format || fileExtension(name) === format) {

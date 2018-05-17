@@ -1,4 +1,4 @@
-import schemaModel from './schema-model'
-import entityModel from './entity-model'
+import SchemaModel from './schema-model'
+import EntityModel from './entity-model'
 
-export { schemaModel, entityModel }
+export { SchemaModel, EntityModel }

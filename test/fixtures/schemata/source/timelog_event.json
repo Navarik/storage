@@ -1,0 +1,29 @@
+{
+  "name": "timelog_event",
+  "namespace": "timelog",
+  "description": "Vessel Arrived",
+  "type": "record",
+  "fields": [
+    {
+      "name": "event_type",
+      "type": "string",
+      "description": "Event type"
+    },
+    {
+      "name": "sender",
+      "type": "int",
+      "description": "Message Sender"
+    },
+    {
+      "name": "timestamp",
+      "type": "long",
+      "logicalType": "timestamp-millis",
+      "description": "Sent At"
+    },
+    {
+      "name": "job_order",
+      "type": "int",
+      "description": "Job order"
+    }
+  ]
+}

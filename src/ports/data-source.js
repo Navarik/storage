@@ -18,9 +18,13 @@ class DataSoure implements DataSourceInterface {
     return this.adapters[protocol]
   }
 
-  read(path: string) {
+  read(path: ?string) {
     const parsed = parsePath(path)
     const adapter = this.getAdapter(parsed.protocol)
+
+    if (!path) {
+      return Promise.resolve(undefined)
+    }
 
     return adapter.readAllFiles(parsed)
   }

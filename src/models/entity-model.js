@@ -1,6 +1,9 @@
+//@flow
 import uuidv4 from 'uuid/v4'
 import { map, liftToArray, head, maybe } from '../utils'
 import schemaRegistry from './schema-registry'
+
+import type { ModelInterface, Identifier, ChangelogInterface, SearchIndexInterface, Collection } from '../flowtypes'
 
 const generateId = body => uuidv4()
 const stringifyProperties = map(x => String(x))
@@ -13,44 +16,57 @@ const searchableFormat = liftToArray(data => ({
   ...stringifyProperties(data.payload)
 }))
 
-const entityModel = (config) => {
-  const searchIndex = config.searchIndex
-  const dataSource = config.dataSource
-  const changeLog = config.changeLog
+class EntityModel implements ModelInterface {
+  searchIndex: SearchIndexInterface
+  changeLog: ChangelogInterface
 
-  const init = async () => {
-    const log = await changeLog.reconstruct()
-    await searchIndex.init(log)
+  constructor(config: Object) {
+    this.searchIndex = config.searchIndex
+    this.changeLog = config.changeLog
+  }
+
+  async init(source: ?Collection) {
+    const log = await (source
+      ? Promise.all(source.map(entity =>
+        this.changeLog.logNew(entity.type, generateId(), entity.payload)
+      ))
+      : this.changeLog.reconstruct()
+    )
+
+    await this.searchIndex.init(log.map(searchableFormat))
   }
 
   // Queries
-  const find = async (params) => {
-    const found = await searchIndex.findLatest(stringifyProperties(params))
-    const entities = found.map(x => changeLog.getLatestVersion(x.id))
+  async find(params: Object) {
+    const found = await this.searchIndex.findLatest(stringifyProperties(params))
+    const entities = found.map(x => this.changeLog.getLatestVersion(x.id))
 
     return entities
   }
 
-  const get = (id, version) => {
+  async get(id: Identifier, version: ?string) {
     if (!version) {
-      return Promise.resolve(changeLog.getLatestVersion(id))
+      return this.changeLog.getLatestVersion(id)
     }
 
-    return searchIndex
-      .findVersions(stringifyProperties({ id, version }))
-      .then(head)
-      .then(maybe(x => changeLog.getVersion(x.version_id)))
+    const searchQuery = stringifyProperties({ id, version })
+    const versions = await this.searchIndex.findVersions(searchQuery)
+    if (versions.length === 0) {
+      return undefined
+    }
+
+    return this.changeLog.getVersion(versions[0].version_id)
   }
 
   // Commands
-  const validate = (type, body) => {
+  validate(type: string, body: Object) {
     const validationErrors = schemaRegistry.validate(type, body)
     const isValid = (validationErrors.length === 0)
 
     return isValid
   }
 
-  const create = async (type, body) => {
+  async create(type: string, body: Object) {
     const validationErrors = schemaRegistry.validate(type, body)
     if (validationErrors.length) {
       throw new Error(`[Entity] Invalid value provided for: ${validationErrors.join(', ')}`)
@@ -59,14 +75,14 @@ const entityModel = (config) => {
     const entity = schemaRegistry.format(type, body)
     const id = generateId()
 
-    const entityRecord = await changeLog.logNew(type, id, entity)
-    await searchIndex.add(searchableFormat(entityRecord))
+    const entityRecord = await this.changeLog.logNew(type, id, entity)
+    await this.searchIndex.add(searchableFormat(entityRecord))
 
     return entityRecord
   }
 
-  const update = async (id, body) => {
-    const { type } = changeLog.getLatestVersion(id)
+  async update(id: Identifier, body: Object) {
+    const { type } = this.changeLog.getLatestVersion(id)
 
     const validationErrors = schemaRegistry.validate(type, body)
     if (validationErrors.length) {
@@ -75,21 +91,11 @@ const entityModel = (config) => {
 
     const entity = schemaRegistry.format(type, body)
 
-    const entityRecord = await changeLog.logChange(id, entity)
-    await searchIndex.add(searchableFormat(entityRecord))
+    const entityRecord = await this.changeLog.logChange(id, entity)
+    await this.searchIndex.add(searchableFormat(entityRecord))
 
     return entityRecord
   }
-
-  // API
-  return {
-    find,
-    get,
-    create,
-    update,
-    init,
-    validate
-  }
 }
 
-export default entityModel
+export default EntityModel

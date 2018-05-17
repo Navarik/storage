@@ -4,7 +4,7 @@ import { head, liftToArray, map, get, unique, maybe } from '../utils'
 import ChangeLog from '../ports/change-log'
 import schemaRegistry from './schema-registry'
 
-import type { ModelInterface, Identifier, AvroSchema, SchemaRecord, ChangelogInterface, SearchIndexInterface, DataSourceInterface } from '../flowtypes'
+import type { ModelInterface, Identifier, AvroSchema, SchemaRecord, ChangelogInterface, SearchIndexInterface, Collection } from '../flowtypes'
 
 // Generate same IDs for the each name + namespace combination
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
@@ -31,10 +31,16 @@ class SchemaModel implements ModelInterface {
     this.changeLog = config.changeLog
   }
 
-  async init() {
-    schemaRegistry.init()
-    const log = await this.changeLog.reconstruct()
-    await this.searchIndex.init(log)
+  async init(source: ?Collection) {
+    const log = await (source
+      ? Promise.all(source.map(schema =>
+        this.changeLog.logNew('schema', generateId(schemaRegistry.fullName(schema)), schema)
+      ))
+      : this.changeLog.reconstruct()
+    )
+
+    await this.searchIndex.init(log.map(searchableFormat))
+    schemaRegistry.init(log.map(x => x.payload))
   }
 
   // Queries
@@ -45,7 +51,7 @@ class SchemaModel implements ModelInterface {
       .then(unique)
   }
 
-  get(name, version) {
+  get(name: string, version: ?string) {
     const schema = schemaRegistry.get(name)
     if (!schema) return Promise.resolve(undefined)
 
@@ -63,7 +69,7 @@ class SchemaModel implements ModelInterface {
       .then(maybe(x => this.changeLog.getVersion(x.version_id)))
   }
 
-  async find(params) {
+  async find(params: Object) {
     const found = await this.searchIndex.findLatest(params)
     const schemas = found.map(x => this.changeLog.getLatestVersion(x.id))
 
@@ -71,7 +77,7 @@ class SchemaModel implements ModelInterface {
   }
 
   // Commands
-  async create(body: AvroSchema) {
+  async create(type: string, body: AvroSchema) {
     const schema = schemaRegistry.add(body)
 
     const id = generateId(schemaRegistry.fullName(body))
@@ -81,7 +87,7 @@ class SchemaModel implements ModelInterface {
     return schemaRecord
   }
 
-  async update(name, body: AvroSchema) {
+  async update(name: string, body: AvroSchema) {
     const schema = schemaRegistry.update(body)
 
     const id = generateId(schemaRegistry.fullName(body))
@@ -92,17 +98,4 @@ class SchemaModel implements ModelInterface {
   }
 }
 
-const schemaModel = (config: Object) => {
-  const model = new SchemaModel(config)
-
-  return {
-    init: () => model.init(),
-    get: (name: string, version: ?string) => model.get(name, version),
-    find: (params: Object) => model.find(params),
-    create: (body: AvroSchema) => model.create(body),
-    update: (name: string, body: AvroSchema) => model.update(name, body),
-    getNamespaces: () => model.getNamespaces()
-  }
-}
-
-export default schemaModel
+export default SchemaModel

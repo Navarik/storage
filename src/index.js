@@ -1,3 +1,4 @@
+// @flow
 import 'babel-polyfill'
 import { GitDatasourceAdapter, FilesystemDatasourceAdapter } from './adapters/data-source'
 import { EventEmitterQueueAdapter } from './adapters/queue'
@@ -6,7 +7,8 @@ import SearchIndex from './ports/search-index'
 import DataSource from './ports/data-source'
 import ChangeLog from './ports/change-log'
 
-import { schemaModel, entityModel } from './models'
+import { SchemaModel, EntityModel } from './models'
+import type { AvroSchema, Identifier } from './flowtypes'
 
 const dataSource = new DataSource({
   adapters: {
@@ -45,29 +47,41 @@ const configure = ({ queue = 'default', index = 'default' }) => {
   const schemaSearchIndex = configureSearchIndex(index.schema || index)
   const entitySearchIndex = configureSearchIndex(index.entity || index)
 
-  const schema = new schemaModel({
+  const schema = new SchemaModel({
     changeLog: schemaChangeLog,
-    searchIndex: schemaSearchIndex,
-    dataSource
+    searchIndex: schemaSearchIndex
   })
 
-  const entity = new entityModel({
+  const entity = new EntityModel({
     changeLog: entityChangeLog,
-    searchIndex: entitySearchIndex,
-    dataSource
+    searchIndex: entitySearchIndex
   })
 
   return {
-    schema,
-    entity,
-    init: async () => {
+    getNamespaces: () => schema.getNamespaces(),
+    getSchema: (name: string, version: ?string) => schema.get(name, version),
+    findSchema: (params: Object) => schema.find(params),
+    createSchema: (body: AvroSchema) => schema.create('schema', body),
+    updateSchema: (name: string, body: AvroSchema) => schema.update(name, body),
+
+    find: (params: Object) => entity.find(params),
+    get: (name: string, version: ?string) => entity.get(name, version),
+    create: (type: string, body: Object) => entity.create(type, body),
+    update: (id: Identifier, body: Object) => entity.update(id, body),
+
+    validate: (type: string, body: Object) => entity.validate(type, body),
+
+    init: async (sources: { schemata?: string, data?: string } = {}) => {
       await Promise.all([
         schemaChangeLog.adapter.connect(),
         entityChangeLog.adapter.connect()
       ])
 
-      await schema.init()
-      await entity.init()
+      const schemaSource = await dataSource.read(sources.schemata)
+      const entitySource = await dataSource.read(sources.data)
+
+      await schema.init(schemaSource)
+      await entity.init(entitySource)
     }
   }
 }

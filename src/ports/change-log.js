@@ -3,7 +3,7 @@ import uuidv5 from 'uuid/v5'
 import TransactionManager from './transaction-manager'
 import { sort } from '../utils'
 
-import type { ChangelogInterface, ChangeRecord, QueueMessage, Identifier, QueueAdapterInterface, Observer } from '../flowtypes'
+import type { ChangelogInterface, ChangeRecord, QueueMessage, Identifier, QueueAdapterInterface, Observer, Collection } from '../flowtypes'
 
 const sign = (id: Identifier, payload: ChangeRecord): Identifier => {
   if (!id) {
@@ -51,6 +51,7 @@ class ChangeLog implements ChangelogInterface {
   async reconstruct() {
     this.latest = {}
     this.versions = {}
+
     let log = await this.adapter.getLog(this.topic)
     log = sort(log, 'version')
 

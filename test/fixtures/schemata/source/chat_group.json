@@ -1,0 +1,34 @@
+{
+  "name": "chat_group",
+  "namespace": "chat",
+  "description": "Chat Group",
+  "type": "record",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string",
+      "description": "Group Name"
+    },
+    {
+      "name": "job_order",
+      "type": "string",
+      "description": "Job order"
+    },
+    {
+      "name": "participants",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "fields": [
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "description": "Participats"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "name": "job_order",
+  "namespace": "document",
+  "description": "Job Order",
+  "type": "record",
+  "fields": [
+    {
+      "name": "status",
+      "type": "string",
+      "description": "Status"
+    },
+    {
+      "name": "code",
+      "type": "string",
+      "description": "Code"
+    },
+    {
+      "name": "activity",
+      "type": "string",
+      "description": "Activity"
+    },
+    {
+      "name": "activity_type",
+      "type": "string",
+      "description": "Activity Type"
+    },
+    {
+      "name": "mot_name",
+      "type": "string",
+      "description": "MoT Name"
+    },
+    {
+      "name": "grade",
+      "type": "string",
+      "description": "Grade"
+    },
+    {
+      "name": "quantity",
+      "type": ["null", "int"],
+      "description": "Quantity"
+    },
+    {
+      "name": "uom",
+      "type": "string",
+      "description": "UoM"
+    },
+    {
+      "name": "eta",
+      "type": "string",
+      "description": "Eta"
+    },
+    {
+      "name": "location",
+      "type": "string",
+      "description": "Location"
+    },
+    {
+      "name": "terminal",
+      "type": "string",
+      "description": "Terminal"
+    }
+  ]
+}

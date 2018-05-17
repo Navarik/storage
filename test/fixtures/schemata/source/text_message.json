@@ -1,0 +1,33 @@
+{
+  "name": "text_message",
+  "namespace": "chat",
+  "description": "Text Message",
+  "type": "record",
+  "fields": [
+    {
+      "name": "sender",
+      "type": "int",
+      "description": "Message Sender"
+    },
+    {
+      "name": "timestamp",
+      "type": "string",
+      "description": "Sent At"
+    },
+    {
+      "name": "job_order",
+      "type": ["null", "int"],
+      "description": "Job order"
+    },
+    {
+      "name": "chat_group",
+      "type": ["null", "int"],
+      "description": "Chat Group"
+    },
+    {
+      "name": "text",
+      "type": "string",
+      "description": "Message Text"
+    }
+  ]
+}

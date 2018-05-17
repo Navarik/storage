@@ -1,6 +1,5 @@
 import expect from 'expect.js'
 import createStorage from '../src'
-import schemata from './fixtures/schemata/schemata.json'
 import fixtures from './fixtures/data/versions.json'
 import { expectEntity } from './steps/checks'
 import { forAll, forNone } from './steps/generic'
@@ -15,9 +14,9 @@ const { canCreate, cannotCreate, cannotUpdate, canUpdate } = createSteps(storage
 let id
 
 describe("Entity versioning", () => {
-  before(() => storage.init()
-    .then(() => Promise.all(schemata.map(storage.schema.create)))
-    .then(() => storage.entity.create('profile.user', fixtures[0]))
+  before(() => storage
+    .init({ schemata: 'file://./test/fixtures/schemata/source' })
+    .then(() => storage.create('profile.user', fixtures[0]))
     .then(entity => { id = entity.id })
   )
 
@@ -31,12 +30,12 @@ describe("Entity versioning", () => {
   it("only the latest version is directly available", async () => {
     let response
 
-    response = await storage.entity.get(id)
+    response = await storage.get(id)
     expectEntity(response)
     expect(response.payload).to.eql(lastVersion)
     expect(response.version).to.eql(fixtures.length)
 
-    response = await storage.entity.find(lastVersion)
+    response = await storage.find(lastVersion)
     expect(response).to.be.an('array')
     expect(response).to.have.length(1)
     expectEntity(response[0])
@@ -47,7 +46,7 @@ describe("Entity versioning", () => {
   it("can't update if nothing has changed", (done) => cannotUpdate(id, lastVersion)(done))
 
   it('all versions are available individually', forAll(fixtures, (fixture, index) => async () => {
-    const response = await storage.entity.get(id, index + 1)
+    const response = await storage.get(id, index + 1)
     expectEntity(response)
     expect(response.payload).to.eql(fixture)
   }))

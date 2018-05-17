@@ -28,7 +28,7 @@ describe("Schema versioning", () => {
   it("can't update if nothing has changed", cannotUpdate('version_test.user', lastVersion))
 
   it('all versions are available individually', forAll(fixtures, (fixture, index) => async () => {
-    const response = await storage.schema.get('version_test.user', index + 1)
+    const response = await storage.getSchema('version_test.user', index + 1)
     expectSchema(response)
     expect(response.payload).to.eql(fixture)
   }))

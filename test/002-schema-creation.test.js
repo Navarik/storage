@@ -48,13 +48,13 @@ describe("Schema creation", () => {
   it("can find created schemata", forAll(fixtures, canFind))
 
   it("correct number of schemata has been created", async () => {
-    const response = await storage.schema.find()
+    const response = await storage.findSchema()
     expect(response).to.be.an('array')
     expect(response).to.have.length(fixtures.length)
   })
 
   it("created namespaces are visible", async () => {
-    const response = await storage.schema.getNamespaces()
+    const response = await storage.getNamespaces()
     fixtures.forEach(fixture => expect(response).to.contain(fixture.namespace))
   })
 })

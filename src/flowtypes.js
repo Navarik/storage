@@ -77,13 +77,13 @@ export interface DataSourceAdapterInterface {
 }
 
 export interface DataSourceInterface {
-  read(path: string): Promise<Collection>;
+  read(path: ?string): Promise<?Collection>;
 }
 
 export interface ModelInterface {
-  init(): Promise<void>;
+  init(source: ?Collection): Promise<void>;
   get(name: Identifier, version: ?string): Promise<?ChangeRecord>;
   find(params: Object): Promise<Array<ChangeRecord>>;
-  create(body: Object): Promise<ChangeRecord>;
-  update(id: Identifier, body: AvroSchema): Promise<ChangeRecord>;
+  create(type: string, body: Object): Promise<ChangeRecord>; //@todo schemas don't have type!!
+  update(id: Identifier, body: Object): Promise<ChangeRecord>;
 }
