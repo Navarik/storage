@@ -4,21 +4,21 @@ import curry from 'curry'
 import { expectEntity } from './checks'
 
 const createSteps = storage => ({
-  cannotCreate: curry((type, payload) => (done) => {
-    storage.create(type, payload)
+  cannotCreate: curry((type, body) => (done) => {
+    storage.create(type, body)
       .then(() => done("Expected error didn't happen"))
       .catch(() => done())
   }),
 
-  canCreate: curry((type, payload) => async () => {
+  canCreate: curry((type, body) => async () => {
     let response
 
     // Create entity
-    response = await storage.create(type, payload)
+    response = await storage.create(type, body)
     expectEntity(response)
     expect(response.type).to.eql(type)
     expect(response.version).to.eql(1)
-    expect(response.payload).to.eql(payload)
+    expect(response.body).to.eql(body)
 
     // Try to read it back by ID
     const id = response.id
@@ -26,22 +26,22 @@ const createSteps = storage => ({
     expectEntity(response)
     expect(response.type).to.eql(type)
     expect(response.version).to.eql(1)
-    expect(response.payload).to.eql(payload)
+    expect(response.body).to.eql(body)
   }),
 
-  cannotUpdate: (id, payload) => done => {
-    storage.update(id, payload)
+  cannotUpdate: (id, body) => done => {
+    storage.update(id, body)
       .then(() => done("Expected error didn't happen"))
       .catch(() => done())
   },
 
-  canUpdate: (id, payload) => async () => {
+  canUpdate: (id, body) => async () => {
     const previous = await storage.get(id)
     expectEntity(previous)
 
-    const response = await storage.update(id, payload)
+    const response = await storage.update(id, body)
     expectEntity(response)
-    expect(response.payload).to.eql(payload)
+    expect(response.body).to.eql(body)
     expect(response.version).to.be(previous.version + 1)
   }
 })

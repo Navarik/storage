@@ -34,7 +34,7 @@ class RedisQueueAdapter implements QueueAdapterInterface {
   }
 
   send(name: string, payload: QueueMessage) {
-    return this.getQueue(name).createJob(payload).save()
+    return this.getQueue(name).createJob(payload).save().then(() => payload)
   }
 
   getLog(name: string) {

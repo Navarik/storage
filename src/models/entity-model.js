@@ -8,12 +8,12 @@ import type { ModelInterface, Identifier, ChangelogInterface, SearchIndexInterfa
 const generateId = body => uuidv4()
 const stringifyProperties = map(x => String(x))
 
-const searchableFormat = liftToArray(data => ({
-  id: data.id,
-  version: String(data.version),
-  version_id: data.version_id,
-  type: data.type,
-  ...stringifyProperties(data.payload)
+const searchableFormat = liftToArray(entity => ({
+  id: entity.id,
+  version: String(entity.version),
+  version_id: entity.version_id,
+  type: entity.type,
+  ...stringifyProperties(entity.body)
 }))
 
 class EntityModel implements ModelInterface {
@@ -28,7 +28,7 @@ class EntityModel implements ModelInterface {
   async init(source: ?Collection) {
     const log = await (source
       ? Promise.all(source.map(entity =>
-        this.changeLog.logNew(entity.type, generateId(), entity.payload)
+        this.changeLog.logNew(entity.type, generateId(), entity.body)
       ))
       : this.changeLog.reconstruct()
     )

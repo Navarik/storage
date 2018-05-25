@@ -1,22 +1,20 @@
 //@flow
 import uuidv5 from 'uuid/v5'
 import arraySort from 'array-sort'
-import TransactionManager from './transaction-manager'
 
 import type { ChangelogInterface, ChangeRecord, QueueMessage, Identifier, QueueAdapterInterface, Observer, Collection } from '../flowtypes'
 
-const sign = (id: Identifier, payload: ChangeRecord): Identifier => {
+const sign = (id: Identifier, body: ChangeRecord): Identifier => {
   if (!id) {
     throw new Error('[ChangeLog] Cannot sign document version: document does not have an ID')
   }
 
-  const versionId = uuidv5(JSON.stringify(payload), id)
+  const versionId = uuidv5(JSON.stringify(body), id)
 
   return versionId
 }
 
 class ChangeLog implements ChangelogInterface {
-  transactionManager: Object
   topic: string
   adapter: QueueAdapterInterface
   latest: { [Identifier]: ChangeRecord }
@@ -28,16 +26,18 @@ class ChangeLog implements ChangelogInterface {
 
     this.latest = {}
     this.versions = {}
-    this.transactionManager = new TransactionManager({
-      queue: this.adapter,
-      commitTopic: this.topic,
-      onCommit: payload => this.registerAsLatest(payload)
-    })
   }
 
-  registerAsLatest(payload: ChangeRecord) {
-    this.versions[payload.version_id] = payload
-    this.latest[payload.id] = payload
+  registerAsLatest(document: ChangeRecord) {
+    this.versions[document.version_id] = document
+    this.latest[document.id] = document
+  }
+
+  async register(document: Object): Promise<Object> {
+    await this.adapter.send(this.topic, document)
+    this.registerAsLatest(document)
+
+    return document
   }
 
   getVersion(versionId: Identifier) {
@@ -62,13 +62,13 @@ class ChangeLog implements ChangelogInterface {
     return log
   }
 
-  logChange(id: Identifier, payload: Object) {
+  logChange(id: Identifier, body: Object) {
     const previous = this.getLatestVersion(id)
     if (!previous) {
       throw new Error('[ChangeLog] Cannot create new version because the previous one does not exist')
     }
 
-    const versionId = sign(id, payload)
+    const versionId = sign(id, body)
     if (previous.version_id === versionId) {
       throw new Error('[ChangeLog] Cannot create new version because it is not different from the current one')
     }
@@ -83,15 +83,15 @@ class ChangeLog implements ChangelogInterface {
       version: versionNumber,
       modified_at: now.toISOString(),
       version_id: versionId,
-      payload
+      body
     }
 
-    return this.transactionManager.execute(this.topic, document)
+    return this.register(document)
   }
 
-  logNew(type: string, id: Identifier, payload: Object) {
+  logNew(type: string, id: Identifier, body: Object) {
     const now = new Date()
-    const versionId = sign(id, payload)
+    const versionId = sign(id, body)
     const document = {
       id,
       type,
@@ -99,10 +99,10 @@ class ChangeLog implements ChangelogInterface {
       version: 1,
       modified_at: now.toISOString(),
       version_id: versionId,
-      payload
+      body
     }
 
-    return this.transactionManager.execute(this.topic, document)
+    return this.register(document)
   }
 
   observe(func: Observer) {

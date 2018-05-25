@@ -32,14 +32,14 @@ describe("Entity versioning", () => {
 
     response = await storage.get(id)
     expectEntity(response)
-    expect(response.payload).to.eql(lastVersion)
+    expect(response.body).to.eql(lastVersion)
     expect(response.version).to.eql(fixtures.length)
 
     response = await storage.find(lastVersion)
     expect(response).to.be.an('array')
     expect(response).to.have.length(1)
     expectEntity(response[0])
-    expect(response[0].payload).to.eql(lastVersion)
+    expect(response[0].body).to.eql(lastVersion)
     expect(response[0].version).to.eql(fixtures.length)
   })
 
@@ -48,6 +48,6 @@ describe("Entity versioning", () => {
   it('all versions are available individually', forAll(fixtures, (fixture, index) => async () => {
     const response = await storage.get(id, index + 1)
     expectEntity(response)
-    expect(response.payload).to.eql(fixture)
+    expect(response.body).to.eql(fixture)
   }))
 })

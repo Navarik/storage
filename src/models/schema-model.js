@@ -11,15 +11,16 @@ import type { ModelInterface, Identifier, AvroSchema, SchemaRecord, ChangelogInt
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
 const generateId = name => uuidv5(name, UUID_ROOT)
 
-const searchableFormat = liftToArray((schema: SchemaRecord) => ({
+const searchableFormat = liftToArray((schema: SchemaRecord) =>
+  ({
     id: schema.id,
     version: schema.version,
     version_id: schema.version_id,
-    name: schema.payload.name,
-    namespace: schema.payload.namespace,
-    full_name: schemaRegistry.fullName(schema.payload),
-    description: schema.payload.description,
-    fields: schema.payload.fields.map(get('name'))
+    name: schema.body.name,
+    namespace: schema.body.namespace,
+    full_name: schemaRegistry.fullName(schema.body),
+    description: schema.body.description,
+    fields: schema.body.fields.map(get('name'))
   })
 )
 
@@ -41,7 +42,7 @@ class SchemaModel implements ModelInterface {
     )
 
     await this.searchIndex.init(log.map(searchableFormat))
-    schemaRegistry.init(log.map(x => x.payload))
+    schemaRegistry.init(log.map(x => x.body))
   }
 
   // Queries

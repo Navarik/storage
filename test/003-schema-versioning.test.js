@@ -30,6 +30,6 @@ describe("Schema versioning", () => {
   it('all versions are available individually', forAll(fixtures, (fixture, index) => async () => {
     const response = await storage.getSchema('version_test.user', index + 1)
     expectSchema(response)
-    expect(response.payload).to.eql(fixture)
+    expect(response.body).to.eql(fixture)
   }))
 })

@@ -24,6 +24,8 @@ class EventEmitterQueueAdapter implements QueueAdapterInterface {
 
   send(topic: string, message: QueueMessage) {
     this.emitter.emit(topic, message)
+
+    return Promise.resolve(message)
   }
 
   getLog(topic: string) {

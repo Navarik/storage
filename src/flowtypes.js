@@ -5,21 +5,6 @@ export type Identifier = string
 export type DateTime = string
 export type IdGenerator = (data: Object) => Identifier
 
-export type Message<T> = {
-  id: Identifier,
-  created_at: DateTime,
-  type: string,
-  payload: T
-}
-
-export type VersionMetadata = {
-  version: number,
-  version_id: Identifier,
-  modified_at: DateTime
-}
-
-export type LogRecord<T: Object> = Message<T> & VersionMetadata
-
 export type AvroSchema = {
   namespace: string,
   name: string,
@@ -28,8 +13,18 @@ export type AvroSchema = {
   fields: Array<Object>
 }
 
-export type ChangeRecord = LogRecord<Object>
-export type SchemaRecord = LogRecord<AvroSchema>
+export type Document<T> = {
+  id: Identifier,
+  type: string,
+  body: T,
+  created_at: DateTime,
+  version: number,
+  version_id: Identifier,
+  modified_at: DateTime
+}
+
+export type ChangeRecord = Document<Object>
+export type SchemaRecord = Document<AvroSchema>
 
 export type Location = {
   pathname: string,
@@ -37,22 +32,22 @@ export type Location = {
   protocols: Array<string>
 }
 
-export type QueueMessage = Message<Object>
+export type QueueMessage = Object
 export type Observer = QueueMessage => void
 
 export interface QueueAdapterInterface {
   connect(): Promise<Object>;
   isConnected(): boolean;
   on(topic: string, handler: Observer): void;
-  send(topic: string, message: QueueMessage): void;
+  send(topic: string, message: QueueMessage): Promise<QueueMessage>;
   getLog(topic: string): Promise<Array<QueueMessage>>;
 }
 
 export interface ChangelogInterface {
   getVersion(versionId: Identifier): ChangeRecord;
   getLatestVersion(id: Identifier): ChangeRecord;
-  logNew(type: string, id: Identifier, payload: Object): Promise<ChangeRecord>;
-  logChange(id: Identifier, payload: Object): Promise<ChangeRecord>;
+  logNew(type: string, id: Identifier, body: Object): Promise<ChangeRecord>;
+  logChange(id: Identifier, body: Object): Promise<ChangeRecord>;
   observe(func: Observer): void;
   reconstruct(): Promise<Collection>;
 }

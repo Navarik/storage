@@ -15,10 +15,10 @@ const createSteps = storage => ({
     response = await storage.createSchema(schema)
     expectSchema(response)
     expect(response.version).to.be(1)
-    expect(response.payload.name).to.be(schema.name)
-    expect(response.payload.namespace).to.be(schema.namespace)
-    expect(response.payload.description).to.be(schema.description || '')
-    expect(response.payload.fields).to.eql(schema.fields || [])
+    expect(response.body.name).to.be(schema.name)
+    expect(response.body.namespace).to.be(schema.namespace)
+    expect(response.body.description).to.be(schema.description || '')
+    expect(response.body.fields).to.eql(schema.fields || [])
   },
 
   canFind: schema => async () => {
@@ -28,14 +28,14 @@ const createSteps = storage => ({
     const typeName = `${schema.namespace}.${schema.name}`
     response = await storage.getSchema(typeName)
     expectSchema(response)
-    expect(response.payload).to.eql(schema)
+    expect(response.body).to.eql(schema)
 
     // Find using name and namespace in a query
     response = await storage.findSchema({ name: schema.name, namespace: schema.namespace })
     expect(response).to.be.an('array')
     expect(response).to.have.length(1)
     expectSchema(response[0])
-    expect(response[0].payload).to.eql(schema)
+    expect(response[0].body).to.eql(schema)
   },
 
   cannotFind: (schema) => async () => {
@@ -64,7 +64,7 @@ const createSteps = storage => ({
 
     const response = await storage.updateSchema(typeName, schema)
     expectSchema(response)
-    expect(response.payload).to.eql(schema)
+    expect(response.body).to.eql(schema)
     expect(response.version).to.be(previous.version + 1)
   }
 })

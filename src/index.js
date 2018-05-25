@@ -73,7 +73,7 @@ const configure = (config: ModuleConfiguration) => {
     updateSchema: (name: string, body: AvroSchema) => schema.update(name, body),
 
     find: (params: Object) => entity.find(params),
-    get: (name: string, version: ?string) => entity.get(name, version),
+    get: (id: string, version: ?string) => entity.get(id, version),
     create: (type: string, body: Object) => entity.create(type, body),
     update: (id: Identifier, body: Object) => entity.update(id, body),
 
