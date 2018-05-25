@@ -31,13 +31,13 @@ var stringifyProperties = (0, _utils.map)(function (x) {
   return String(x);
 });
 
-var searchableFormat = (0, _utils.liftToArray)(function (data) {
+var searchableFormat = (0, _utils.liftToArray)(function (entity) {
   return _extends({
-    id: data.id,
-    version: String(data.version),
-    version_id: data.version_id,
-    type: data.type
-  }, stringifyProperties(data.payload));
+    id: entity.id,
+    version: String(entity.version),
+    version_id: entity.version_id,
+    type: entity.type
+  }, stringifyProperties(entity.body));
 });
 
 var EntityModel = function () {
@@ -61,7 +61,7 @@ var EntityModel = function () {
               case 0:
                 _context.next = 2;
                 return source ? Promise.all(source.map(function (entity) {
-                  return _this.changeLog.logNew(entity.type, generateId(), entity.payload);
+                  return _this.changeLog.logNew(entity.type, generateId(), entity.body);
                 })) : this.changeLog.reconstruct();
 
               case 2:

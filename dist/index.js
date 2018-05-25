@@ -99,8 +99,8 @@ var configure = function configure(config) {
     find: function find(params) {
       return entity.find(params);
     },
-    get: function get(name, version) {
-      return entity.get(name, version);
+    get: function get(id, version) {
+      return entity.get(id, version);
     },
     create: function create(type, body) {
       return entity.create(type, body);

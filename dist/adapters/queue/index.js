@@ -13,13 +13,4 @@ Object.defineProperty(exports, 'EventEmitterQueueAdapter', {
   }
 });
 
-var _redisQueue = require('./redis-queue');
-
-Object.defineProperty(exports, 'RedisQueueAdapter', {
-  enumerable: true,
-  get: function get() {
-    return _interopRequireDefault(_redisQueue).default;
-  }
-});
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }

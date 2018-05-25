@@ -41,11 +41,11 @@ var searchableFormat = (0, _utils.liftToArray)(function (schema) {
     id: schema.id,
     version: schema.version,
     version_id: schema.version_id,
-    name: schema.payload.name,
-    namespace: schema.payload.namespace,
-    full_name: _schemaRegistry2.default.fullName(schema.payload),
-    description: schema.payload.description,
-    fields: schema.payload.fields.map((0, _utils.get)('name'))
+    name: schema.body.name,
+    namespace: schema.body.namespace,
+    full_name: _schemaRegistry2.default.fullName(schema.body),
+    description: schema.body.description,
+    fields: schema.body.fields.map((0, _utils.get)('name'))
   };
 });
 
@@ -80,7 +80,7 @@ var SchemaModel = function () {
 
               case 5:
                 _schemaRegistry2.default.init(log.map(function (x) {
-                  return x.payload;
+                  return x.body;
                 }));
 
               case 6:

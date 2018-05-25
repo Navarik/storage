@@ -40,6 +40,8 @@ var EventEmitterQueueAdapter = function () {
     key: 'send',
     value: function send(topic, message) {
       this.emitter.emit(topic, message);
+
+      return Promise.resolve(message);
     }
   }, {
     key: 'getLog',
