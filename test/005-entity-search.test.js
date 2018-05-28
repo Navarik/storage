@@ -1,5 +1,6 @@
 import expect from 'expect.js'
 import createStorage from '../src'
+import fixtureSchemata from './fixtures/schemata/schemata.json'
 import fixturesEvents from './fixtures/data/events.json'
 import fixturesJobs from './fixtures/data/job-orders.json'
 import fixturesUsers from './fixtures/data/users.json'
@@ -9,14 +10,13 @@ import { forAll, forNone } from './steps/generic'
 import createSteps from './steps/entities'
 
 const storage = createStorage({
-  queue: 'default',
-  index: 'default'
+  schema: fixtureSchemata
 })
 
 const { canCreate, cannotCreate } = createSteps(storage)
 
 describe("Entity search", () => {
-  before(() => storage.init({ schemata: 'file://./test/fixtures/schemata/source' }))
+  before(() => storage.init())
 
   it("Correctly creates new entities", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
   it("Correctly creates new entities: job orders", forAll(fixturesJobs, canCreate('document.job_order')))

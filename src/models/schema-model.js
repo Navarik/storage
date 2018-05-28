@@ -5,7 +5,7 @@ import { head, liftToArray, map, get, maybe } from '../utils'
 import ChangeLog from '../ports/change-log'
 import schemaRegistry from './schema-registry'
 
-import type { ModelInterface, Identifier, AvroSchema, SchemaRecord, ChangelogInterface, SearchIndexInterface, Collection } from '../flowtypes'
+import type { Identifier, AvroSchema, SchemaRecord, ChangelogInterface, SearchIndexInterface, Collection } from '../flowtypes'
 
 // Generate same IDs for the each name + namespace combination
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
@@ -24,7 +24,7 @@ const searchableFormat = liftToArray((schema: SchemaRecord) =>
   })
 )
 
-class SchemaModel implements ModelInterface {
+class SchemaModel {
   searchIndex: SearchIndexInterface
   changeLog: ChangelogInterface
 

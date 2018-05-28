@@ -1,6 +1,5 @@
 //@flow
 import Database from 'nedb'
-import logger from 'logops'
 import exclude from 'poly-exclude'
 import { map, maybe } from '../../utils'
 
@@ -10,9 +9,7 @@ import { DBClientInterface } from './ne-db'
 const format = maybe(exclude(['_id']))
 
 const databaseError = (err: string): Error => {
-  logger.error(`[NeDB] Database error: ${err}`)
-
-  return new Error(err)
+  throw new Error(`[NeDB] Database error: ${err}`)
 }
 
 class NeDbClient implements DBClientInterface {

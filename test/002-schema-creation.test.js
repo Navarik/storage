@@ -4,10 +4,7 @@ import fixtures from './fixtures/schemata/schemata.json'
 import { forAll, forNone } from './steps/generic'
 import createSchemaSteps from './steps/schema'
 
-const storage = createStorage({
-  queue: 'default',
-  index: 'default'
-})
+const storage = createStorage()
 
 const { cannotCreate, canCreate, cannotFind, canFind } = createSchemaSteps(storage)
 

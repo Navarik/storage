@@ -6,8 +6,6 @@ Object.defineProperty(exports, "__esModule", {
 
 require('babel-polyfill');
 
-var _dataSource = require('./adapters/data-source');
-
 var _queue = require('./adapters/queue');
 
 var _searchIndex = require('./adapters/search-index');
@@ -15,10 +13,6 @@ var _searchIndex = require('./adapters/search-index');
 var _searchIndex2 = require('./ports/search-index');
 
 var _searchIndex3 = _interopRequireDefault(_searchIndex2);
-
-var _dataSource2 = require('./ports/data-source');
-
-var _dataSource3 = _interopRequireDefault(_dataSource2);
 
 var _changeLog = require('./ports/change-log');
 
@@ -30,44 +24,49 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
-var dataSource = new _dataSource3.default({
-  adapters: {
-    file: new _dataSource.FilesystemDatasourceAdapter({ format: 'json' }),
-    git: new _dataSource.GitDatasourceAdapter({
-      workingDirectory: process.env.TEMP_DIRECTORY,
-      format: 'json'
-    })
-  }
-});
-
 var createChangelogAdapter = function createChangelogAdapter(conf) {
-  return conf === 'default' ? new _queue.EventEmitterQueueAdapter() : conf;
+  if (conf === 'default') {
+    return new _queue.EventEmitterQueueAdapter({});
+  }
+
+  if (conf instanceof Array) {
+    return new _queue.EventEmitterQueueAdapter({ log: conf });
+  }
+
+  return conf;
 };
 
-var configureSearchIndex = function configureSearchIndex(conf) {
+var configureSearchIndexAdapter = function configureSearchIndexAdapter(conf) {
   var adapter = conf;
   if (conf === 'default') {
     adapter = new _searchIndex.NeDbSearchIndexAdapter();
   }
 
-  return new _searchIndex3.default({ adapter: adapter });
+  return adapter;
 };
 
-var configure = function configure(config) {
-  var queue = config.queue || 'default';
+var configure = function configure() {
+  var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+  var log = config.log || 'default';
   var index = config.index || 'default';
+  var namespace = config.namespace || 'storage';
 
   var schemaChangeLog = new _changeLog2.default({
-    topic: 'schema',
-    adapter: createChangelogAdapter(queue.schema || queue)
+    topic: namespace + '.schema',
+    adapter: createChangelogAdapter(log.schema || log)
   });
   var entityChangeLog = new _changeLog2.default({
-    topic: 'entity',
-    adapter: createChangelogAdapter(queue.entity || queue)
+    topic: namespace + '.entity',
+    adapter: createChangelogAdapter(log.entity || log)
   });
 
-  var schemaSearchIndex = configureSearchIndex(index.schema || index);
-  var entitySearchIndex = configureSearchIndex(index.entity || index);
+  var schemaSearchIndex = new _searchIndex3.default({
+    adapter: configureSearchIndexAdapter(index.schema || index)
+  });
+  var entitySearchIndex = new _searchIndex3.default({
+    adapter: configureSearchIndexAdapter(index.entity || index)
+  });
 
   var schema = new _models.SchemaModel({
     changeLog: schemaChangeLog,
@@ -115,34 +114,18 @@ var configure = function configure(config) {
 
     init: function () {
       var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-        var sources = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-        var schemaSource, entitySource;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return Promise.all([schemaChangeLog.adapter.connect(), entityChangeLog.adapter.connect()]);
+                return schema.init(config.schema || []);
 
               case 2:
                 _context.next = 4;
-                return dataSource.read(sources.schemata);
+                return entity.init(config.data || []);
 
               case 4:
-                schemaSource = _context.sent;
-                _context.next = 7;
-                return dataSource.read(sources.data);
-
-              case 7:
-                entitySource = _context.sent;
-                _context.next = 10;
-                return schema.init(schemaSource);
-
-              case 10:
-                _context.next = 12;
-                return entity.init(entitySource);
-
-              case 12:
               case 'end':
                 return _context.stop();
             }

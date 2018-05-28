@@ -60,8 +60,8 @@ var EntityModel = function () {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return source ? Promise.all(source.map(function (entity) {
-                  return _this.changeLog.logNew(entity.type, generateId(), entity.body);
+                return source && source.length ? Promise.all(source.map(function (x) {
+                  return _this.changeLog.logNew(x.type, generateId(), x.body);
                 })) : this.changeLog.reconstruct();
 
               case 2:

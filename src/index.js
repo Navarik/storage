@@ -1,59 +1,54 @@
 // @flow
 import 'babel-polyfill'
-import { GitDatasourceAdapter, FilesystemDatasourceAdapter } from './adapters/data-source'
 import { EventEmitterQueueAdapter } from './adapters/queue'
 import { NeDbSearchIndexAdapter } from './adapters/search-index'
 import SearchIndex from './ports/search-index'
-import DataSource from './ports/data-source'
 import ChangeLog from './ports/change-log'
 
 import { SchemaModel, EntityModel } from './models'
-import type { AvroSchema, Identifier } from './flowtypes'
+import type { AvroSchema, Identifier, ModuleConfiguration } from './flowtypes'
 
-const dataSource = new DataSource({
-  adapters: {
-    file: new FilesystemDatasourceAdapter({ format: 'json' }),
-    git: new GitDatasourceAdapter({
-      workingDirectory: process.env.TEMP_DIRECTORY,
-      format: 'json'
-    })
+const createChangelogAdapter = (conf) => {
+  if (conf === 'default') {
+    return new EventEmitterQueueAdapter({})
   }
-})
 
-const createChangelogAdapter = (conf) => (conf === 'default'
-  ? new EventEmitterQueueAdapter()
-  : conf
-)
+  if (conf instanceof Array) {
+    return new EventEmitterQueueAdapter({ log: conf })
+  }
 
-const configureSearchIndex = (conf) => {
+  return conf
+}
+
+const configureSearchIndexAdapter = (conf) => {
   let adapter = conf
   if (conf === 'default') {
     adapter = new NeDbSearchIndexAdapter()
   }
 
-  return new SearchIndex({ adapter })
+  return adapter
 }
 
-type ModuleConfiguration = {
-  queue: ?string | { schema: string, entity: string },
-  index: ?string | { schema: string, entity: string }
-}
-
-const configure = (config: ModuleConfiguration) => {
-  const queue = config.queue || 'default'
+const configure = (config: ModuleConfiguration = {}) => {
+  const log = config.log || 'default'
   const index = config.index || 'default'
+  const namespace = config.namespace || 'storage'
 
   const schemaChangeLog = new ChangeLog({
-    topic: 'schema',
-    adapter: createChangelogAdapter(queue.schema || queue)
+    topic: `${namespace}.schema`,
+    adapter: createChangelogAdapter(log.schema || log)
   })
   const entityChangeLog = new ChangeLog({
-    topic: 'entity',
-    adapter: createChangelogAdapter(queue.entity || queue)
+    topic: `${namespace}.entity`,
+    adapter: createChangelogAdapter(log.entity || log)
   })
 
-  const schemaSearchIndex = configureSearchIndex(index.schema || index)
-  const entitySearchIndex = configureSearchIndex(index.entity || index)
+  const schemaSearchIndex = new SearchIndex({
+    adapter: configureSearchIndexAdapter(index.schema || index)
+  })
+  const entitySearchIndex = new SearchIndex({
+    adapter: configureSearchIndexAdapter(index.entity || index)
+  })
 
   const schema = new SchemaModel({
     changeLog: schemaChangeLog,
@@ -79,17 +74,9 @@ const configure = (config: ModuleConfiguration) => {
 
     validate: (type: string, body: Object) => entity.validate(type, body),
 
-    init: async (sources: { schemata?: string, data?: string } = {}) => {
-      await Promise.all([
-        schemaChangeLog.adapter.connect(),
-        entityChangeLog.adapter.connect()
-      ])
-
-      const schemaSource = await dataSource.read(sources.schemata)
-      const entitySource = await dataSource.read(sources.data)
-
-      await schema.init(schemaSource)
-      await entity.init(entitySource)
+    init: async () => {
+      await schema.init(config.schema || [])
+      await entity.init(config.data || [])
     }
   }
 }

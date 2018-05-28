@@ -15,23 +15,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var EventEmitterQueueAdapter = function () {
-  function EventEmitterQueueAdapter() {
+  function EventEmitterQueueAdapter(config) {
     _classCallCheck(this, EventEmitterQueueAdapter);
 
     this.emitter = (0, _eventEmitter2.default)();
+    this.log = config.log || [];
   }
 
   _createClass(EventEmitterQueueAdapter, [{
-    key: 'connect',
-    value: function connect() {
-      return Promise.resolve(this.emitter);
-    }
-  }, {
-    key: 'isConnected',
-    value: function isConnected() {
-      return true;
-    }
-  }, {
     key: 'on',
     value: function on(topic, handler) {
       this.emitter.on(topic, handler);
@@ -46,7 +37,7 @@ var EventEmitterQueueAdapter = function () {
   }, {
     key: 'getLog',
     value: function getLog(topic) {
-      return Promise.resolve([]);
+      return Promise.resolve(this.log);
     }
   }]);
 

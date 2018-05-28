@@ -1,10 +1,7 @@
 import expect from 'expect.js'
 import createStorage from '../src'
 
-const storage = createStorage({
-  queue: 'default',
-  index: 'default'
-})
+const storage = createStorage()
 
 describe("Initial state", () => {
   before(() => storage.init())

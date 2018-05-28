@@ -1,13 +1,13 @@
 import expect from 'expect.js'
 import createStorage from '../src'
+import fixtureSchemata from './fixtures/schemata/schemata.json'
 import fixtures from './fixtures/data/versions.json'
 import { expectEntity } from './steps/checks'
 import { forAll, forNone } from './steps/generic'
 import createSteps from './steps/entities'
 
 const storage = createStorage({
-  queue: 'default',
-  index: 'default'
+  schema: fixtureSchemata
 })
 
 const { canCreate, cannotCreate, cannotUpdate, canUpdate } = createSteps(storage)
@@ -15,7 +15,7 @@ let id
 
 describe("Entity versioning", () => {
   before(() => storage
-    .init({ schemata: 'file://./test/fixtures/schemata/source' })
+    .init()
     .then(() => storage.create('profile.user', fixtures[0]))
     .then(entity => { id = entity.id })
   )

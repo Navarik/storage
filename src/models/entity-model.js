@@ -3,7 +3,7 @@ import uuidv4 from 'uuid/v4'
 import { map, liftToArray, head, maybe } from '../utils'
 import schemaRegistry from './schema-registry'
 
-import type { ModelInterface, Identifier, ChangelogInterface, SearchIndexInterface, Collection } from '../flowtypes'
+import type { Identifier, ChangelogInterface, SearchIndexInterface, Collection } from '../flowtypes'
 
 const generateId = body => uuidv4()
 const stringifyProperties = map(x => String(x))
@@ -16,7 +16,7 @@ const searchableFormat = liftToArray(entity => ({
   ...stringifyProperties(entity.body)
 }))
 
-class EntityModel implements ModelInterface {
+class EntityModel {
   searchIndex: SearchIndexInterface
   changeLog: ChangelogInterface
 
@@ -26,9 +26,9 @@ class EntityModel implements ModelInterface {
   }
 
   async init(source: ?Collection) {
-    const log = await (source
-      ? Promise.all(source.map(entity =>
-        this.changeLog.logNew(entity.type, generateId(), entity.body)
+    const log = await (source && source.length
+      ? Promise.all(source.map(x =>
+        this.changeLog.logNew(x.type, generateId(), x.body)
       ))
       : this.changeLog.reconstruct()
     )

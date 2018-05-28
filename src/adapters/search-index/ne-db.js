@@ -1,6 +1,5 @@
 //@flow
 import Database from 'nedb'
-import logger from 'logops'
 import NeDbClient from './ne-db-client'
 
 import type { SearchIndexAdapterInterface, Collection } from '../../flowtypes'

@@ -2,7 +2,7 @@
 import uuidv5 from 'uuid/v5'
 import arraySort from 'array-sort'
 
-import type { ChangelogInterface, ChangeRecord, QueueMessage, Identifier, QueueAdapterInterface, Observer, Collection } from '../flowtypes'
+import type { ChangelogInterface, ChangeRecord, Identifier, QueueAdapterInterface, Observer } from '../flowtypes'
 
 const sign = (id: Identifier, body: ChangeRecord): Identifier => {
   if (!id) {

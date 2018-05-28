@@ -26,21 +26,12 @@ export type Document<T> = {
 export type ChangeRecord = Document<Object>
 export type SchemaRecord = Document<AvroSchema>
 
-export type Location = {
-  pathname: string,
-  resource: string,
-  protocols: Array<string>
-}
-
-export type QueueMessage = Object
-export type Observer = QueueMessage => void
+export type Observer = Object => void
 
 export interface QueueAdapterInterface {
-  connect(): Promise<Object>;
-  isConnected(): boolean;
   on(topic: string, handler: Observer): void;
-  send(topic: string, message: QueueMessage): Promise<QueueMessage>;
-  getLog(topic: string): Promise<Array<QueueMessage>>;
+  send(topic: string, message: Object): Promise<Object>;
+  getLog(topic: string): Promise<Array<Object>>;
 }
 
 export interface ChangelogInterface {
@@ -66,19 +57,12 @@ export interface SearchIndexInterface {
   findVersions(params: Object): Promise<Collection>;
 }
 
-export interface DataSourceAdapterInterface {
-  constructor(config: Object): void;
-  readAllFiles(location: Location): Promise<Collection>;
-}
+type AdapterConfiguration = string | Object
 
-export interface DataSourceInterface {
-  read(path: ?string): Promise<?Collection>;
-}
-
-export interface ModelInterface {
-  init(source: ?Collection): Promise<void>;
-  get(name: Identifier, version: ?string): Promise<?ChangeRecord>;
-  find(params: Object): Promise<Array<ChangeRecord>>;
-  create(type: string, body: Object): Promise<ChangeRecord>; //@todo schemas don't have type!!
-  update(id: Identifier, body: Object): Promise<ChangeRecord>;
+export type ModuleConfiguration = {
+  log?: AdapterConfiguration | { schema: AdapterConfiguration, entity: AdapterConfiguration },
+  index?: AdapterConfiguration | { schema: AdapterConfiguration, entity: AdapterConfiguration },
+  namespace?: string,
+  schema?: Array<AvroSchema>,
+  data?: Array<Object>
 }

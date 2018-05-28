@@ -5,10 +5,7 @@ import createSteps from './steps/schema'
 import { expectSchema } from './steps/checks'
 import { forAll, forNone } from './steps/generic'
 
-const storage = createStorage({
-  queue: 'default',
-  index: 'default'
-})
+const storage = createStorage()
 
 const { canCreate, canFind, canUpdate, cannotUpdate } = createSteps(storage)
 

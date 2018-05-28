@@ -10,10 +10,6 @@ var _nedb = require('nedb');
 
 var _nedb2 = _interopRequireDefault(_nedb);
 
-var _logops = require('logops');
-
-var _logops2 = _interopRequireDefault(_logops);
-
 var _neDbClient = require('./ne-db-client');
 
 var _neDbClient2 = _interopRequireDefault(_neDbClient);

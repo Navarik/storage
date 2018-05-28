@@ -10,10 +10,6 @@ var _nedb = require('nedb');
 
 var _nedb2 = _interopRequireDefault(_nedb);
 
-var _logops = require('logops');
-
-var _logops2 = _interopRequireDefault(_logops);
-
 var _polyExclude = require('poly-exclude');
 
 var _polyExclude2 = _interopRequireDefault(_polyExclude);
@@ -29,9 +25,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var format = (0, _utils.maybe)((0, _polyExclude2.default)(['_id']));
 
 var databaseError = function databaseError(err) {
-  _logops2.default.error('[NeDB] Database error: ' + err);
-
-  return new Error(err);
+  throw new Error('[NeDB] Database error: ' + err);
 };
 
 var NeDbClient = function () {

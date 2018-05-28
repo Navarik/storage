@@ -3,7 +3,7 @@ import arraySort from 'array-sort'
 import groupBy from 'group-by'
 import map from 'poly-map'
 
-import type { SearchIndexInterface, SearchIndexAdapterInterface, Identifier, Collection } from '../flowtypes'
+import type { SearchIndexInterface, SearchIndexAdapterInterface, Collection } from '../flowtypes'
 
 const sortByVersionNumber = data => arraySort(data, 'version', { reverse: true })
 
