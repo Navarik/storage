@@ -78,8 +78,17 @@ var get = function get(type) {
   return registry[type];
 };
 
+var listAllTypes = function listAllTypes() {
+  return Object.keys(registry);
+};
+var listUserTypes = function listUserTypes() {
+  return listAllTypes().filter(function (x) {
+    return !x.includes('.');
+  });
+};
+
 var init = function init(source) {
-  Object.keys(registry).forEach(function (type) {
+  listAllTypes().forEach(function (type) {
     delete registry[type];
   });
   if (source) {
@@ -87,6 +96,6 @@ var init = function init(source) {
   }
 };
 
-var schemaRegistry = { add: add, update: update, get: get, format: format, fullName: fullName, init: init, validate: validate };
+var schemaRegistry = { add: add, update: update, get: get, format: format, fullName: fullName, init: init, validate: validate, listAllTypes: listAllTypes, listUserTypes: listUserTypes };
 
 exports.default = schemaRegistry;

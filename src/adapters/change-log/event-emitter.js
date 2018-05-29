@@ -3,13 +3,13 @@ import eventEmitter from 'event-emitter'
 
 import type { ChangelogAdapterInterface, Observer } from '../../flowtypes'
 
-class EventEmitterQueueAdapter implements ChangelogAdapterInterface {
+class DefaultChangelogAdapter implements ChangelogAdapterInterface {
   emitter: Object
-  log: Array<Object>
+  log: { [string]: Array<Object> }
 
   constructor(config: Object) {
     this.emitter = eventEmitter()
-    this.log = config.log || []
+    this.log = config.log || {}
   }
 
   on(topic: string, handler: Observer) {
@@ -23,8 +23,8 @@ class EventEmitterQueueAdapter implements ChangelogAdapterInterface {
   }
 
   read(topic: string) {
-    return Promise.resolve(this.log)
+    return Promise.resolve(this.log[topic])
   }
 }
 
-export default EventEmitterQueueAdapter
+export default DefaultChangelogAdapter

@@ -20,7 +20,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var sign = function sign(id, body) {
+var signVersion = function signVersion(id, body) {
   if (!id) {
     throw new Error('[ChangeLog] Cannot sign document version: document does not have an ID');
   }
@@ -31,13 +31,12 @@ var sign = function sign(id, body) {
 };
 
 var ChangeLog = function () {
-  function ChangeLog() {
-    var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
+  function ChangeLog(topic, adapter, generator) {
     _classCallCheck(this, ChangeLog);
 
-    this.adapter = config.adapter;
-    this.topic = config.topic;
+    this.adapter = adapter;
+    this.topic = topic;
+    this.generateId = generator;
 
     this.latest = {};
     this.versions = {};
@@ -58,7 +57,7 @@ var ChangeLog = function () {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return this.adapter.send(this.topic, document);
+                return this.adapter.write(this.topic, document);
 
               case 2:
                 this.registerAsLatest(document);
@@ -73,7 +72,7 @@ var ChangeLog = function () {
         }, _callee, this);
       }));
 
-      function register(_x2) {
+      function register(_x) {
         return _ref.apply(this, arguments);
       }
 
@@ -90,9 +89,28 @@ var ChangeLog = function () {
       return this.latest[id];
     }
   }, {
+    key: 'createNewDocument',
+    value: function createNewDocument(body) {
+      var now = new Date();
+      var id = this.generateId(body);
+      var versionId = signVersion(id, body);
+      var document = {
+        id: id,
+        created_at: now.toISOString(),
+        version: 1,
+        modified_at: now.toISOString(),
+        version_id: versionId,
+        body: body
+      };
+
+      return document;
+    }
+  }, {
     key: 'reconstruct',
     value: function () {
       var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+        var _this = this;
+
         var log, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, record;
 
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
@@ -103,65 +121,68 @@ var ChangeLog = function () {
                 this.versions = {};
 
                 _context2.next = 4;
-                return this.adapter.getLog(this.topic);
+                return this.adapter.read(this.topic);
 
               case 4:
                 log = _context2.sent;
 
                 log = (0, _arraySort2.default)(log, 'version');
+                log = log.map(function (record) {
+                  return record.id ? record : _this.createNewDocument(record);
+                });
 
                 _iteratorNormalCompletion = true;
                 _didIteratorError = false;
                 _iteratorError = undefined;
-                _context2.prev = 9;
+                _context2.prev = 10;
                 for (_iterator = log[Symbol.iterator](); !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
                   record = _step.value;
 
                   this.registerAsLatest(record);
                 }
 
-                _context2.next = 17;
+                _context2.next = 18;
                 break;
 
-              case 13:
-                _context2.prev = 13;
-                _context2.t0 = _context2['catch'](9);
+              case 14:
+                _context2.prev = 14;
+                _context2.t0 = _context2['catch'](10);
                 _didIteratorError = true;
                 _iteratorError = _context2.t0;
 
-              case 17:
-                _context2.prev = 17;
+              case 18:
                 _context2.prev = 18;
+                _context2.prev = 19;
 
                 if (!_iteratorNormalCompletion && _iterator.return) {
                   _iterator.return();
                 }
 
-              case 20:
-                _context2.prev = 20;
+              case 21:
+                _context2.prev = 21;
 
                 if (!_didIteratorError) {
-                  _context2.next = 23;
+                  _context2.next = 24;
                   break;
                 }
 
                 throw _iteratorError;
 
-              case 23:
-                return _context2.finish(20);
-
               case 24:
-                return _context2.finish(17);
+                return _context2.finish(21);
 
               case 25:
-                return _context2.abrupt('return', log);
+                return _context2.finish(18);
 
               case 26:
+                return _context2.abrupt('return', log);
+
+              case 27:
               case 'end':
                 return _context2.stop();
             }
           }
-        }, _callee2, this, [[9, 13, 17, 25], [18,, 20, 24]]);
+        }, _callee2, this, [[10, 14, 18, 26], [19,, 21, 25]]);
       }));
 
       function reconstruct() {
@@ -178,7 +199,7 @@ var ChangeLog = function () {
         throw new Error('[ChangeLog] Cannot create new version because the previous one does not exist');
       }
 
-      var versionId = sign(id, body);
+      var versionId = signVersion(id, body);
       if (previous.version_id === versionId) {
         throw new Error('[ChangeLog] Cannot create new version because it is not different from the current one');
       }
@@ -188,7 +209,6 @@ var ChangeLog = function () {
 
       var document = {
         id: id,
-        type: previous.type,
         created_at: previous.created_at,
         version: versionNumber,
         modified_at: now.toISOString(),
@@ -200,25 +220,8 @@ var ChangeLog = function () {
     }
   }, {
     key: 'logNew',
-    value: function logNew(type, id, body) {
-      var now = new Date();
-      var versionId = sign(id, body);
-      var document = {
-        id: id,
-        type: type,
-        created_at: now.toISOString(),
-        version: 1,
-        modified_at: now.toISOString(),
-        version_id: versionId,
-        body: body
-      };
-
-      return this.register(document);
-    }
-  }, {
-    key: 'observe',
-    value: function observe(func) {
-      this.adapter.on(this.topic, func);
+    value: function logNew(body) {
+      return this.register(this.createNewDocument(body));
     }
   }]);
 

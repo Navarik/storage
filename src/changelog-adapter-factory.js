@@ -1,11 +1,11 @@
 // @flow
-import { EventEmitterQueueAdapter } from './adapters/change-log'
+import { DefaultChangelogAdapter } from './adapters/change-log'
 
 const createChangelogAdapter = (type: any, namespace: string) => {
   if (type === 'default') {
-    return new EventEmitterQueueAdapter({})
-  } else if (type instanceof Array) {
-    return new EventEmitterQueueAdapter({ log: type })
+    return new DefaultChangelogAdapter({})
+  } else if (type instanceof Object) {
+    return new DefaultChangelogAdapter({ log: type })
   }
 
   return type

@@ -14,6 +14,10 @@ var _polyExclude = require('poly-exclude');
 
 var _polyExclude2 = _interopRequireDefault(_polyExclude);
 
+var _polyMap = require('poly-map');
+
+var _polyMap2 = _interopRequireDefault(_polyMap);
+
 var _utils = require('../../utils');
 
 var _neDb = require('./ne-db');
@@ -42,7 +46,7 @@ var NeDbClient = function () {
 
       return new Promise(function (resolve, reject) {
         return _this.client.find(searchParameters, function (err, res) {
-          if (err) reject(databaseError(err));else resolve((0, _utils.map)(format, res));
+          if (err) reject(databaseError(err));else resolve((0, _polyMap2.default)(format, res));
         });
       });
     }

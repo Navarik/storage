@@ -6,17 +6,13 @@ Object.defineProperty(exports, "__esModule", {
 
 require('babel-polyfill');
 
-var _queue = require('./adapters/queue');
+var _changelogAdapterFactory = require('./changelog-adapter-factory');
 
-var _searchIndex = require('./adapters/search-index');
+var _changelogAdapterFactory2 = _interopRequireDefault(_changelogAdapterFactory);
 
-var _searchIndex2 = require('./ports/search-index');
+var _searchIndexFactory = require('./search-index-factory');
 
-var _searchIndex3 = _interopRequireDefault(_searchIndex2);
-
-var _changeLog = require('./ports/change-log');
-
-var _changeLog2 = _interopRequireDefault(_changeLog);
+var _searchIndexFactory2 = _interopRequireDefault(_searchIndexFactory);
 
 var _models = require('./models');
 
@@ -24,26 +20,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
-var createChangelogAdapter = function createChangelogAdapter(conf) {
-  if (conf === 'default') {
-    return new _queue.EventEmitterQueueAdapter({});
-  }
-
-  if (conf instanceof Array) {
-    return new _queue.EventEmitterQueueAdapter({ log: conf });
-  }
-
-  return conf;
-};
-
-var configureSearchIndexAdapter = function configureSearchIndexAdapter(conf) {
-  var adapter = conf;
-  if (conf === 'default') {
-    adapter = new _searchIndex.NeDbSearchIndexAdapter();
-  }
-
-  return adapter;
-};
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 var configure = function configure() {
   var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -52,23 +29,14 @@ var configure = function configure() {
   var index = config.index || 'default';
   var namespace = config.namespace || 'storage';
 
-  var schemaChangeLog = new _changeLog2.default({
-    topic: namespace + '.schema',
-    adapter: createChangelogAdapter(log.schema || log)
-  });
-  var entityChangeLog = new _changeLog2.default({
-    topic: namespace + '.entity',
-    adapter: createChangelogAdapter(log.entity || log)
-  });
+  var schemaChangeLog = config.schema ? (0, _changelogAdapterFactory2.default)(_defineProperty({}, namespace + '.schema', config.schema)) : (0, _changelogAdapterFactory2.default)(log.schema || log, namespace);
+  var entityChangeLog = (0, _changelogAdapterFactory2.default)(config.data || log.entity || log, namespace);
 
-  var schemaSearchIndex = new _searchIndex3.default({
-    adapter: configureSearchIndexAdapter(index.schema || index)
-  });
-  var entitySearchIndex = new _searchIndex3.default({
-    adapter: configureSearchIndexAdapter(index.entity || index)
-  });
+  var schemaSearchIndex = (0, _searchIndexFactory2.default)(index.schema || index);
+  var entitySearchIndex = (0, _searchIndexFactory2.default)(index.entity || index);
 
   var schema = new _models.SchemaModel({
+    namespace: namespace,
     changeLog: schemaChangeLog,
     searchIndex: schemaSearchIndex
   });
@@ -119,11 +87,11 @@ var configure = function configure() {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return schema.init(config.schema || []);
+                return schema.init();
 
               case 2:
                 _context.next = 4;
-                return entity.init(config.data || []);
+                return entity.init();
 
               case 4:
               case 'end':

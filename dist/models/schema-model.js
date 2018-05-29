@@ -14,6 +14,10 @@ var _arrayUnique = require('array-unique');
 
 var _arrayUnique2 = _interopRequireDefault(_arrayUnique);
 
+var _polyMap = require('poly-map');
+
+var _polyMap2 = _interopRequireDefault(_polyMap);
+
 var _utils = require('../utils');
 
 var _changeLog = require('../ports/change-log');
@@ -45,7 +49,9 @@ var searchableFormat = (0, _utils.liftToArray)(function (schema) {
     namespace: schema.body.namespace,
     full_name: _schemaRegistry2.default.fullName(schema.body),
     description: schema.body.description,
-    fields: schema.body.fields.map((0, _utils.get)('name'))
+    fields: schema.body.fields.map(function (x) {
+      return x.name;
+    })
   };
 });
 
@@ -54,36 +60,35 @@ var SchemaModel = function () {
     _classCallCheck(this, SchemaModel);
 
     this.searchIndex = config.searchIndex;
-    this.changeLog = config.changeLog;
+    this.changeLog = new _changeLog2.default(config.namespace + '.schema', config.changeLog, function (body) {
+      return generateId(_schemaRegistry2.default.fullName(body));
+    });
   }
 
   _createClass(SchemaModel, [{
     key: 'init',
     value: function () {
-      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(source) {
-        var _this = this;
-
+      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
         var log;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return source ? Promise.all(source.map(function (schema) {
-                  return _this.changeLog.logNew('schema', generateId(_schemaRegistry2.default.fullName(schema)), schema);
-                })) : this.changeLog.reconstruct();
+                return this.changeLog.reconstruct();
 
               case 2:
                 log = _context.sent;
                 _context.next = 5;
-                return this.searchIndex.init(log.map(searchableFormat));
-
-              case 5:
-                _schemaRegistry2.default.init(log.map(function (x) {
+                return _schemaRegistry2.default.init(log.map(function (x) {
                   return x.body;
                 }));
 
-              case 6:
+              case 5:
+                _context.next = 7;
+                return this.searchIndex.init(log.map(searchableFormat));
+
+              case 7:
               case 'end':
                 return _context.stop();
             }
@@ -91,7 +96,7 @@ var SchemaModel = function () {
         }, _callee, this);
       }));
 
-      function init(_x) {
+      function init() {
         return _ref.apply(this, arguments);
       }
 
@@ -103,12 +108,14 @@ var SchemaModel = function () {
   }, {
     key: 'getNamespaces',
     value: function getNamespaces() {
-      return this.searchIndex.findLatest({}).then((0, _utils.map)((0, _utils.get)('namespace'))).then(_arrayUnique2.default);
+      return this.searchIndex.findLatest({}).then((0, _polyMap2.default)(function (x) {
+        return x.namespace;
+      })).then(_arrayUnique2.default);
     }
   }, {
     key: 'get',
     value: function get(name, version) {
-      var _this2 = this;
+      var _this = this;
 
       var schema = _schemaRegistry2.default.get(name);
       if (!schema) return Promise.resolve(undefined);
@@ -122,14 +129,14 @@ var SchemaModel = function () {
       }
 
       return this.searchIndex.findVersions({ id: id, version: version }).then(_utils.head).then((0, _utils.maybe)(function (x) {
-        return _this2.changeLog.getVersion(x.version_id);
+        return _this.changeLog.getVersion(x.version_id);
       }));
     }
   }, {
     key: 'find',
     value: function () {
       var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(params) {
-        var _this3 = this;
+        var _this2 = this;
 
         var found, schemas;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
@@ -142,7 +149,7 @@ var SchemaModel = function () {
               case 2:
                 found = _context2.sent;
                 schemas = found.map(function (x) {
-                  return _this3.changeLog.getLatestVersion(x.id);
+                  return _this2.changeLog.getLatestVersion(x.id);
                 });
                 return _context2.abrupt('return', schemas);
 
@@ -154,7 +161,7 @@ var SchemaModel = function () {
         }, _callee2, this);
       }));
 
-      function find(_x2) {
+      function find(_x) {
         return _ref2.apply(this, arguments);
       }
 
@@ -167,25 +174,24 @@ var SchemaModel = function () {
     key: 'create',
     value: function () {
       var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(type, body) {
-        var schema, id, schemaRecord;
+        var schema, schemaRecord;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
                 schema = _schemaRegistry2.default.add(body);
-                id = generateId(_schemaRegistry2.default.fullName(body));
-                _context3.next = 4;
-                return this.changeLog.logNew('schema', id, schema);
+                _context3.next = 3;
+                return this.changeLog.logNew(schema);
 
-              case 4:
+              case 3:
                 schemaRecord = _context3.sent;
-                _context3.next = 7;
+                _context3.next = 6;
                 return this.searchIndex.add(searchableFormat(schemaRecord));
 
-              case 7:
+              case 6:
                 return _context3.abrupt('return', schemaRecord);
 
-              case 8:
+              case 7:
               case 'end':
                 return _context3.stop();
             }
@@ -193,7 +199,7 @@ var SchemaModel = function () {
         }, _callee3, this);
       }));
 
-      function create(_x3, _x4) {
+      function create(_x2, _x3) {
         return _ref3.apply(this, arguments);
       }
 
@@ -229,7 +235,7 @@ var SchemaModel = function () {
         }, _callee4, this);
       }));
 
-      function update(_x5, _x6) {
+      function update(_x4, _x5) {
         return _ref4.apply(this, arguments);
       }
 

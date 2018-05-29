@@ -2,11 +2,11 @@
 import uuidv5 from 'uuid/v5'
 import arraySort from 'array-sort'
 
-import type { ChangelogInterface, ChangeRecord, Identifier, ChangelogAdapterInterface, Observer } from '../flowtypes'
+import type { IdGenerator, ChangelogInterface, ChangeRecord, Identifier, ChangelogAdapterInterface, Observer } from '../flowtypes'
 
 type GenericChangeRecord = ChangeRecord<any>
 
-const sign = (id: Identifier, body: GenericChangeRecord): Identifier => {
+const signVersion = (id: Identifier, body: GenericChangeRecord): Identifier => {
   if (!id) {
     throw new Error('[ChangeLog] Cannot sign document version: document does not have an ID')
   }
@@ -18,13 +18,15 @@ const sign = (id: Identifier, body: GenericChangeRecord): Identifier => {
 
 class ChangeLog implements ChangelogInterface {
   topic: string
+  generateId: IdGenerator
   adapter: ChangelogAdapterInterface
   latest: { [Identifier]: GenericChangeRecord }
-  versions: {[Identifier]: GenericChangeRecord }
+  versions: { [Identifier]: GenericChangeRecord }
 
-  constructor(topic: string, adapter: ChangelogAdapterInterface) {
+  constructor(topic: string, adapter: ChangelogAdapterInterface, generator: IdGenerator) {
     this.adapter = adapter
     this.topic = topic
+    this.generateId = generator
 
     this.latest = {}
     this.versions = {}
@@ -50,12 +52,29 @@ class ChangeLog implements ChangelogInterface {
     return this.latest[id]
   }
 
+  createNewDocument(body: any) {
+    const now = new Date()
+    const id = this.generateId(body)
+    const versionId = signVersion(id, body)
+    const document = {
+      id,
+      created_at: now.toISOString(),
+      version: 1,
+      modified_at: now.toISOString(),
+      version_id: versionId,
+      body
+    }
+
+    return document
+  }
+
   async reconstruct() {
     this.latest = {}
     this.versions = {}
 
     let log = await this.adapter.read(this.topic)
     log = arraySort(log, 'version')
+    log = log.map(record => (record.id ? record : this.createNewDocument(record)))
 
     for (let record of log) {
       this.registerAsLatest(record)
@@ -70,7 +89,7 @@ class ChangeLog implements ChangelogInterface {
       throw new Error('[ChangeLog] Cannot create new version because the previous one does not exist')
     }
 
-    const versionId = sign(id, body)
+    const versionId = signVersion(id, body)
     if (previous.version_id === versionId) {
       throw new Error('[ChangeLog] Cannot create new version because it is not different from the current one')
     }
@@ -90,19 +109,8 @@ class ChangeLog implements ChangelogInterface {
     return this.register(document)
   }
 
-  logNew(id: Identifier, body: any) {
-    const now = new Date()
-    const versionId = sign(id, body)
-    const document = {
-      id,
-      created_at: now.toISOString(),
-      version: 1,
-      modified_at: now.toISOString(),
-      version_id: versionId,
-      body
-    }
-
-    return this.register(document)
+  logNew(body: any) {
+    return this.register(this.createNewDocument(body))
   }
 }
 

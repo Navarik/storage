@@ -4,12 +4,12 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _eventEmitterQueue = require('./event-emitter-queue');
+var _eventEmitter = require('./event-emitter');
 
-Object.defineProperty(exports, 'EventEmitterQueueAdapter', {
+Object.defineProperty(exports, 'DefaultChangelogAdapter', {
   enumerable: true,
   get: function get() {
-    return _interopRequireDefault(_eventEmitterQueue).default;
+    return _interopRequireDefault(_eventEmitter).default;
   }
 });
 

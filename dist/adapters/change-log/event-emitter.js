@@ -14,34 +14,34 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventEmitterQueueAdapter = function () {
-  function EventEmitterQueueAdapter(config) {
-    _classCallCheck(this, EventEmitterQueueAdapter);
+var DefaultChangelogAdapter = function () {
+  function DefaultChangelogAdapter(config) {
+    _classCallCheck(this, DefaultChangelogAdapter);
 
     this.emitter = (0, _eventEmitter2.default)();
-    this.log = config.log || [];
+    this.log = config.log || {};
   }
 
-  _createClass(EventEmitterQueueAdapter, [{
+  _createClass(DefaultChangelogAdapter, [{
     key: 'on',
     value: function on(topic, handler) {
       this.emitter.on(topic, handler);
     }
   }, {
-    key: 'send',
-    value: function send(topic, message) {
+    key: 'write',
+    value: function write(topic, message) {
       this.emitter.emit(topic, message);
 
       return Promise.resolve(message);
     }
   }, {
-    key: 'getLog',
-    value: function getLog(topic) {
-      return Promise.resolve(this.log);
+    key: 'read',
+    value: function read(topic) {
+      return Promise.resolve(this.log[topic]);
     }
   }]);
 
-  return EventEmitterQueueAdapter;
+  return DefaultChangelogAdapter;
 }();
 
-exports.default = EventEmitterQueueAdapter;
+exports.default = DefaultChangelogAdapter;

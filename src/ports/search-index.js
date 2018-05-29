@@ -3,7 +3,7 @@ import arraySort from 'array-sort'
 import groupBy from 'group-by'
 import map from 'poly-map'
 
-import type { SearchIndexInterface, SearchIndexAdapterInterface, Collection } from '../flowtypes'
+import type { SearchIndexInterface, Searchable, SearchIndexAdapterInterface, Collection } from '../flowtypes'
 
 const sortByVersionNumber = data => arraySort(data, 'version', { reverse: true })
 
@@ -14,7 +14,7 @@ class SearchIndex implements SearchIndexInterface {
     this.adapter = config.adapter
   }
 
-  init(log: Collection) {
+  init(log: Collection<Searchable>) {
     const versions = Object.values(groupBy(log, 'id'))
     const latest = map(sortByVersionNumber, versions)
 

@@ -65,13 +65,16 @@ const get = (type: string): AvroType => {
   return registry[type]
 }
 
+const listAllTypes = (): Array<string> => Object.keys(registry)
+const listUserTypes = (): Array<string> => listAllTypes().filter(x => !x.includes('.'))
+
 const init = (source: ?Array<AvroSchema>) => {
-  Object.keys(registry).forEach(type => { delete registry[type] })
+  listAllTypes().forEach(type => { delete registry[type] })
   if (source) {
     source.forEach(add)
   }
 }
 
-const schemaRegistry = { add, update, get, format, fullName, init, validate }
+const schemaRegistry = { add, update, get, format, fullName, init, validate, listAllTypes, listUserTypes }
 
 export default schemaRegistry

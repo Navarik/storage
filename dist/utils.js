@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.liftToArray = exports.head = exports.get = exports.maybe = exports.map = undefined;
+exports.liftToArray = exports.head = exports.maybe = undefined;
 
 var _polyMap = require('poly-map');
 
@@ -11,19 +11,11 @@ var _polyMap2 = _interopRequireDefault(_polyMap);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-exports.map = _polyMap2.default;
 var maybe = exports.maybe = function maybe(f) {
   return function (x) {
     return x === undefined ? undefined : f(x);
   };
 };
-
-var get = exports.get = function get(name) {
-  return maybe(function (object) {
-    return object[name];
-  });
-};
-
 var head = exports.head = function head(xs) {
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;

@@ -31,19 +31,17 @@ class SchemaModel {
 
   constructor(config: Object) {
     this.searchIndex = config.searchIndex
-    this.changeLog = new ChangeLog(`${config.namespace}.schema`, config.changeLog)
+    this.changeLog = new ChangeLog(
+      `${config.namespace}.schema`,
+      config.changeLog,
+      body => generateId(schemaRegistry.fullName(body))
+    )
   }
 
-  async init(source: ?Collection<AvroSchema>) {
-    const log = await (source
-      ? Promise.all(source.map(schema =>
-        this.changeLog.logNew(generateId(schemaRegistry.fullName(schema)), schema)
-      ))
-      : this.changeLog.reconstruct()
-    )
-
+  async init() {
+    const log = await this.changeLog.reconstruct()
+    await schemaRegistry.init(log.map(x => x.body))
     await this.searchIndex.init(log.map(searchableFormat))
-    schemaRegistry.init(log.map(x => x.body))
   }
 
   // Queries
@@ -83,8 +81,7 @@ class SchemaModel {
   async create(type: string, body: AvroSchema) {
     const schema = schemaRegistry.add(body)
 
-    const id = generateId(schemaRegistry.fullName(body))
-    const schemaRecord = await this.changeLog.logNew(id, schema)
+    const schemaRecord = await this.changeLog.logNew(schema)
     await this.searchIndex.add(searchableFormat(schemaRecord))
 
     return schemaRecord

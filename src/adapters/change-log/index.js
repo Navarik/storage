@@ -1,1 +1,1 @@
-export { default as EventEmitterQueueAdapter } from './event-emitter-queue'
+export { default as DefaultChangelogAdapter } from './event-emitter'

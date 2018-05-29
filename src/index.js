@@ -11,8 +11,10 @@ const configure = (config: ModuleConfiguration = {}) => {
   const index = config.index || 'default'
   const namespace = config.namespace || 'storage'
 
-  const schemaChangeLog = createChangelogAdapter(log.schema || log, namespace)
-  const entityChangeLog = createChangelogAdapter(log.entity || log, namespace)
+  const schemaChangeLog = config.schema
+    ? createChangelogAdapter({ [`${namespace}.schema`]: config.schema })
+    : createChangelogAdapter(log.schema || log, namespace)
+  const entityChangeLog = createChangelogAdapter(config.data || log.entity || log, namespace)
 
   const schemaSearchIndex = createSearchIndex(index.schema || index)
   const entitySearchIndex = createSearchIndex(index.entity || index)
@@ -43,8 +45,8 @@ const configure = (config: ModuleConfiguration = {}) => {
     validate: (type: string, body: Object) => entity.validate(type, body),
 
     init: async () => {
-      await schema.init(config.schema || [])
-      await entity.init(config.data || [])
+      await schema.init()
+      await entity.init()
     }
   }
 }

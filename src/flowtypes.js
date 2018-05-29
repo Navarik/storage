@@ -48,7 +48,7 @@ export interface ChangelogAdapterInterface {
 export interface ChangelogInterface {
   getVersion<T>(versionId: Identifier): ChangeRecord<T>;
   getLatestVersion<T>(id: Identifier): ChangeRecord<T>;
-  logNew<T>(id: Identifier, body: T): Promise<ChangeRecord<T>>;
+  logNew<T>(body: T): Promise<ChangeRecord<T>>;
   logChange<T>(id: Identifier, body: T): Promise<ChangeRecord<T>>;
   reconstruct<T>(): Promise<Collection<ChangeRecord<T>>>;
 }

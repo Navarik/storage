@@ -3,6 +3,7 @@ import uuidv4 from 'uuid/v4'
 import map from 'poly-map'
 import pipe from 'function-pipe'
 import filter from 'poly-filter'
+import flatten from 'array-flatten'
 import { liftToArray, head, maybe } from '../utils'
 import ChangeLog from '../ports/change-log'
 import schemaRegistry from './schema-registry'
@@ -44,22 +45,20 @@ class EntityModel {
     if (!this.changelogs[type]) {
       this.changelogs[type] = new ChangeLog(
         `${this.namespace}.${type}`,
-        this.changelogAdapter
+        this.changelogAdapter,
+        generateId
       )
     }
 
     return this.changelogs[type]
   }
 
-  async init(source: ?Collection<Entity>) {
-    const log = await (source && source.length
-      ? Promise.all(source.map(x =>
-        this.getChangelog(x.type).logNew(generateId(), x.body)
-      ))
-      : []//this.getChangelog(x.type).reconstruct()
-    )
-
-    await this.searchIndex.init(log.map(searchableFormat))
+  async init() {
+    const types = schemaRegistry.listUserTypes()
+    const log = await Promise.all(types.map(type =>
+      this.getChangelog(type).reconstruct().then(searchableFormat)
+    ))
+    await this.searchIndex.init(flatten(log))
   }
 
   // Queries
@@ -109,9 +108,8 @@ class EntityModel {
     }
 
     const formatted = schemaRegistry.format(type, body)
-    const id = generateId()
 
-    const entityRecord = await this.getChangelog(type).logNew(id, formatted)
+    const entityRecord = await this.getChangelog(type).logNew(formatted)
     const entity = wrapEntity(entityRecord, type)
     await this.searchIndex.add(searchableFormat(entity))
 

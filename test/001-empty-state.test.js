@@ -3,7 +3,7 @@ import createStorage from '../src'
 
 const storage = createStorage()
 
-describe("Initial state", () => {
+describe("Empty state", () => {
   before(() => storage.init())
 
   it("should have no namespaces", async () => {
