@@ -1,14 +1,23 @@
 //@flow
 import uuidv4 from 'uuid/v4'
 import map from 'poly-map'
+import pipe from 'function-pipe'
+import filter from 'poly-filter'
 import { liftToArray, head, maybe } from '../utils'
 import ChangeLog from '../ports/change-log'
 import schemaRegistry from './schema-registry'
 
-import type { Identifier, ChangelogInterface, ChangelogAdapterInterface, SearchIndexInterface, Collection } from '../flowtypes'
+import type { Entity, Identifier, ChangelogInterface, ChangeRecord, ChangelogAdapterInterface, SearchIndexInterface, Collection } from '../flowtypes'
 
 const generateId = body => uuidv4()
-const stringifyProperties = map(x => String(x))
+const isDefined = x => x !== undefined
+const stringifyProperties = pipe(filter(isDefined), map(String))
+
+const wrapEntity = (document: ChangeRecord<Object>, type: string): Entity => ({
+  ...document,
+  type,
+  schema: schemaRegistry.get(type).schema()
+})
 
 const searchableFormat = liftToArray(entity => ({
   id: entity.id,
@@ -42,7 +51,7 @@ class EntityModel {
     return this.changelogs[type]
   }
 
-  async init(source: ?Collection) {
+  async init(source: ?Collection<Entity>) {
     const log = await (source && source.length
       ? Promise.all(source.map(x =>
         this.getChangelog(x.type).logNew(generateId(), x.body)
@@ -56,23 +65,33 @@ class EntityModel {
   // Queries
   async find(params: Object) {
     const found = await this.searchIndex.findLatest(stringifyProperties(params))
-    const entities = found.map(x => this.getChangelog(type).getLatestVersion(x.id))
+    const entities = found.map(x =>
+      wrapEntity(this.getChangelog(x.type).getLatestVersion(x.id), x.type)
+    )
 
     return entities
   }
 
-  async get(id: Identifier, version: ?string) {
-    if (!version) {
-      return this.getChangelog(type).getLatestVersion(id)
+  async get(id: Identifier, version: ?string): Promise<?Entity> {
+    const query = stringifyProperties({ id, version })
+
+    let found
+    if (version) {
+      found = await this.searchIndex.findVersions(query)
+    } else {
+      found = await this.searchIndex.findLatest(query)
     }
 
-    const searchQuery = stringifyProperties({ id, version })
-    const versions = await this.searchIndex.findVersions(searchQuery)
-    if (versions.length === 0) {
+    if (found.length === 0) {
       return undefined
     }
 
-    return this.getChangelog(type).getVersion(versions[0].version_id)
+    const type = found[0].type
+    const log = this.getChangelog(type)
+    const data = log.getVersion(found[0].version_id)
+    const entity = wrapEntity(data, type)
+
+    return entity
   }
 
   // Commands
@@ -89,29 +108,35 @@ class EntityModel {
       throw new Error(`[Entity] Invalid value provided for: ${validationErrors.join(', ')}`)
     }
 
-    const entity = schemaRegistry.format(type, body)
+    const formatted = schemaRegistry.format(type, body)
     const id = generateId()
 
-    const entityRecord = await this.getChangelog(type).logNew(id, entity)
-    await this.searchIndex.add(searchableFormat(entityRecord))
+    const entityRecord = await this.getChangelog(type).logNew(id, formatted)
+    const entity = wrapEntity(entityRecord, type)
+    await this.searchIndex.add(searchableFormat(entity))
 
-    return entityRecord
+    return entity
   }
 
   async update(id: Identifier, body: Object) {
-    const { type } = this.getChangelog(type).getLatestVersion(id)
+    const current = await this.get(id)
 
-    const validationErrors = schemaRegistry.validate(type, body)
+    if (!current) {
+      throw new Error(`[Entity] Entity doesn's exist for ID: ${id}`)
+    }
+
+    const validationErrors = schemaRegistry.validate(current.type, body)
     if (validationErrors.length) {
       throw new Error(`[Entity] Invalid value provided for: ${validationErrors.join(', ')}`)
     }
 
-    const entity = schemaRegistry.format(type, body)
+    const formatted = schemaRegistry.format(current.type, body)
 
-    const entityRecord = await this.getChangelog(type).logChange(id, entity)
-    await this.searchIndex.add(searchableFormat(entityRecord))
+    const entityRecord = await this.getChangelog(current.type).logChange(id, formatted)
+    const entity = wrapEntity(entityRecord, current.type)
+    await this.searchIndex.add(searchableFormat(entity))
 
-    return entityRecord
+    return entity
   }
 }
 

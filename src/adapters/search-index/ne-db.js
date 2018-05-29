@@ -2,11 +2,11 @@
 import Database from 'nedb'
 import NeDbClient from './ne-db-client'
 
-import type { SearchIndexAdapterInterface, Collection } from '../../flowtypes'
+import type { SearchIndexAdapterInterface, Collection, Searchable } from '../../flowtypes'
 
 export interface DBClientInterface {
-  find(searchParameters: Object): Promise<Collection>;
-  insert(documents: Collection): Promise<number>;
+  find(searchParameters: Object): Promise<Collection<Searchable>>;
+  insert(documents: Collection<Searchable>): Promise<number>;
   update(searchParams: Object, document: Object): Promise<number>;
 }
 
@@ -29,7 +29,7 @@ class NeDbSearchIndexAdapter implements SearchIndexAdapterInterface {
     return this.getCollection(name).find(searchParams)
   }
 
-  insert(name: string, documents: Collection) {
+  insert(name: string, documents: Collection<Searchable>) {
     return this.getCollection(name).insert(documents)
   }
 

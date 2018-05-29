@@ -4,7 +4,7 @@ import exclude from 'poly-exclude'
 import map from 'poly-map'
 import { maybe } from '../../utils'
 
-import type { Collection } from '../../flowtypes'
+import type { Collection, Searchable } from '../../flowtypes'
 import { DBClientInterface } from './ne-db'
 
 const format = maybe(exclude(['_id']))
@@ -29,7 +29,7 @@ class NeDbClient implements DBClientInterface {
     )
   }
 
-  insert(documents: Collection) {
+  insert(documents: Collection<Searchable>) {
     return new Promise((resolve, reject) =>
       this.client.insert(documents, (err, res) => {
         if (err) reject(databaseError(err))

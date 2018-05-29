@@ -34,21 +34,21 @@ describe("Entity format and constraints", () => {
   }))
 })
 
-// describe("Entity creation flow", () => {
-//   before(() => storage.init({ schemata: 'file://./test/fixtures/schemata/source' }))
+describe("Entity creation flow", () => {
+  before(() => storage.init({ schemata: 'file://./test/fixtures/schemata/source' }))
 
-//   it("doesn't have entities before they are created", async () => {
-//     const response = await storage.find()
-//     expect(response).to.be.an('array')
-//     expect(response).to.be.empty()
-//   })
+  it("doesn't have entities before they are created", async () => {
+    const response = await storage.find()
+    expect(response).to.be.an('array')
+    expect(response).to.be.empty()
+  })
 
-//   it("correctly creates new entities", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
-//   it("allows duplicates", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
+  it("correctly creates new entities", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
+  it("allows duplicates", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
 
-//   it("correct number of entities is created", async () => {
-//     const response = await storage.find()
-//     expect(response).to.be.an('array')
-//     expect(response).to.have.length(10)
-//   })
-// })
+  it("correct number of entities is created", async () => {
+    const response = await storage.find()
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(10)
+  })
+})

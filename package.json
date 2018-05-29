@@ -17,9 +17,11 @@
     "babel-polyfill": "^6.26.0",
     "event-emitter": "^0.3.5",
     "file-extension": "^4.0.2",
+    "function-pipe": "^1.2.1",
     "group-by": "0.0.1",
     "nedb": "^1.8.0",
     "poly-exclude": "^1.0.4",
+    "poly-filter": "^1.0.2",
     "poly-map": "^2.1.1",
     "uuid": "^3.2.1"
   },

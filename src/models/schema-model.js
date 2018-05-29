@@ -6,13 +6,13 @@ import { head, liftToArray, maybe } from '../utils'
 import ChangeLog from '../ports/change-log'
 import schemaRegistry from './schema-registry'
 
-import type { Identifier, AvroSchema, SchemaRecord, ChangelogInterface, SearchIndexInterface, Collection } from '../flowtypes'
+import type { Identifier, Schema, AvroSchema, ChangeRecord, ChangelogInterface, SearchIndexInterface, Collection } from '../flowtypes'
 
 // Generate same IDs for the each name + namespace combination
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
 const generateId = name => uuidv5(name, UUID_ROOT)
 
-const searchableFormat = liftToArray((schema: SchemaRecord) =>
+const searchableFormat = liftToArray((schema: ChangeRecord<AvroSchema>) =>
   ({
     id: schema.id,
     version: schema.version,
@@ -34,7 +34,7 @@ class SchemaModel {
     this.changeLog = new ChangeLog(`${config.namespace}.schema`, config.changeLog)
   }
 
-  async init(source: ?Collection) {
+  async init(source: ?Collection<AvroSchema>) {
     const log = await (source
       ? Promise.all(source.map(schema =>
         this.changeLog.logNew(generateId(schemaRegistry.fullName(schema)), schema)

@@ -4,7 +4,9 @@ import arraySort from 'array-sort'
 
 import type { ChangelogInterface, ChangeRecord, Identifier, ChangelogAdapterInterface, Observer } from '../flowtypes'
 
-const sign = (id: Identifier, body: ChangeRecord): Identifier => {
+type GenericChangeRecord = ChangeRecord<any>
+
+const sign = (id: Identifier, body: GenericChangeRecord): Identifier => {
   if (!id) {
     throw new Error('[ChangeLog] Cannot sign document version: document does not have an ID')
   }
@@ -17,8 +19,8 @@ const sign = (id: Identifier, body: ChangeRecord): Identifier => {
 class ChangeLog implements ChangelogInterface {
   topic: string
   adapter: ChangelogAdapterInterface
-  latest: { [Identifier]: ChangeRecord }
-  versions: { [Identifier]: ChangeRecord }
+  latest: { [Identifier]: GenericChangeRecord }
+  versions: {[Identifier]: GenericChangeRecord }
 
   constructor(topic: string, adapter: ChangelogAdapterInterface) {
     this.adapter = adapter
@@ -28,12 +30,12 @@ class ChangeLog implements ChangelogInterface {
     this.versions = {}
   }
 
-  registerAsLatest(document: ChangeRecord) {
+  registerAsLatest(document: GenericChangeRecord) {
     this.versions[document.version_id] = document
     this.latest[document.id] = document
   }
 
-  async register(document: ChangeRecord): Promise<ChangeRecord> {
+  async register(document: GenericChangeRecord): Promise<GenericChangeRecord> {
     await this.adapter.write(this.topic, document)
     this.registerAsLatest(document)
 
@@ -62,7 +64,7 @@ class ChangeLog implements ChangelogInterface {
     return log
   }
 
-  logChange(id: Identifier, body: Object) {
+  logChange(id: Identifier, body: any) {
     const previous = this.getLatestVersion(id)
     if (!previous) {
       throw new Error('[ChangeLog] Cannot create new version because the previous one does not exist')
@@ -78,7 +80,6 @@ class ChangeLog implements ChangelogInterface {
 
     const document = {
       id,
-      type: this.topic,
       created_at: previous.created_at,
       version: versionNumber,
       modified_at: now.toISOString(),
@@ -89,12 +90,11 @@ class ChangeLog implements ChangelogInterface {
     return this.register(document)
   }
 
-  logNew(id: Identifier, body: Object) {
+  logNew(id: Identifier, body: any) {
     const now = new Date()
     const versionId = sign(id, body)
     const document = {
       id,
-      type: this.topic,
       created_at: now.toISOString(),
       version: 1,
       modified_at: now.toISOString(),
