@@ -28,18 +28,17 @@ export type SchemaRecord = Document<AvroSchema>
 
 export type Observer = Object => void
 
-export interface QueueAdapterInterface {
+export interface ChangelogAdapterInterface {
   on(topic: string, handler: Observer): void;
-  send(topic: string, message: Object): Promise<Object>;
-  getLog(topic: string): Promise<Array<Object>>;
+  write(topic: string, message: Object): Promise<Object>;
+  read(topic: string): Promise<Array<Object>>;
 }
 
 export interface ChangelogInterface {
   getVersion(versionId: Identifier): ChangeRecord;
   getLatestVersion(id: Identifier): ChangeRecord;
-  logNew(type: string, id: Identifier, body: Object): Promise<ChangeRecord>;
+  logNew(id: Identifier, body: Object): Promise<ChangeRecord>;
   logChange(id: Identifier, body: Object): Promise<ChangeRecord>;
-  observe(func: Observer): void;
   reconstruct(): Promise<Collection>;
 }
 

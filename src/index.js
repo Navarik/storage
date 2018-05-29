@@ -1,56 +1,24 @@
 // @flow
 import 'babel-polyfill'
-import { EventEmitterQueueAdapter } from './adapters/queue'
-import { NeDbSearchIndexAdapter } from './adapters/search-index'
-import SearchIndex from './ports/search-index'
-import ChangeLog from './ports/change-log'
+import createChangelogAdapter from './changelog-adapter-factory'
+import createSearchIndex from './search-index-factory'
 
 import { SchemaModel, EntityModel } from './models'
 import type { AvroSchema, Identifier, ModuleConfiguration } from './flowtypes'
-
-const createChangelogAdapter = (conf) => {
-  if (conf === 'default') {
-    return new EventEmitterQueueAdapter({})
-  }
-
-  if (conf instanceof Array) {
-    return new EventEmitterQueueAdapter({ log: conf })
-  }
-
-  return conf
-}
-
-const configureSearchIndexAdapter = (conf) => {
-  let adapter = conf
-  if (conf === 'default') {
-    adapter = new NeDbSearchIndexAdapter()
-  }
-
-  return adapter
-}
 
 const configure = (config: ModuleConfiguration = {}) => {
   const log = config.log || 'default'
   const index = config.index || 'default'
   const namespace = config.namespace || 'storage'
 
-  const schemaChangeLog = new ChangeLog({
-    topic: `${namespace}.schema`,
-    adapter: createChangelogAdapter(log.schema || log)
-  })
-  const entityChangeLog = new ChangeLog({
-    topic: `${namespace}.entity`,
-    adapter: createChangelogAdapter(log.entity || log)
-  })
+  const schemaChangeLog = createChangelogAdapter(log.schema || log, namespace)
+  const entityChangeLog = createChangelogAdapter(log.entity || log, namespace)
 
-  const schemaSearchIndex = new SearchIndex({
-    adapter: configureSearchIndexAdapter(index.schema || index)
-  })
-  const entitySearchIndex = new SearchIndex({
-    adapter: configureSearchIndexAdapter(index.entity || index)
-  })
+  const schemaSearchIndex = createSearchIndex(index.schema || index)
+  const entitySearchIndex = createSearchIndex(index.entity || index)
 
   const schema = new SchemaModel({
+    namespace,
     changeLog: schemaChangeLog,
     searchIndex: schemaSearchIndex
   })

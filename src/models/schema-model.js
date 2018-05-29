@@ -1,7 +1,8 @@
 //@flow
 import uuidv5 from 'uuid/v5'
 import unique from 'array-unique'
-import { head, liftToArray, map, get, maybe } from '../utils'
+import map from 'poly-map'
+import { head, liftToArray, maybe } from '../utils'
 import ChangeLog from '../ports/change-log'
 import schemaRegistry from './schema-registry'
 
@@ -20,7 +21,7 @@ const searchableFormat = liftToArray((schema: SchemaRecord) =>
     namespace: schema.body.namespace,
     full_name: schemaRegistry.fullName(schema.body),
     description: schema.body.description,
-    fields: schema.body.fields.map(get('name'))
+    fields: schema.body.fields.map(x => x.name)
   })
 )
 
@@ -30,13 +31,13 @@ class SchemaModel {
 
   constructor(config: Object) {
     this.searchIndex = config.searchIndex
-    this.changeLog = config.changeLog
+    this.changeLog = new ChangeLog(`${config.namespace}.schema`, config.changeLog)
   }
 
   async init(source: ?Collection) {
     const log = await (source
       ? Promise.all(source.map(schema =>
-        this.changeLog.logNew('schema', generateId(schemaRegistry.fullName(schema)), schema)
+        this.changeLog.logNew(generateId(schemaRegistry.fullName(schema)), schema)
       ))
       : this.changeLog.reconstruct()
     )
@@ -49,7 +50,7 @@ class SchemaModel {
   getNamespaces() {
     return this.searchIndex
       .findLatest({})
-      .then(map(get('namespace')))
+      .then(map(x => x.namespace))
       .then(unique)
   }
 
@@ -83,7 +84,7 @@ class SchemaModel {
     const schema = schemaRegistry.add(body)
 
     const id = generateId(schemaRegistry.fullName(body))
-    const schemaRecord = await this.changeLog.logNew('schema', id, schema)
+    const schemaRecord = await this.changeLog.logNew(id, schema)
     await this.searchIndex.add(searchableFormat(schemaRecord))
 
     return schemaRecord

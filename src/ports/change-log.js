@@ -2,7 +2,7 @@
 import uuidv5 from 'uuid/v5'
 import arraySort from 'array-sort'
 
-import type { ChangelogInterface, ChangeRecord, Identifier, QueueAdapterInterface, Observer } from '../flowtypes'
+import type { ChangelogInterface, ChangeRecord, Identifier, ChangelogAdapterInterface, Observer } from '../flowtypes'
 
 const sign = (id: Identifier, body: ChangeRecord): Identifier => {
   if (!id) {
@@ -16,13 +16,13 @@ const sign = (id: Identifier, body: ChangeRecord): Identifier => {
 
 class ChangeLog implements ChangelogInterface {
   topic: string
-  adapter: QueueAdapterInterface
+  adapter: ChangelogAdapterInterface
   latest: { [Identifier]: ChangeRecord }
   versions: { [Identifier]: ChangeRecord }
 
-  constructor(config: Object = {}) {
-    this.adapter = config.adapter
-    this.topic = config.topic
+  constructor(topic: string, adapter: ChangelogAdapterInterface) {
+    this.adapter = adapter
+    this.topic = topic
 
     this.latest = {}
     this.versions = {}
@@ -33,8 +33,8 @@ class ChangeLog implements ChangelogInterface {
     this.latest[document.id] = document
   }
 
-  async register(document: Object): Promise<Object> {
-    await this.adapter.send(this.topic, document)
+  async register(document: ChangeRecord): Promise<ChangeRecord> {
+    await this.adapter.write(this.topic, document)
     this.registerAsLatest(document)
 
     return document
@@ -52,7 +52,7 @@ class ChangeLog implements ChangelogInterface {
     this.latest = {}
     this.versions = {}
 
-    let log = await this.adapter.getLog(this.topic)
+    let log = await this.adapter.read(this.topic)
     log = arraySort(log, 'version')
 
     for (let record of log) {
@@ -78,7 +78,7 @@ class ChangeLog implements ChangelogInterface {
 
     const document = {
       id,
-      type: previous.type,
+      type: this.topic,
       created_at: previous.created_at,
       version: versionNumber,
       modified_at: now.toISOString(),
@@ -89,12 +89,12 @@ class ChangeLog implements ChangelogInterface {
     return this.register(document)
   }
 
-  logNew(type: string, id: Identifier, body: Object) {
+  logNew(id: Identifier, body: Object) {
     const now = new Date()
     const versionId = sign(id, body)
     const document = {
       id,
-      type,
+      type: this.topic,
       created_at: now.toISOString(),
       version: 1,
       modified_at: now.toISOString(),
@@ -103,10 +103,6 @@ class ChangeLog implements ChangelogInterface {
     }
 
     return this.register(document)
-  }
-
-  observe(func: Observer) {
-    this.adapter.on(this.topic, func)
   }
 }
 

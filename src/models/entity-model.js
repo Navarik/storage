@@ -1,9 +1,11 @@
 //@flow
 import uuidv4 from 'uuid/v4'
-import { map, liftToArray, head, maybe } from '../utils'
+import map from 'poly-map'
+import { liftToArray, head, maybe } from '../utils'
+import ChangeLog from '../ports/change-log'
 import schemaRegistry from './schema-registry'
 
-import type { Identifier, ChangelogInterface, SearchIndexInterface, Collection } from '../flowtypes'
+import type { Identifier, ChangelogInterface, ChangelogAdapterInterface, SearchIndexInterface, Collection } from '../flowtypes'
 
 const generateId = body => uuidv4()
 const stringifyProperties = map(x => String(x))
@@ -17,20 +19,35 @@ const searchableFormat = liftToArray(entity => ({
 }))
 
 class EntityModel {
+  namespace: string
   searchIndex: SearchIndexInterface
-  changeLog: ChangelogInterface
+  changelogAdapter: ChangelogAdapterInterface
+  changelogs: { [string]: ChangelogInterface }
 
   constructor(config: Object) {
+    this.namespace = config.namespace
     this.searchIndex = config.searchIndex
-    this.changeLog = config.changeLog
+    this.changelogAdapter = config.changeLog
+    this.changelogs = {}
+  }
+
+  getChangelog(type: string) {
+    if (!this.changelogs[type]) {
+      this.changelogs[type] = new ChangeLog(
+        `${this.namespace}.${type}`,
+        this.changelogAdapter
+      )
+    }
+
+    return this.changelogs[type]
   }
 
   async init(source: ?Collection) {
     const log = await (source && source.length
       ? Promise.all(source.map(x =>
-        this.changeLog.logNew(x.type, generateId(), x.body)
+        this.getChangelog(x.type).logNew(generateId(), x.body)
       ))
-      : this.changeLog.reconstruct()
+      : []//this.getChangelog(x.type).reconstruct()
     )
 
     await this.searchIndex.init(log.map(searchableFormat))
@@ -39,14 +56,14 @@ class EntityModel {
   // Queries
   async find(params: Object) {
     const found = await this.searchIndex.findLatest(stringifyProperties(params))
-    const entities = found.map(x => this.changeLog.getLatestVersion(x.id))
+    const entities = found.map(x => this.getChangelog(type).getLatestVersion(x.id))
 
     return entities
   }
 
   async get(id: Identifier, version: ?string) {
     if (!version) {
-      return this.changeLog.getLatestVersion(id)
+      return this.getChangelog(type).getLatestVersion(id)
     }
 
     const searchQuery = stringifyProperties({ id, version })
@@ -55,7 +72,7 @@ class EntityModel {
       return undefined
     }
 
-    return this.changeLog.getVersion(versions[0].version_id)
+    return this.getChangelog(type).getVersion(versions[0].version_id)
   }
 
   // Commands
@@ -75,14 +92,14 @@ class EntityModel {
     const entity = schemaRegistry.format(type, body)
     const id = generateId()
 
-    const entityRecord = await this.changeLog.logNew(type, id, entity)
+    const entityRecord = await this.getChangelog(type).logNew(id, entity)
     await this.searchIndex.add(searchableFormat(entityRecord))
 
     return entityRecord
   }
 
   async update(id: Identifier, body: Object) {
-    const { type } = this.changeLog.getLatestVersion(id)
+    const { type } = this.getChangelog(type).getLatestVersion(id)
 
     const validationErrors = schemaRegistry.validate(type, body)
     if (validationErrors.length) {
@@ -91,7 +108,7 @@ class EntityModel {
 
     const entity = schemaRegistry.format(type, body)
 
-    const entityRecord = await this.changeLog.logChange(id, entity)
+    const entityRecord = await this.getChangelog(type).logChange(id, entity)
     await this.searchIndex.add(searchableFormat(entityRecord))
 
     return entityRecord

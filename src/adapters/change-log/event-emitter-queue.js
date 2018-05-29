@@ -1,9 +1,9 @@
 // @flow
 import eventEmitter from 'event-emitter'
 
-import type { QueueAdapterInterface, Observer } from '../../flowtypes'
+import type { ChangelogAdapterInterface, Observer } from '../../flowtypes'
 
-class EventEmitterQueueAdapter implements QueueAdapterInterface {
+class EventEmitterQueueAdapter implements ChangelogAdapterInterface {
   emitter: Object
   log: Array<Object>
 
@@ -16,13 +16,13 @@ class EventEmitterQueueAdapter implements QueueAdapterInterface {
     this.emitter.on(topic, handler)
   }
 
-  send(topic: string, message: Object) {
+  write(topic: string, message: Object) {
     this.emitter.emit(topic, message)
 
     return Promise.resolve(message)
   }
 
-  getLog(topic: string) {
+  read(topic: string) {
     return Promise.resolve(this.log)
   }
 }

@@ -8,7 +8,6 @@ export const expectRecord = (given) => {
 
 export const expectSchema = (given) => {
   expectRecord(given)
-  expect(given.type).to.be('schema')
   expect(given.body.fields).to.be.an('array')
   expect(given.body.name).to.be.a('string')
   expect(given.body.namespace).to.be.a('string')
