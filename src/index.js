@@ -7,7 +7,7 @@ import createSearchIndex from './search-index-factory'
 import { SchemaModel, EntityModel } from './models'
 import type { AvroSchema, Identifier, ModuleConfiguration } from './flowtypes'
 
-const prependKeys = (prefix, xs) => {
+const prependKeys = (prefix: string, xs: Object) => {
   const result = {}
   const keys = Object.keys(xs)
 
@@ -47,7 +47,6 @@ const configure = (config: ModuleConfiguration = {}) => {
   })
 
   return {
-    getNamespaces: () => schema.getNamespaces(),
     getSchema: (name: string, version: ?string) => schema.get(name, version),
     findSchema: (params: Object) => schema.find(params),
     createSchema: (body: AvroSchema) => schema.create('schema', body),

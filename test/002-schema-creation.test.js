@@ -12,28 +12,11 @@ describe("Schema format", () => {
   before(() => storage.init())
 
   it("can't create empty schema", cannotCreate({}))
-  it("can't create schema without namespace", cannotCreate({
-    name: 'test',
-    fields: [{ name: 'test_field', type: 'string' }]
-  }))
-  it("allows schemata without fields and description", canCreate({
-    name: 'test',
-    namespace: 'test'
-  }))
+  it("allows schemata without fields and description", canCreate({ name: 'test' }))
 
   it("created schemata are normalized and default values are provided",
-    canFind({ name: 'test', namespace: 'test', description: '', type: 'record', fields: [] })
+    canFind({ name: 'test', description: '', type: 'record', fields: [] })
   )
-})
-
-describe("Schema namespaces", () => {
-  before(() => storage.init())
-
-  const dogeWow = { namespace: 'doge', name: 'wow', fields: [{ name: 'test_field', type: 'string' }] }
-  const suchWow = { namespace: 'such', name: 'wow' }
-
-  it("can have same names in different namespaces", forAll([dogeWow, suchWow], canCreate))
-  it("can't have duplicate names in the same namespace", forNone([dogeWow, suchWow], canCreate))
 })
 
 describe("Schema creation", () => {
@@ -48,10 +31,5 @@ describe("Schema creation", () => {
     const response = await storage.findSchema()
     expect(response).to.be.an('array')
     expect(response).to.have.length(fixtures.length)
-  })
-
-  it("created namespaces are visible", async () => {
-    const response = await storage.getNamespaces()
-    fixtures.forEach(fixture => expect(response).to.contain(fixture.namespace))
   })
 })

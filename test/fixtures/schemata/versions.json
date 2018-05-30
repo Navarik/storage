@@ -1,14 +1,12 @@
 [
   {
-    "name": "user",
-    "namespace": "version_test",
+    "name": "version_test.user",
     "description": "",
     "type": "record",
     "fields": []
   },
   {
-    "name": "user",
-    "namespace": "version_test",
+    "name": "version_test.user",
     "description": "",
     "type": "record",
     "fields": [
@@ -25,8 +23,7 @@
     ]
   },
   {
-    "name": "user",
-    "namespace": "version_test",
+    "name": "version_test.user",
     "description": "User",
     "type": "record",
     "fields": [
@@ -48,8 +45,7 @@
     ]
   },
   {
-    "name": "user",
-    "namespace": "version_test",
+    "name": "version_test.user",
     "description": "User",
     "type": "record",
     "fields": [

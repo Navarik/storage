@@ -6,12 +6,6 @@ const storage = createStorage()
 describe("Empty state", () => {
   before(() => storage.init())
 
-  it("should have no namespaces", async () => {
-    const response = await storage.getNamespaces()
-    expect(response).to.be.an('array')
-    expect(response).to.be.empty()
-  })
-
   it("should have no types", async () => {
     const response = await storage.findSchema()
     expect(response).to.be.an('array')

@@ -16,7 +16,6 @@ const createSteps = storage => ({
     expectSchema(response)
     expect(response.version).to.be(1)
     expect(response.body.name).to.be(schema.name)
-    expect(response.body.namespace).to.be(schema.namespace)
     expect(response.body.description).to.be(schema.description || '')
     expect(response.body.fields).to.eql(schema.fields || [])
   },
@@ -25,13 +24,12 @@ const createSteps = storage => ({
     let response
 
     // Get by type name
-    const typeName = `${schema.namespace}.${schema.name}`
-    response = await storage.getSchema(typeName)
+    response = await storage.getSchema(schema.name)
     expectSchema(response)
     expect(response.body).to.eql(schema)
 
     // Find using name and namespace in a query
-    response = await storage.findSchema({ name: schema.name, namespace: schema.namespace })
+    response = await storage.findSchema({ name: schema.name })
     expect(response).to.be.an('array')
     expect(response).to.have.length(1)
     expectSchema(response[0])
@@ -42,12 +40,11 @@ const createSteps = storage => ({
     let response
 
     // Get by type name
-    const typeName = `${schema.namespace}.${schema.name}`
-    response = await storage.getSchema(typeName)
+    response = await storage.getSchema(schema.name)
     expect(response).to.be(undefined)
 
     // Find using name and namespace in a query
-    response = await storage.findSchema({ name: schema.name, namespace: schema.namespace })
+    response = await storage.findSchema({ name: schema.name })
     expect(response).to.be.an('array')
     expect(response).to.have.length(0)
   },

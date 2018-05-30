@@ -10,7 +10,7 @@ import type { Identifier, Schema, AvroSchema, ChangeRecord, ChangelogInterface, 
 
 // Generate same IDs for the each name + namespace combination
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
-const generateId = name => uuidv5(name, UUID_ROOT)
+const generateId = (body: Object) => uuidv5(body.name, UUID_ROOT)
 
 const searchableFormat = liftToArray((schema: ChangeRecord<AvroSchema>) =>
   ({
@@ -18,8 +18,6 @@ const searchableFormat = liftToArray((schema: ChangeRecord<AvroSchema>) =>
     version: schema.version,
     version_id: schema.version_id,
     name: schema.body.name,
-    namespace: schema.body.namespace,
-    full_name: schemaRegistry.fullName(schema.body),
     description: schema.body.description,
     fields: schema.body.fields.map(x => x.name)
   })
@@ -34,7 +32,7 @@ class SchemaModel {
     this.changeLog = new ChangeLog(
       `${config.namespace}.schema`,
       config.changeLog,
-      body => generateId(schemaRegistry.fullName(body))
+      generateId
     )
   }
 
@@ -45,20 +43,11 @@ class SchemaModel {
   }
 
   // Queries
-  getNamespaces() {
-    return this.searchIndex
-      .findLatest({})
-      .then(map(x => x.namespace))
-      .then(unique)
-  }
-
   get(name: string, version: ?string) {
     const schema = schemaRegistry.get(name)
     if (!schema) return Promise.resolve(undefined)
 
-    // Avro is weird: after adding a new schema to the registry,
-    // it removes schema's namespace property and changes its name to 'namespace.name'
-    const id = generateId(schema.name)
+    const id = generateId(schema)
 
     if (!version) {
       return Promise.resolve(this.changeLog.getLatestVersion(id))
@@ -90,7 +79,7 @@ class SchemaModel {
   async update(name: string, body: AvroSchema) {
     const schema = schemaRegistry.update(body)
 
-    const id = generateId(schemaRegistry.fullName(body))
+    const id = generateId(body)
     const schemaRecord = await this.changeLog.logChange(id, schema)
     await this.searchIndex.add(searchableFormat(schemaRecord))
 

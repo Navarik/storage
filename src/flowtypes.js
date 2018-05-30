@@ -6,7 +6,6 @@ export type DateTime = string
 export type IdGenerator = (data: Object) => Identifier
 
 export type AvroSchema = {
-  namespace: string,
   name: string,
   type: string,
   description: '',
@@ -74,5 +73,5 @@ export type ModuleConfiguration = {
   index?: AdapterConfiguration | { schema: AdapterConfiguration, entity: AdapterConfiguration },
   namespace?: string,
   schema?: Array<AvroSchema>,
-  data?: Array<Object>
+  data?: { [string]: Array<Object> }
 }

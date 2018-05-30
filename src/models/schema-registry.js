@@ -8,14 +8,6 @@ type AvroType = Object
 
 const registry = {}
 
-const fullName = (schema: AvroSchema): string => {
-  if (!schema.name || !schema.namespace) {
-    throw new Error(`[SchemaRegistry] Both namespace and name must be provided, got name: ${schema.name}, namespace: ${schema.namespace}`)
-  }
-
-  return `${schema.namespace}.${schema.name}`
-}
-
 const validate = (type: string, data: Object): Array<Object> => {
   const errors = []
   const schema = avro.Type.forSchema(type, { registry })
@@ -49,7 +41,7 @@ const add = (schema: AvroSchema): AvroSchema => {
 
 const update = (schema: AvroSchema): AvroSchema => {
   const formatted = formatSchema(schema)
-  const type = fullName(formatted)
+  const type = formatted.name
 
   if (!registry[type]){
     throw new Error(`[SchemaRegistry] Cannot update non-existing schema: ${type}`)
@@ -75,6 +67,6 @@ const init = (source: ?Array<AvroSchema>) => {
   }
 }
 
-const schemaRegistry = { add, update, get, format, fullName, init, validate, listAllTypes, listUserTypes }
+const schemaRegistry = { add, update, get, format, init, validate, listAllTypes, listUserTypes }
 
 export default schemaRegistry

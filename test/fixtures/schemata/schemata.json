@@ -1,7 +1,6 @@
 [
   {
-    "name": "user",
-    "namespace": "profile",
+    "name": "profile.user",
     "description": "User",
     "type": "record",
     "fields": [
@@ -33,8 +32,7 @@
     ]
   },
   {
-    "name": "job_order",
-    "namespace": "document",
+    "name": "document.job_order",
     "description": "Job Order",
     "type": "record",
     "fields": [
@@ -96,8 +94,7 @@
     ]
   },
   {
-    "name": "text_message",
-    "namespace": "chat",
+    "name": "chat.text_message",
     "description": "Text Message",
     "type": "record",
     "fields": [
@@ -129,8 +126,7 @@
     ]
   },
   {
-    "name": "chat_group",
-    "namespace": "chat",
+    "name": "chat.chat_group",
     "description": "Chat Group",
     "type": "record",
     "fields": [
@@ -163,8 +159,7 @@
     ]
   },
   {
-    "name": "timelog_event",
-    "namespace": "timelog",
+    "name": "timelog.timelog_event",
     "description": "Vessel Arrived",
     "type": "record",
     "fields": [
