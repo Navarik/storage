@@ -13,15 +13,20 @@ const storage = createStorage({
   schema: fixtureSchemata
 })
 
-const { canCreate, cannotCreate } = createSteps(storage)
+const { canCreate, cannotCreate, canFind } = createSteps(storage)
 
 describe("Entity search", () => {
   before(() => storage.init())
 
-  it("correctly creates new entities", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
+  it("correctly creates new entities: timelog events", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
   it("correctly creates new entities: job orders", forAll(fixturesJobs, canCreate('document.job_order')))
   it("correctly creates new entities: users", forAll(fixturesUsers, canCreate('profile.user')))
   it("correctly creates new entities: messages", forAll(fixturesMessages, canCreate('chat.text_message')))
+
+  it("can find by complete bodies: timelog events", forAll(fixturesEvents, canFind))
+  it("can find by complete bodies: job orders", forAll(fixturesJobs, canFind))
+  it("can find by complete bodies: users", forAll(fixturesUsers, canFind))
+  it("can find by complete bodies: messages", forAll(fixturesMessages, canFind))
 
   it("can find entities by type", async () => {
     const response = await storage.find({ type: 'timelog.timelog_event' })

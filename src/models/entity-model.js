@@ -55,15 +55,20 @@ class EntityModel {
 
   async init() {
     const types = schemaRegistry.listUserTypes()
-    const log = await Promise.all(types.map(type =>
-      this.getChangelog(type).reconstruct().then(searchableFormat)
+    const logs = await Promise.all(types.map(type =>
+      this.getChangelog(type)
+        .reconstruct()
+        .then(map(data => ({ ...data, type })))
+        .then(searchableFormat)
     ))
-    await this.searchIndex.init(flatten(log))
+
+    await this.searchIndex.init(flatten(logs))
   }
 
   // Queries
   async find(params: Object) {
     const found = await this.searchIndex.findLatest(stringifyProperties(params))
+
     const entities = found.map(x =>
       wrapEntity(this.getChangelog(x.type).getLatestVersion(x.id), x.type)
     )

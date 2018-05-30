@@ -93,7 +93,7 @@ var EntityModel = function () {
       var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
         var _this = this;
 
-        var types, log;
+        var types, logs;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -101,13 +101,15 @@ var EntityModel = function () {
                 types = _schemaRegistry2.default.listUserTypes();
                 _context.next = 3;
                 return Promise.all(types.map(function (type) {
-                  return _this.getChangelog(type).reconstruct().then(searchableFormat);
+                  return _this.getChangelog(type).reconstruct().then((0, _polyMap2.default)(function (data) {
+                    return _extends({}, data, { type: type });
+                  })).then(searchableFormat);
                 }));
 
               case 3:
-                log = _context.sent;
+                logs = _context.sent;
                 _context.next = 6;
-                return this.searchIndex.init((0, _arrayFlatten2.default)(log));
+                return this.searchIndex.init((0, _arrayFlatten2.default)(logs));
 
               case 6:
               case 'end':

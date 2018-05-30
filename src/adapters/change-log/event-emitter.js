@@ -23,7 +23,7 @@ class DefaultChangelogAdapter implements ChangelogAdapterInterface {
   }
 
   read(topic: string) {
-    return Promise.resolve(this.log[topic])
+    return Promise.resolve(this.log[topic] || [])
   }
 }
 

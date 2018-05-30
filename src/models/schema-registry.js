@@ -66,7 +66,7 @@ const get = (type: string): AvroType => {
 }
 
 const listAllTypes = (): Array<string> => Object.keys(registry)
-const listUserTypes = (): Array<string> => listAllTypes().filter(x => !x.includes('.'))
+const listUserTypes = (): Array<string> => listAllTypes().filter(x => x.includes('.'))
 
 const init = (source: ?Array<AvroSchema>) => {
   listAllTypes().forEach(type => { delete registry[type] })

@@ -37,7 +37,7 @@ var DefaultChangelogAdapter = function () {
   }, {
     key: 'read',
     value: function read(topic) {
-      return Promise.resolve(this.log[topic]);
+      return Promise.resolve(this.log[topic] || []);
     }
   }]);
 

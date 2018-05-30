@@ -29,6 +29,17 @@ const createSteps = storage => ({
     expect(response.body).to.eql(body)
   }),
 
+  canFind: entity => async () => {
+    let response
+
+    // Find using fields in a query
+    response = await storage.find(entity)
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(1)
+    expectEntity(response[0])
+    expect(response[0].body).to.eql(entity)
+  },
+
   cannotUpdate: (id, body) => done => {
     storage.update(id, body)
       .then(() => done("Expected error didn't happen"))

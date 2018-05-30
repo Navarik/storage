@@ -2,6 +2,7 @@
 import arraySort from 'array-sort'
 import groupBy from 'group-by'
 import map from 'poly-map'
+import flatten from 'array-flatten'
 
 import type { SearchIndexInterface, Searchable, SearchIndexAdapterInterface, Collection } from '../flowtypes'
 
@@ -16,7 +17,7 @@ class SearchIndex implements SearchIndexInterface {
 
   init(log: Collection<Searchable>) {
     const versions = Object.values(groupBy(log, 'id'))
-    const latest = map(sortByVersionNumber, versions)
+    const latest = flatten(map(sortByVersionNumber, versions))
 
     return this.adapter
       .reset()

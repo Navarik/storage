@@ -18,6 +18,10 @@ var _polyMap = require('poly-map');
 
 var _polyMap2 = _interopRequireDefault(_polyMap);
 
+var _arrayFlatten = require('array-flatten');
+
+var _arrayFlatten2 = _interopRequireDefault(_arrayFlatten);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -41,7 +45,7 @@ var SearchIndex = function () {
       var _this = this;
 
       var versions = Object.values((0, _groupBy2.default)(log, 'id'));
-      var latest = (0, _polyMap2.default)(sortByVersionNumber, versions);
+      var latest = (0, _arrayFlatten2.default)((0, _polyMap2.default)(sortByVersionNumber, versions));
 
       return this.adapter.reset().then(function () {
         return Promise.all([_this.adapter.insert('versions', log), _this.adapter.insert('latest', latest)]);

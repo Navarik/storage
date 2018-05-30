@@ -83,7 +83,7 @@ var listAllTypes = function listAllTypes() {
 };
 var listUserTypes = function listUserTypes() {
   return listAllTypes().filter(function (x) {
-    return !x.includes('.');
+    return x.includes('.');
   });
 };
 

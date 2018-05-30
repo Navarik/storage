@@ -1,10 +1,10 @@
 // @flow
 import { DefaultChangelogAdapter } from './adapters/change-log'
 
-const createChangelogAdapter = (type: any, namespace: string) => {
+const createChangelogAdapter = (type: any) => {
   if (type === 'default') {
     return new DefaultChangelogAdapter({})
-  } else if (type instanceof Object) {
+  } else if (type.constructor === Object) {
     return new DefaultChangelogAdapter({ log: type })
   }
 

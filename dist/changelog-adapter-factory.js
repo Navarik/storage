@@ -6,10 +6,10 @@ Object.defineProperty(exports, "__esModule", {
 
 var _changeLog = require('./adapters/change-log');
 
-var createChangelogAdapter = function createChangelogAdapter(type, namespace) {
+var createChangelogAdapter = function createChangelogAdapter(type) {
   if (type === 'default') {
     return new _changeLog.DefaultChangelogAdapter({});
-  } else if (type instanceof Object) {
+  } else if (type.constructor === Object) {
     return new _changeLog.DefaultChangelogAdapter({ log: type });
   }
 
