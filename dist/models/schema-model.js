@@ -36,8 +36,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 // Generate same IDs for the each name + namespace combination
 var UUID_ROOT = '00000000-0000-0000-0000-000000000000';
-var generateId = function generateId(name) {
-  return (0, _v2.default)(name, UUID_ROOT);
+var generateId = function generateId(body) {
+  return (0, _v2.default)(body.name, UUID_ROOT);
 };
 
 var searchableFormat = (0, _utils.liftToArray)(function (schema) {
@@ -46,8 +46,6 @@ var searchableFormat = (0, _utils.liftToArray)(function (schema) {
     version: schema.version,
     version_id: schema.version_id,
     name: schema.body.name,
-    namespace: schema.body.namespace,
-    full_name: _schemaRegistry2.default.fullName(schema.body),
     description: schema.body.description,
     fields: schema.body.fields.map(function (x) {
       return x.name;
@@ -60,9 +58,7 @@ var SchemaModel = function () {
     _classCallCheck(this, SchemaModel);
 
     this.searchIndex = config.searchIndex;
-    this.changeLog = new _changeLog2.default(config.namespace + '.schema', config.changeLog, function (body) {
-      return generateId(_schemaRegistry2.default.fullName(body));
-    });
+    this.changeLog = new _changeLog2.default(config.namespace + '.schema', config.changeLog, generateId);
   }
 
   _createClass(SchemaModel, [{
@@ -106,13 +102,6 @@ var SchemaModel = function () {
     // Queries
 
   }, {
-    key: 'getNamespaces',
-    value: function getNamespaces() {
-      return this.searchIndex.findLatest({}).then((0, _polyMap2.default)(function (x) {
-        return x.namespace;
-      })).then(_arrayUnique2.default);
-    }
-  }, {
     key: 'get',
     value: function get(name, version) {
       var _this = this;
@@ -120,9 +109,7 @@ var SchemaModel = function () {
       var schema = _schemaRegistry2.default.get(name);
       if (!schema) return Promise.resolve(undefined);
 
-      // Avro is weird: after adding a new schema to the registry,
-      // it removes schema's namespace property and changes its name to 'namespace.name'
-      var id = generateId(schema.name);
+      var id = generateId(schema);
 
       if (!version) {
         return Promise.resolve(this.changeLog.getLatestVersion(id));
@@ -215,7 +202,7 @@ var SchemaModel = function () {
             switch (_context4.prev = _context4.next) {
               case 0:
                 schema = _schemaRegistry2.default.update(body);
-                id = generateId(_schemaRegistry2.default.fullName(body));
+                id = generateId(body);
                 _context4.next = 4;
                 return this.changeLog.logChange(id, schema);
 

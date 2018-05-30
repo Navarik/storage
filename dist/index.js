@@ -62,9 +62,6 @@ var configure = function configure() {
   });
 
   return {
-    getNamespaces: function getNamespaces() {
-      return schema.getNamespaces();
-    },
     getSchema: function getSchema(name, version) {
       return schema.get(name, version);
     },

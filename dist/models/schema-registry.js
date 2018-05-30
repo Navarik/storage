@@ -18,14 +18,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var registry = {};
 
-var fullName = function fullName(schema) {
-  if (!schema.name || !schema.namespace) {
-    throw new Error('[SchemaRegistry] Both namespace and name must be provided, got name: ' + schema.name + ', namespace: ' + schema.namespace);
-  }
-
-  return schema.namespace + '.' + schema.name;
-};
-
 var validate = function validate(type, data) {
   var errors = [];
   var schema = _avsc2.default.Type.forSchema(type, { registry: registry });
@@ -62,7 +54,7 @@ var add = function add(schema) {
 
 var update = function update(schema) {
   var formatted = formatSchema(schema);
-  var type = fullName(formatted);
+  var type = formatted.name;
 
   if (!registry[type]) {
     throw new Error('[SchemaRegistry] Cannot update non-existing schema: ' + type);
@@ -96,6 +88,6 @@ var init = function init(source) {
   }
 };
 
-var schemaRegistry = { add: add, update: update, get: get, format: format, fullName: fullName, init: init, validate: validate, listAllTypes: listAllTypes, listUserTypes: listUserTypes };
+var schemaRegistry = { add: add, update: update, get: get, format: format, init: init, validate: validate, listAllTypes: listAllTypes, listUserTypes: listUserTypes };
 
 exports.default = schemaRegistry;
