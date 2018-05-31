@@ -29,11 +29,7 @@ class SchemaModel {
 
   constructor(config: Object) {
     this.searchIndex = config.searchIndex
-    this.changeLog = new ChangeLog(
-      `${config.namespace}.schema`,
-      config.changeLog,
-      generateId
-    )
+    this.changeLog = new ChangeLog('schema', config.changeLog, generateId)
   }
 
   async init() {

@@ -29,13 +29,11 @@ const searchableFormat = liftToArray(entity => ({
 }))
 
 class EntityModel {
-  namespace: string
   searchIndex: SearchIndexInterface
   changelogAdapter: ChangelogAdapterInterface
   changelogs: { [string]: ChangelogInterface }
 
   constructor(config: Object) {
-    this.namespace = config.namespace
     this.searchIndex = config.searchIndex
     this.changelogAdapter = config.changeLog
     this.changelogs = {}
@@ -43,11 +41,7 @@ class EntityModel {
 
   getChangelog(type: string) {
     if (!this.changelogs[type]) {
-      this.changelogs[type] = new ChangeLog(
-        `${this.namespace}.${type}`,
-        this.changelogAdapter,
-        generateId
-      )
+      this.changelogs[type] = new ChangeLog(type, this.changelogAdapter, generateId)
     }
 
     return this.changelogs[type]

@@ -1,47 +1,32 @@
 // @flow
 import 'babel-polyfill'
-import map from 'poly-map'
 import createChangelogAdapter from './changelog-adapter-factory'
 import createSearchIndex from './search-index-factory'
 
 import { SchemaModel, EntityModel } from './models'
 import type { AvroSchema, Identifier, ModuleConfiguration } from './flowtypes'
 
-const prependKeys = (prefix: string, xs: Object) => {
-  const result = {}
-  const keys = Object.keys(xs)
-
-  for (let i = 0; i < keys.length; i++) {
-    result[`${prefix}.${keys[i]}`] = xs[keys[i]]
-  }
-
-  return result
-}
-
 const configure = (config: ModuleConfiguration = {}) => {
   const log = config.log || 'default'
   const index = config.index || 'default'
-  const namespace = config.namespace || 'storage'
 
   const schemaChangeLog = config.schema
-    ? createChangelogAdapter(prependKeys(namespace, { schema: config.schema }))
+    ? createChangelogAdapter({ schema: config.schema })
     : createChangelogAdapter(log.schema || log)
 
   const entityChangeLog = config.data
-    ? createChangelogAdapter(prependKeys(namespace, config.data))
+    ? createChangelogAdapter(config.data)
     : createChangelogAdapter(log.entity || log)
 
   const schemaSearchIndex = createSearchIndex(index.schema || index)
   const entitySearchIndex = createSearchIndex(index.entity || index)
 
   const schema = new SchemaModel({
-    namespace,
     changeLog: schemaChangeLog,
     searchIndex: schemaSearchIndex
   })
 
   const entity = new EntityModel({
-    namespace,
     changeLog: entityChangeLog,
     searchIndex: entitySearchIndex
   })

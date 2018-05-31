@@ -58,7 +58,7 @@ var SchemaModel = function () {
     _classCallCheck(this, SchemaModel);
 
     this.searchIndex = config.searchIndex;
-    this.changeLog = new _changeLog2.default(config.namespace + '.schema', config.changeLog, generateId);
+    this.changeLog = new _changeLog2.default('schema', config.changeLog, generateId);
   }
 
   _createClass(SchemaModel, [{

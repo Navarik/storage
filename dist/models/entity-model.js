@@ -72,7 +72,6 @@ var EntityModel = function () {
   function EntityModel(config) {
     _classCallCheck(this, EntityModel);
 
-    this.namespace = config.namespace;
     this.searchIndex = config.searchIndex;
     this.changelogAdapter = config.changeLog;
     this.changelogs = {};
@@ -82,7 +81,7 @@ var EntityModel = function () {
     key: 'getChangelog',
     value: function getChangelog(type) {
       if (!this.changelogs[type]) {
-        this.changelogs[type] = new _changeLog2.default(this.namespace + '.' + type, this.changelogAdapter, generateId);
+        this.changelogs[type] = new _changeLog2.default(type, this.changelogAdapter, generateId);
       }
 
       return this.changelogs[type];

@@ -6,10 +6,6 @@ Object.defineProperty(exports, "__esModule", {
 
 require('babel-polyfill');
 
-var _polyMap = require('poly-map');
-
-var _polyMap2 = _interopRequireDefault(_polyMap);
-
 var _changelogAdapterFactory = require('./changelog-adapter-factory');
 
 var _changelogAdapterFactory2 = _interopRequireDefault(_changelogAdapterFactory);
@@ -24,39 +20,25 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
-var prependKeys = function prependKeys(prefix, xs) {
-  var result = {};
-  var keys = Object.keys(xs);
-
-  for (var i = 0; i < keys.length; i++) {
-    result[prefix + '.' + keys[i]] = xs[keys[i]];
-  }
-
-  return result;
-};
-
 var configure = function configure() {
   var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
   var log = config.log || 'default';
   var index = config.index || 'default';
-  var namespace = config.namespace || 'storage';
 
-  var schemaChangeLog = config.schema ? (0, _changelogAdapterFactory2.default)(prependKeys(namespace, { schema: config.schema })) : (0, _changelogAdapterFactory2.default)(log.schema || log);
+  var schemaChangeLog = config.schema ? (0, _changelogAdapterFactory2.default)({ schema: config.schema }) : (0, _changelogAdapterFactory2.default)(log.schema || log);
 
-  var entityChangeLog = config.data ? (0, _changelogAdapterFactory2.default)(prependKeys(namespace, config.data)) : (0, _changelogAdapterFactory2.default)(log.entity || log);
+  var entityChangeLog = config.data ? (0, _changelogAdapterFactory2.default)(config.data) : (0, _changelogAdapterFactory2.default)(log.entity || log);
 
   var schemaSearchIndex = (0, _searchIndexFactory2.default)(index.schema || index);
   var entitySearchIndex = (0, _searchIndexFactory2.default)(index.entity || index);
 
   var schema = new _models.SchemaModel({
-    namespace: namespace,
     changeLog: schemaChangeLog,
     searchIndex: schemaSearchIndex
   });
 
   var entity = new _models.EntityModel({
-    namespace: namespace,
     changeLog: entityChangeLog,
     searchIndex: entitySearchIndex
   });

@@ -71,7 +71,6 @@ type AdapterConfiguration = string | Object
 export type ModuleConfiguration = {
   log?: AdapterConfiguration | { schema: AdapterConfiguration, entity: AdapterConfiguration },
   index?: AdapterConfiguration | { schema: AdapterConfiguration, entity: AdapterConfiguration },
-  namespace?: string,
   schema?: Array<AvroSchema>,
   data?: { [string]: Array<Object> }
 }
