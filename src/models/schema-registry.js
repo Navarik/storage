@@ -1,6 +1,7 @@
 //@flow
 import avro from 'avsc'
 import map from 'poly-map'
+import curry from 'curry'
 
 import type { AvroSchema } from '../flowtypes'
 
@@ -8,21 +9,27 @@ type AvroType = Object
 
 const registry = {}
 
-const validate = (type: string, data: Object): Array<Object> => {
+const validate = (type: string, data: Object|Array<Object>): Array<Object> => {
   const errors = []
   const schema = avro.Type.forSchema(type, { registry })
+  const validator = body =>
+    schema.isValid(body, { errorHook: (path) => { errors.push(path.join()) } })
 
-  schema.isValid(data, { errorHook: (path) => { errors.push(path.join()) } })
+  if (data instanceof Array) {
+    data.map(validator)
+  } else {
+    validator(data)
+  }
 
   return errors
 }
 
-const format = (type: string, data: Object): Object => {
+const format = curry((type: string, data: Object): Object => {
   const schema = avro.Type.forSchema(type, { registry })
   const response = { ...schema.fromBuffer(schema.toBuffer(data)) }
 
   return response
-}
+})
 
 const formatSchema = schema => ({
   ...schema,

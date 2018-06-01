@@ -15,7 +15,7 @@ class MockSchemaLogAdapter {
     return nope
   }
 
-  read(topic, payload) {
+  read(topic) {
     return fixtureSchemata
   }
 }
@@ -29,8 +29,12 @@ class MockEntityLogAdapter {
     return nope
   }
 
-  read(topic, payload) {
-    return fixturesJobs
+  read(topic) {
+    if (topic === 'document.job_order') {
+      return Promise.resolve(fixturesJobs)
+    } else {
+      return Promise.resolve([])
+    }
   }
 }
 
@@ -48,5 +52,5 @@ describe("Allows overriding changelog adapters", () => {
   before(() => storage.init())
 
   it("should have pre-defined schemas", forAll(fixtureSchemata, schemaSteps.canFind))
-  it("should have pre-defined entities", forAll(fixtureSchemata, schemaSteps.canFind))
+  it("should have pre-defined entities", forAll(fixturesJobs, entitySteps.canFind))
 })

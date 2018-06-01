@@ -16,6 +16,10 @@ var _polyMap = require('poly-map');
 
 var _polyMap2 = _interopRequireDefault(_polyMap);
 
+var _curry = require('curry');
+
+var _curry2 = _interopRequireDefault(_curry);
+
 var _functionPipe = require('function-pipe');
 
 var _functionPipe2 = _interopRequireDefault(_functionPipe);
@@ -52,12 +56,12 @@ var isDefined = function isDefined(x) {
 };
 var stringifyProperties = (0, _functionPipe2.default)((0, _polyFilter2.default)(isDefined), (0, _polyMap2.default)(String));
 
-var wrapEntity = function wrapEntity(document, type) {
+var wrapEntity = (0, _curry2.default)(function (type, document) {
   return _extends({}, document, {
     type: type,
     schema: _schemaRegistry2.default.get(type).schema()
   });
-};
+});
 
 var searchableFormat = (0, _utils.liftToArray)(function (entity) {
   return _extends({
@@ -144,7 +148,7 @@ var EntityModel = function () {
               case 2:
                 found = _context2.sent;
                 entities = found.map(function (x) {
-                  return wrapEntity(_this2.getChangelog(x.type).getLatestVersion(x.id), x.type);
+                  return wrapEntity(x.type, _this2.getChangelog(x.type).getLatestVersion(x.id));
                 });
                 return _context2.abrupt('return', entities);
 
@@ -206,7 +210,7 @@ var EntityModel = function () {
                 type = found[0].type;
                 log = this.getChangelog(type);
                 data = log.getVersion(found[0].version_id);
-                entity = wrapEntity(data, type);
+                entity = wrapEntity(type, data);
                 return _context3.abrupt('return', entity);
 
               case 18:
@@ -238,7 +242,7 @@ var EntityModel = function () {
     key: 'create',
     value: function () {
       var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(type, body) {
-        var validationErrors, formatted, entityRecord, entity;
+        var validationErrors, log, format, record, entity;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -253,20 +257,23 @@ var EntityModel = function () {
                 throw new Error('[Entity] Invalid value provided for: ' + validationErrors.join(', '));
 
               case 3:
-                formatted = _schemaRegistry2.default.format(type, body);
-                _context4.next = 6;
-                return this.getChangelog(type).logNew(formatted);
+                log = this.getChangelog(type);
+                format = _schemaRegistry2.default.format(type);
+                _context4.next = 7;
+                return body instanceof Array ? Promise.all(body.map(function (x) {
+                  return log.logNew(format(x));
+                })) : log.logNew(format(body));
 
-              case 6:
-                entityRecord = _context4.sent;
-                entity = wrapEntity(entityRecord, type);
-                _context4.next = 10;
+              case 7:
+                record = _context4.sent;
+                entity = record instanceof Array ? record.map(wrapEntity(type)) : wrapEntity(type, record);
+                _context4.next = 11;
                 return this.searchIndex.add(searchableFormat(entity));
 
-              case 10:
+              case 11:
                 return _context4.abrupt('return', entity);
 
-              case 11:
+              case 12:
               case 'end':
                 return _context4.stop();
             }
@@ -319,7 +326,7 @@ var EntityModel = function () {
 
               case 11:
                 entityRecord = _context5.sent;
-                entity = wrapEntity(entityRecord, current.type);
+                entity = wrapEntity(current.type, entityRecord);
                 _context5.next = 15;
                 return this.searchIndex.add(searchableFormat(entity));
 

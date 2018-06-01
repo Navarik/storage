@@ -14,6 +14,10 @@ var _polyMap = require('poly-map');
 
 var _polyMap2 = _interopRequireDefault(_polyMap);
 
+var _curry = require('curry');
+
+var _curry2 = _interopRequireDefault(_curry);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var registry = {};
@@ -21,20 +25,27 @@ var registry = {};
 var validate = function validate(type, data) {
   var errors = [];
   var schema = _avsc2.default.Type.forSchema(type, { registry: registry });
+  var validator = function validator(body) {
+    return schema.isValid(body, { errorHook: function errorHook(path) {
+        errors.push(path.join());
+      } });
+  };
 
-  schema.isValid(data, { errorHook: function errorHook(path) {
-      errors.push(path.join());
-    } });
+  if (data instanceof Array) {
+    data.map(validator);
+  } else {
+    validator(data);
+  }
 
   return errors;
 };
 
-var format = function format(type, data) {
+var format = (0, _curry2.default)(function (type, data) {
   var schema = _avsc2.default.Type.forSchema(type, { registry: registry });
   var response = _extends({}, schema.fromBuffer(schema.toBuffer(data)));
 
   return response;
-};
+});
 
 var formatSchema = function formatSchema(schema) {
   return _extends({}, schema, {

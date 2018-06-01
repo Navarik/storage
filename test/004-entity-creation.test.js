@@ -10,7 +10,7 @@ const storage = createStorage({
   schema: fixtureSchemata
 })
 
-const { canCreate, cannotCreate } = createSteps(storage)
+const { canCreate, cannotCreate, canFind, canCreateCollection } = createSteps(storage)
 
 describe("Entity format and constraints", () => {
   before(() => storage.init())
@@ -35,7 +35,7 @@ describe("Entity format and constraints", () => {
 })
 
 describe("Entity creation flow", () => {
-  before(() => storage.init({ schemata: 'file://./test/fixtures/schemata/source' }))
+  before(() => storage.init())
 
   it("doesn't have entities before they are created", async () => {
     const response = await storage.find()
@@ -44,11 +44,27 @@ describe("Entity creation flow", () => {
   })
 
   it("correctly creates new entities", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
+  it("can find created entities", forAll(fixturesEvents, canFind))
   it("allows duplicates", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
 
   it("correct number of entities is created", async () => {
     const response = await storage.find()
     expect(response).to.be.an('array')
     expect(response).to.have.length(10)
+  })
+})
+
+describe("Bulk entity creation", () => {
+  before(() => storage.init())
+
+  it("correctly creates collection of new entities",
+    canCreateCollection('timelog.timelog_event', fixturesEvents)
+  )
+  it("can find created entities", forAll(fixturesEvents, canFind))
+
+  it("correct number of entities is created", async () => {
+    const response = await storage.find()
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(5)
   })
 })

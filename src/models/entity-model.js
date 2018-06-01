@@ -1,6 +1,7 @@
 //@flow
 import uuidv4 from 'uuid/v4'
 import map from 'poly-map'
+import curry from 'curry'
 import pipe from 'function-pipe'
 import filter from 'poly-filter'
 import flatten from 'array-flatten'
@@ -14,11 +15,11 @@ const generateId = body => uuidv4()
 const isDefined = x => x !== undefined
 const stringifyProperties = pipe(filter(isDefined), map(String))
 
-const wrapEntity = (document: ChangeRecord<Object>, type: string): Entity => ({
+const wrapEntity = curry((type: string, document: ChangeRecord<Object>): Entity => ({
   ...document,
   type,
   schema: schemaRegistry.get(type).schema()
-})
+}))
 
 const searchableFormat = liftToArray(entity => ({
   id: entity.id,
@@ -64,7 +65,7 @@ class EntityModel {
     const found = await this.searchIndex.findLatest(stringifyProperties(params))
 
     const entities = found.map(x =>
-      wrapEntity(this.getChangelog(x.type).getLatestVersion(x.id), x.type)
+      wrapEntity(x.type, this.getChangelog(x.type).getLatestVersion(x.id))
     )
 
     return entities
@@ -87,7 +88,7 @@ class EntityModel {
     const type = found[0].type
     const log = this.getChangelog(type)
     const data = log.getVersion(found[0].version_id)
-    const entity = wrapEntity(data, type)
+    const entity = wrapEntity(type, data)
 
     return entity
   }
@@ -100,16 +101,25 @@ class EntityModel {
     return isValid
   }
 
-  async create(type: string, body: Object) {
+  async create(type: string, body: Object|Array<Object>) {
     const validationErrors = schemaRegistry.validate(type, body)
     if (validationErrors.length) {
       throw new Error(`[Entity] Invalid value provided for: ${validationErrors.join(', ')}`)
     }
 
-    const formatted = schemaRegistry.format(type, body)
+    const log = this.getChangelog(type)
+    const format = schemaRegistry.format(type)
 
-    const entityRecord = await this.getChangelog(type).logNew(formatted)
-    const entity = wrapEntity(entityRecord, type)
+    const record = await (body instanceof Array
+      ? Promise.all(body.map(x => log.logNew(format(x))))
+      : log.logNew(format(body))
+    )
+
+    const entity = (record instanceof Array
+      ? record.map(wrapEntity(type))
+      : wrapEntity(type, record)
+    )
+
     await this.searchIndex.add(searchableFormat(entity))
 
     return entity
@@ -130,7 +140,7 @@ class EntityModel {
     const formatted = schemaRegistry.format(current.type, body)
 
     const entityRecord = await this.getChangelog(current.type).logChange(id, formatted)
-    const entity = wrapEntity(entityRecord, current.type)
+    const entity = wrapEntity(current.type, entityRecord)
     await this.searchIndex.add(searchableFormat(entity))
 
     return entity
