@@ -1,7 +1,7 @@
 {
   "name": "@navarik/storage",
   "description": "Document storage with schemas and versions",
-  "version": "5.0.1",
+  "version": "5.1.0",
   "scripts": {
     "build": "rm -rf dist/* && babel src --out-dir dist",
     "flow": "flow",
