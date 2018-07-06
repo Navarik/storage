@@ -2,10 +2,7 @@
 import uuidv4 from 'uuid/v4'
 import map from 'poly-map'
 import curry from 'curry'
-import pipe from 'function-pipe'
-import filter from 'poly-filter'
 import flatten from 'array-flatten'
-import { liftToArray, head, maybe } from '../utils'
 import ChangeLog from '../ports/change-log'
 import schemaRegistry from './schema-registry'
 
@@ -13,20 +10,11 @@ import type { Entity, Identifier, ChangelogInterface, ChangeRecord, ChangelogAda
 
 const generateId = body => uuidv4()
 const isDefined = x => x !== undefined
-const stringifyProperties = pipe(filter(isDefined), map(String))
 
 const wrapEntity = curry((type: string, document: ChangeRecord<Object>): Entity => ({
   ...document,
   type,
   schema: schemaRegistry.get(type).schema()
-}))
-
-const searchableFormat = liftToArray(entity => ({
-  id: entity.id,
-  version: String(entity.version),
-  version_id: entity.version_id,
-  type: entity.type,
-  ...stringifyProperties(entity.body)
 }))
 
 class EntityModel {
@@ -54,7 +42,6 @@ class EntityModel {
       this.getChangelog(type)
         .reconstruct()
         .then(map(data => ({ ...data, type })))
-        .then(searchableFormat)
     ))
 
     await this.searchIndex.init(flatten(logs))
@@ -62,7 +49,7 @@ class EntityModel {
 
   // Queries
   async find(params: Object) {
-    const found = await this.searchIndex.findLatest(stringifyProperties(params))
+    const found = await this.searchIndex.findLatest(params)
 
     const entities = found.map(x =>
       wrapEntity(x.type, this.getChangelog(x.type).getLatestVersion(x.id))
@@ -72,14 +59,9 @@ class EntityModel {
   }
 
   async get(id: Identifier, version: ?string): Promise<?Entity> {
-    const query = stringifyProperties({ id, version })
-
-    let found
-    if (version) {
-      found = await this.searchIndex.findVersions(query)
-    } else {
-      found = await this.searchIndex.findLatest(query)
-    }
+    const found = version
+      ? await this.searchIndex.findVersions({ id, version })
+      : await this.searchIndex.findLatest({ id })
 
     if (found.length === 0) {
       return undefined
@@ -95,13 +77,17 @@ class EntityModel {
 
   // Commands
   validate(type: string, body: Object) {
+    return schemaRegistry.validate(type, body)
+  }
+
+  isValid(type: string, body: Object) {
     const validationErrors = schemaRegistry.validate(type, body)
     const isValid = (validationErrors.length === 0)
 
     return isValid
   }
 
-  async create(type: string, body: Object|Array<Object>) {
+  async create(type: string, body: Object) {
     const validationErrors = schemaRegistry.validate(type, body)
     if (validationErrors.length) {
       throw new Error(`[Entity] Invalid value provided for: ${validationErrors.join(', ')}`)
@@ -110,19 +96,29 @@ class EntityModel {
     const log = this.getChangelog(type)
     const format = schemaRegistry.format(type)
 
-    const record = await (body instanceof Array
-      ? Promise.all(body.map(x => log.logNew(format(x))))
-      : log.logNew(format(body))
-    )
+    const record = await log.logNew(format(body))
+    const entity = wrapEntity(type, record)
 
-    const entity = (record instanceof Array
-      ? record.map(wrapEntity(type))
-      : wrapEntity(type, record)
-    )
-
-    await this.searchIndex.add(searchableFormat(entity))
+    await this.searchIndex.add(entity)
 
     return entity
+  }
+
+  async createCollection(type: string, bodies: Array<Object>) {
+    const validationErrors = schemaRegistry.validate(type, bodies)
+    if (validationErrors.length) {
+      throw new Error(`[Entity] Invalid value provided for: ${validationErrors.join(', ')}`)
+    }
+
+    const log = this.getChangelog(type)
+    const format = schemaRegistry.format(type)
+
+    const records = await Promise.all(bodies.map(x => log.logNew(format(x))))
+    const entities = records.map(wrapEntity(type))
+
+    await this.searchIndex.addCollection(entities)
+
+    return entities
   }
 
   async update(id: Identifier, body: Object) {
@@ -141,7 +137,7 @@ class EntityModel {
 
     const entityRecord = await this.getChangelog(current.type).logChange(id, formatted)
     const entity = wrapEntity(current.type, entityRecord)
-    await this.searchIndex.add(searchableFormat(entity))
+    await this.searchIndex.add(entity)
 
     return entity
   }

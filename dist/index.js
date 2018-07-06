@@ -4,8 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-require('babel-polyfill');
-
 var _changelogAdapterFactory = require('./changelog-adapter-factory');
 
 var _changelogAdapterFactory2 = _interopRequireDefault(_changelogAdapterFactory);
@@ -64,7 +62,7 @@ var configure = function configure() {
       return entity.get(id, version);
     },
     create: function create(type, body) {
-      return entity.create(type, body);
+      return body instanceof Array ? entity.createCollection(type, body) : entity.create(type, body);
     },
     update: function update(id, body) {
       return entity.update(id, body);
@@ -72,6 +70,9 @@ var configure = function configure() {
 
     validate: function validate(type, body) {
       return entity.validate(type, body);
+    },
+    isValid: function isValid(type, body) {
+      return entity.isValid(type, body);
     },
 
     init: function () {

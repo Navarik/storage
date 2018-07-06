@@ -13,7 +13,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var maybe = exports.maybe = function maybe(f) {
   return function (x) {
-    return x === undefined ? undefined : f(x);
+    return x === undefined || x === null ? x : f(x);
   };
 };
 var head = exports.head = function head(xs) {

@@ -1,5 +1,4 @@
 // @flow
-import 'babel-polyfill'
 import createChangelogAdapter from './changelog-adapter-factory'
 import createSearchIndex from './search-index-factory'
 
@@ -39,10 +38,15 @@ const configure = (config: ModuleConfiguration = {}) => {
 
     find: (params: Object) => entity.find(params),
     get: (id: string, version: ?string) => entity.get(id, version),
-    create: (type: string, body: Object) => entity.create(type, body),
+    create: (type: string, body: Object | Array<Object>) => (
+      body instanceof Array
+        ? entity.createCollection(type, body)
+        : entity.create(type, body)
+    ),
     update: (id: Identifier, body: Object) => entity.update(id, body),
 
     validate: (type: string, body: Object) => entity.validate(type, body),
+    isValid: (type: string, body: Object) => entity.isValid(type, body),
 
     init: async () => {
       await schema.init()

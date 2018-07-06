@@ -2,7 +2,7 @@
 import uuidv5 from 'uuid/v5'
 import unique from 'array-unique'
 import map from 'poly-map'
-import { head, liftToArray, maybe } from '../utils'
+import { head, maybe } from '../utils'
 import ChangeLog from '../ports/change-log'
 import schemaRegistry from './schema-registry'
 
@@ -11,17 +11,6 @@ import type { Identifier, Schema, AvroSchema, ChangeRecord, ChangelogInterface, 
 // Generate same IDs for the each name + namespace combination
 const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
 const generateId = (body: Object) => uuidv5(body.name, UUID_ROOT)
-
-const searchableFormat = liftToArray((schema: ChangeRecord<AvroSchema>) =>
-  ({
-    id: schema.id,
-    version: schema.version,
-    version_id: schema.version_id,
-    name: schema.body.name,
-    description: schema.body.description,
-    fields: schema.body.fields.map(x => x.name)
-  })
-)
 
 class SchemaModel {
   searchIndex: SearchIndexInterface
@@ -35,7 +24,7 @@ class SchemaModel {
   async init() {
     const log = await this.changeLog.reconstruct()
     await schemaRegistry.init(log.map(x => x.body))
-    await this.searchIndex.init(log.map(searchableFormat))
+    await this.searchIndex.init(log)
   }
 
   // Queries
@@ -67,7 +56,7 @@ class SchemaModel {
     const schema = schemaRegistry.add(body)
 
     const schemaRecord = await this.changeLog.logNew(schema)
-    await this.searchIndex.add(searchableFormat(schemaRecord))
+    await this.searchIndex.add(schemaRecord)
 
     return schemaRecord
   }
@@ -77,7 +66,7 @@ class SchemaModel {
 
     const id = generateId(body)
     const schemaRecord = await this.changeLog.logChange(id, schema)
-    await this.searchIndex.add(searchableFormat(schemaRecord))
+    await this.searchIndex.add(schemaRecord)
 
     return schemaRecord
   }

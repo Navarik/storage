@@ -40,19 +40,6 @@ var generateId = function generateId(body) {
   return (0, _v2.default)(body.name, UUID_ROOT);
 };
 
-var searchableFormat = (0, _utils.liftToArray)(function (schema) {
-  return {
-    id: schema.id,
-    version: schema.version,
-    version_id: schema.version_id,
-    name: schema.body.name,
-    description: schema.body.description,
-    fields: schema.body.fields.map(function (x) {
-      return x.name;
-    })
-  };
-});
-
 var SchemaModel = function () {
   function SchemaModel(config) {
     _classCallCheck(this, SchemaModel);
@@ -82,7 +69,7 @@ var SchemaModel = function () {
 
               case 5:
                 _context.next = 7;
-                return this.searchIndex.init(log.map(searchableFormat));
+                return this.searchIndex.init(log);
 
               case 7:
               case 'end':
@@ -173,7 +160,7 @@ var SchemaModel = function () {
               case 3:
                 schemaRecord = _context3.sent;
                 _context3.next = 6;
-                return this.searchIndex.add(searchableFormat(schemaRecord));
+                return this.searchIndex.add(schemaRecord);
 
               case 6:
                 return _context3.abrupt('return', schemaRecord);
@@ -209,7 +196,7 @@ var SchemaModel = function () {
               case 4:
                 schemaRecord = _context4.sent;
                 _context4.next = 7;
-                return this.searchIndex.add(searchableFormat(schemaRecord));
+                return this.searchIndex.add(schemaRecord);
 
               case 7:
                 return _context4.abrupt('return', schemaRecord);
