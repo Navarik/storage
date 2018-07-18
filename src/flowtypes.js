@@ -62,6 +62,7 @@ export interface SearchIndexAdapterInterface {
 export interface SearchIndexInterface {
   init(log: Collection<Searchable>): Promise<any>;
   add(document: Object): Promise<any>;
+  addCollection(document: Collection<Object>): Promise<any>;
   findLatest(params: Object): Promise<Collection<Searchable>>;
   findVersions(params: Object): Promise<Collection<Searchable>>;
 }

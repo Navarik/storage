@@ -201,7 +201,7 @@ var ChangeLog = function () {
 
       var versionId = signVersion(id, body);
       if (previous.version_id === versionId) {
-        throw new Error('[ChangeLog] Cannot create new version because it is not different from the current one');
+        return Promise.resolve(previous);
       }
 
       var versionNumber = previous.version + 1;

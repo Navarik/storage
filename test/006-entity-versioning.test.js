@@ -43,8 +43,6 @@ describe("Entity versioning", () => {
     expect(response[0].version).to.eql(fixtures.length)
   })
 
-  it("can't update if nothing has changed", (done) => cannotUpdate(id, lastVersion)(done))
-
   it('all versions are available individually', forAll(fixtures, (fixture, index) => async () => {
     const response = await storage.get(id, index + 1)
     expectEntity(response)

@@ -22,7 +22,6 @@ describe("Schema versioning", () => {
 
   const lastVersion = fixtures[fixtures.length - 1]
   it("only the latest version is directly available", canFind(lastVersion))
-  it("can't update if nothing has changed", cannotUpdate('version_test.user', lastVersion))
 
   it('all versions are available individually', forAll(fixtures, (fixture, index) => async () => {
     const response = await storage.getSchema('version_test.user', index + 1)
