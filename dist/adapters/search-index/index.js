@@ -13,4 +13,13 @@ Object.defineProperty(exports, 'NeDbSearchIndexAdapter', {
   }
 });
 
+var _searchindexAdapterFactory = require('./searchindex-adapter-factory');
+
+Object.defineProperty(exports, 'createSearchIndexAdapter', {
+  enumerable: true,
+  get: function get() {
+    return _interopRequireDefault(_searchindexAdapterFactory).default;
+  }
+});
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }

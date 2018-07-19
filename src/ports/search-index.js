@@ -27,8 +27,8 @@ const searchableFormat = document => ({
 class SearchIndex implements SearchIndexInterface {
   adapter: SearchIndexAdapterInterface
 
-  constructor(config: Object = {}) {
-    this.adapter = config.adapter
+  constructor(adapter: SearchIndexAdapterInterface) {
+    this.adapter = adapter
   }
 
   init(log: Collection<Searchable>) {

@@ -25,6 +25,14 @@ class DefaultChangelogAdapter implements ChangelogAdapterInterface {
   read(topic: string) {
     return Promise.resolve(this.log[topic] || [])
   }
+
+  init() {
+    return Promise.resolve(true)
+  }
+
+  isConnected() {
+    return true
+  }
 }
 
 export default DefaultChangelogAdapter

@@ -4,6 +4,7 @@ import unique from 'array-unique'
 import map from 'poly-map'
 import { head, maybe } from '../utils'
 import ChangeLog from '../ports/change-log'
+import SearchIndex from '../ports/search-index'
 import schemaRegistry from './schema-registry'
 
 import type { Identifier, Schema, AvroSchema, ChangeRecord, ChangelogInterface, SearchIndexInterface, Collection } from '../flowtypes'
@@ -17,7 +18,7 @@ class SchemaModel {
   changeLog: ChangelogInterface
 
   constructor(config: Object) {
-    this.searchIndex = config.searchIndex
+    this.searchIndex = new SearchIndex(config.searchIndex)
     this.changeLog = new ChangeLog('schema', config.changeLog, generateId)
   }
 

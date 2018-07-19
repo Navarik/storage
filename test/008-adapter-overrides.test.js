@@ -18,6 +18,10 @@ class MockSchemaLogAdapter {
   read(topic) {
     return fixtureSchemata
   }
+
+  init() {
+    return Promise.resolve(true)
+  }
 }
 
 class MockEntityLogAdapter {
@@ -35,6 +39,10 @@ class MockEntityLogAdapter {
     } else {
       return Promise.resolve([])
     }
+  }
+
+  init() {
+    return Promise.resolve(true)
   }
 }
 

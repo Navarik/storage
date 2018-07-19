@@ -28,6 +28,10 @@ var _changeLog = require('../ports/change-log');
 
 var _changeLog2 = _interopRequireDefault(_changeLog);
 
+var _searchIndex = require('../ports/search-index');
+
+var _searchIndex2 = _interopRequireDefault(_searchIndex);
+
 var _schemaRegistry = require('./schema-registry');
 
 var _schemaRegistry2 = _interopRequireDefault(_schemaRegistry);
@@ -56,7 +60,7 @@ var EntityModel = function () {
   function EntityModel(config) {
     _classCallCheck(this, EntityModel);
 
-    this.searchIndex = config.searchIndex;
+    this.searchIndex = new _searchIndex2.default(config.searchIndex);
     this.changelogAdapter = config.changeLog;
     this.changelogs = {};
   }

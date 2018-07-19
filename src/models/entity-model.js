@@ -4,6 +4,7 @@ import map from 'poly-map'
 import curry from 'curry'
 import flatten from 'array-flatten'
 import ChangeLog from '../ports/change-log'
+import SearchIndex from '../ports/search-index'
 import schemaRegistry from './schema-registry'
 
 import type { Entity, Identifier, ChangelogInterface, ChangeRecord, ChangelogAdapterInterface, SearchIndexInterface, Collection } from '../flowtypes'
@@ -23,7 +24,7 @@ class EntityModel {
   changelogs: { [string]: ChangelogInterface }
 
   constructor(config: Object) {
-    this.searchIndex = config.searchIndex
+    this.searchIndex = new SearchIndex(config.searchIndex)
     this.changelogAdapter = config.changeLog
     this.changelogs = {}
   }

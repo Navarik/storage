@@ -1,6 +1,6 @@
 // @flow
-import createChangelogAdapter from './changelog-adapter-factory'
-import createSearchIndex from './search-index-factory'
+import { createChangelogAdapter } from './adapters/change-log'
+import { createSearchIndexAdapter } from './adapters/search-index'
 
 import { SchemaModel, EntityModel } from './models'
 import schemaRegistry from './models/schema-registry'
@@ -18,8 +18,13 @@ const configure = (config: ModuleConfiguration = {}) => {
     ? createChangelogAdapter(config.data)
     : createChangelogAdapter(log.entity || log)
 
-  const schemaSearchIndex = createSearchIndex(index.schema || index)
-  const entitySearchIndex = createSearchIndex(index.entity || index)
+  const schemaSearchIndex = createSearchIndexAdapter(
+    index.schema || index
+  )
+
+  const entitySearchIndex = createSearchIndexAdapter(
+    index.entity || index
+  )
 
   const schema = new SchemaModel({
     changeLog: schemaChangeLog,
@@ -54,9 +59,22 @@ const configure = (config: ModuleConfiguration = {}) => {
     isValid: (type: string, body: Object) => entity.isValid(type, body),
 
     init: async () => {
+      await Promise.all([
+        schemaChangeLog.init(),
+        schemaSearchIndex.init(),
+        entityChangeLog.init(),
+        entitySearchIndex.init(),
+      ])
+
       await schema.init()
       await entity.init()
-    }
+    },
+
+    isConnected: () =>
+      schemaChangeLog.isConnected() &&
+      schemaSearchIndex.isConnected() &&
+      entityChangeLog.isConnected() &&
+      entitySearchIndex.isConnected()
   }
 }
 

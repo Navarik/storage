@@ -42,6 +42,8 @@ export interface ChangelogAdapterInterface {
   on(topic: string, handler: Observer): void;
   write(topic: string, message: Object): Promise<Object>;
   read(topic: string): Promise<Array<Object>>;
+  init(): Promise<boolean>;
+  isConnected(): boolean;
 }
 
 export interface ChangelogInterface {
@@ -57,6 +59,8 @@ export interface SearchIndexAdapterInterface {
   insert(name: string, documents: Collection<Searchable>): Promise<number>;
   update(name: string, searchParams: Object, document: Object): Promise<number>;
   reset(): Promise<any>;
+  init(): Promise<boolean>;
+  isConnected(): boolean;
 }
 
 export interface SearchIndexInterface {

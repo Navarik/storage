@@ -4,13 +4,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _changelogAdapterFactory = require('./changelog-adapter-factory');
+var _changeLog = require('./adapters/change-log');
 
-var _changelogAdapterFactory2 = _interopRequireDefault(_changelogAdapterFactory);
-
-var _searchIndexFactory = require('./search-index-factory');
-
-var _searchIndexFactory2 = _interopRequireDefault(_searchIndexFactory);
+var _searchIndex = require('./adapters/search-index');
 
 var _models = require('./models');
 
@@ -28,12 +24,13 @@ var configure = function configure() {
   var log = config.log || 'default';
   var index = config.index || 'default';
 
-  var schemaChangeLog = config.schema ? (0, _changelogAdapterFactory2.default)({ schema: config.schema }) : (0, _changelogAdapterFactory2.default)(log.schema || log);
+  var schemaChangeLog = config.schema ? (0, _changeLog.createChangelogAdapter)({ schema: config.schema }) : (0, _changeLog.createChangelogAdapter)(log.schema || log);
 
-  var entityChangeLog = config.data ? (0, _changelogAdapterFactory2.default)(config.data) : (0, _changelogAdapterFactory2.default)(log.entity || log);
+  var entityChangeLog = config.data ? (0, _changeLog.createChangelogAdapter)(config.data) : (0, _changeLog.createChangelogAdapter)(log.entity || log);
 
-  var schemaSearchIndex = (0, _searchIndexFactory2.default)(index.schema || index);
-  var entitySearchIndex = (0, _searchIndexFactory2.default)(index.entity || index);
+  var schemaSearchIndex = (0, _searchIndex.createSearchIndexAdapter)(index.schema || index);
+
+  var entitySearchIndex = (0, _searchIndex.createSearchIndexAdapter)(index.entity || index);
 
   var schema = new _models.SchemaModel({
     changeLog: schemaChangeLog,
@@ -98,13 +95,17 @@ var configure = function configure() {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return schema.init();
+                return Promise.all([schemaChangeLog.init(), schemaSearchIndex.init(), entityChangeLog.init(), entitySearchIndex.init()]);
 
               case 2:
                 _context.next = 4;
-                return entity.init();
+                return schema.init();
 
               case 4:
+                _context.next = 6;
+                return entity.init();
+
+              case 6:
               case 'end':
                 return _context.stop();
             }
@@ -117,7 +118,11 @@ var configure = function configure() {
       }
 
       return init;
-    }()
+    }(),
+
+    isConnected: function isConnected() {
+      return schemaChangeLog.isConnected() && schemaSearchIndex.isConnected() && entityChangeLog.isConnected() && entitySearchIndex.isConnected();
+    }
   };
 };
 

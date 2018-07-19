@@ -56,6 +56,16 @@ var NeDbSearchIndexAdapter = function () {
 
       return Promise.resolve(true);
     }
+  }, {
+    key: 'init',
+    value: function init() {
+      return Promise.resolve(true);
+    }
+  }, {
+    key: 'isConnected',
+    value: function isConnected() {
+      return true;
+    }
   }]);
 
   return NeDbSearchIndexAdapter;

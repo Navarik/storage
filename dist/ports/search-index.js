@@ -56,12 +56,10 @@ var searchableFormat = function searchableFormat(document) {
 };
 
 var SearchIndex = function () {
-  function SearchIndex() {
-    var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
+  function SearchIndex(adapter) {
     _classCallCheck(this, SearchIndex);
 
-    this.adapter = config.adapter;
+    this.adapter = adapter;
   }
 
   _createClass(SearchIndex, [{

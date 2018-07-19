@@ -39,6 +39,16 @@ var DefaultChangelogAdapter = function () {
     value: function read(topic) {
       return Promise.resolve(this.log[topic] || []);
     }
+  }, {
+    key: 'init',
+    value: function init() {
+      return Promise.resolve(true);
+    }
+  }, {
+    key: 'isConnected',
+    value: function isConnected() {
+      return true;
+    }
   }]);
 
   return DefaultChangelogAdapter;

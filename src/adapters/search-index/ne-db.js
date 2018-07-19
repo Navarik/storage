@@ -42,6 +42,14 @@ class NeDbSearchIndexAdapter implements SearchIndexAdapterInterface {
 
     return Promise.resolve(true)
   }
+
+  init() {
+    return Promise.resolve(true)
+  }
+
+  isConnected() {
+    return true
+  }
 }
 
 export default NeDbSearchIndexAdapter

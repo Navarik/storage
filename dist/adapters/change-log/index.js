@@ -13,4 +13,13 @@ Object.defineProperty(exports, 'DefaultChangelogAdapter', {
   }
 });
 
+var _changelogAdapterFactory = require('./changelog-adapter-factory');
+
+Object.defineProperty(exports, 'createChangelogAdapter', {
+  enumerable: true,
+  get: function get() {
+    return _interopRequireDefault(_changelogAdapterFactory).default;
+  }
+});
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
