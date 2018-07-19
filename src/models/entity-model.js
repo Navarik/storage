@@ -58,6 +58,17 @@ class EntityModel {
     return entities
   }
 
+  async findData(params: Object) {
+    const found = await this.searchIndex.findLatest(params)
+
+    const entities = found.map(x => ({
+      ...this.getChangelog(x.type).getLatestVersion(x.id),
+      id: x.id
+    }))
+
+    return entities
+  }
+
   async get(id: Identifier, version: ?string): Promise<?Entity> {
     const found = version
       ? await this.searchIndex.findVersions({ id, version })

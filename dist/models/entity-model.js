@@ -147,52 +147,29 @@ var EntityModel = function () {
       return find;
     }()
   }, {
-    key: 'get',
+    key: 'findData',
     value: function () {
-      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(id, version) {
-        var found, type, log, data, entity;
+      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(params) {
+        var _this3 = this;
+
+        var found, entities;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                if (!version) {
-                  _context3.next = 6;
-                  break;
-                }
+                _context3.next = 2;
+                return this.searchIndex.findLatest(params);
 
-                _context3.next = 3;
-                return this.searchIndex.findVersions({ id: id, version: version });
+              case 2:
+                found = _context3.sent;
+                entities = found.map(function (x) {
+                  return _extends({}, _this3.getChangelog(x.type).getLatestVersion(x.id), {
+                    id: x.id
+                  });
+                });
+                return _context3.abrupt('return', entities);
 
-              case 3:
-                _context3.t0 = _context3.sent;
-                _context3.next = 9;
-                break;
-
-              case 6:
-                _context3.next = 8;
-                return this.searchIndex.findLatest({ id: id });
-
-              case 8:
-                _context3.t0 = _context3.sent;
-
-              case 9:
-                found = _context3.t0;
-
-                if (!(found.length === 0)) {
-                  _context3.next = 12;
-                  break;
-                }
-
-                return _context3.abrupt('return', undefined);
-
-              case 12:
-                type = found[0].type;
-                log = this.getChangelog(type);
-                data = log.getVersion(found[0].version_id);
-                entity = wrapEntity(type, data);
-                return _context3.abrupt('return', entity);
-
-              case 17:
+              case 5:
               case 'end':
                 return _context3.stop();
             }
@@ -200,8 +177,68 @@ var EntityModel = function () {
         }, _callee3, this);
       }));
 
-      function get(_x2, _x3) {
+      function findData(_x2) {
         return _ref3.apply(this, arguments);
+      }
+
+      return findData;
+    }()
+  }, {
+    key: 'get',
+    value: function () {
+      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(id, version) {
+        var found, type, log, data, entity;
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                if (!version) {
+                  _context4.next = 6;
+                  break;
+                }
+
+                _context4.next = 3;
+                return this.searchIndex.findVersions({ id: id, version: version });
+
+              case 3:
+                _context4.t0 = _context4.sent;
+                _context4.next = 9;
+                break;
+
+              case 6:
+                _context4.next = 8;
+                return this.searchIndex.findLatest({ id: id });
+
+              case 8:
+                _context4.t0 = _context4.sent;
+
+              case 9:
+                found = _context4.t0;
+
+                if (!(found.length === 0)) {
+                  _context4.next = 12;
+                  break;
+                }
+
+                return _context4.abrupt('return', undefined);
+
+              case 12:
+                type = found[0].type;
+                log = this.getChangelog(type);
+                data = log.getVersion(found[0].version_id);
+                entity = wrapEntity(type, data);
+                return _context4.abrupt('return', entity);
+
+              case 17:
+              case 'end':
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function get(_x3, _x4) {
+        return _ref4.apply(this, arguments);
       }
 
       return get;
@@ -225,60 +262,13 @@ var EntityModel = function () {
   }, {
     key: 'create',
     value: function () {
-      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(type, body) {
+      var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(type, body) {
         var validationErrors, log, format, record, entity;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                validationErrors = _schemaRegistry2.default.validate(type, body);
-
-                if (!validationErrors.length) {
-                  _context4.next = 3;
-                  break;
-                }
-
-                throw new Error('[Entity] Invalid value provided for: ' + validationErrors.join(', '));
-
-              case 3:
-                log = this.getChangelog(type);
-                format = _schemaRegistry2.default.format(type);
-                _context4.next = 7;
-                return log.logNew(format(body));
-
-              case 7:
-                record = _context4.sent;
-                entity = wrapEntity(type, record);
-                _context4.next = 11;
-                return this.searchIndex.add(entity);
-
-              case 11:
-                return _context4.abrupt('return', entity);
-
-              case 12:
-              case 'end':
-                return _context4.stop();
-            }
-          }
-        }, _callee4, this);
-      }));
-
-      function create(_x4, _x5) {
-        return _ref4.apply(this, arguments);
-      }
-
-      return create;
-    }()
-  }, {
-    key: 'createCollection',
-    value: function () {
-      var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(type, bodies) {
-        var validationErrors, log, format, records, entities;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                validationErrors = _schemaRegistry2.default.validate(type, bodies);
+                validationErrors = _schemaRegistry2.default.validate(type, body);
 
                 if (!validationErrors.length) {
                   _context5.next = 3;
@@ -291,18 +281,16 @@ var EntityModel = function () {
                 log = this.getChangelog(type);
                 format = _schemaRegistry2.default.format(type);
                 _context5.next = 7;
-                return Promise.all(bodies.map(function (x) {
-                  return log.logNew(format(x));
-                }));
+                return log.logNew(format(body));
 
               case 7:
-                records = _context5.sent;
-                entities = records.map(wrapEntity(type));
+                record = _context5.sent;
+                entity = wrapEntity(type, record);
                 _context5.next = 11;
-                return this.searchIndex.addCollection(entities);
+                return this.searchIndex.add(entity);
 
               case 11:
-                return _context5.abrupt('return', entities);
+                return _context5.abrupt('return', entity);
 
               case 12:
               case 'end':
@@ -312,8 +300,57 @@ var EntityModel = function () {
         }, _callee5, this);
       }));
 
-      function createCollection(_x6, _x7) {
+      function create(_x5, _x6) {
         return _ref5.apply(this, arguments);
+      }
+
+      return create;
+    }()
+  }, {
+    key: 'createCollection',
+    value: function () {
+      var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(type, bodies) {
+        var validationErrors, log, format, records, entities;
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                validationErrors = _schemaRegistry2.default.validate(type, bodies);
+
+                if (!validationErrors.length) {
+                  _context6.next = 3;
+                  break;
+                }
+
+                throw new Error('[Entity] Invalid value provided for: ' + validationErrors.join(', '));
+
+              case 3:
+                log = this.getChangelog(type);
+                format = _schemaRegistry2.default.format(type);
+                _context6.next = 7;
+                return Promise.all(bodies.map(function (x) {
+                  return log.logNew(format(x));
+                }));
+
+              case 7:
+                records = _context6.sent;
+                entities = records.map(wrapEntity(type));
+                _context6.next = 11;
+                return this.searchIndex.addCollection(entities);
+
+              case 11:
+                return _context6.abrupt('return', entities);
+
+              case 12:
+              case 'end':
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this);
+      }));
+
+      function createCollection(_x7, _x8) {
+        return _ref6.apply(this, arguments);
       }
 
       return createCollection;
@@ -321,20 +358,20 @@ var EntityModel = function () {
   }, {
     key: 'update',
     value: function () {
-      var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(id, body) {
+      var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(id, body) {
         var current, validationErrors, formatted, entityRecord, entity;
-        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
-            switch (_context6.prev = _context6.next) {
+            switch (_context7.prev = _context7.next) {
               case 0:
-                _context6.next = 2;
+                _context7.next = 2;
                 return this.get(id);
 
               case 2:
-                current = _context6.sent;
+                current = _context7.sent;
 
                 if (current) {
-                  _context6.next = 5;
+                  _context7.next = 5;
                   break;
                 }
 
@@ -344,7 +381,7 @@ var EntityModel = function () {
                 validationErrors = _schemaRegistry2.default.validate(current.type, body);
 
                 if (!validationErrors.length) {
-                  _context6.next = 8;
+                  _context7.next = 8;
                   break;
                 }
 
@@ -352,28 +389,28 @@ var EntityModel = function () {
 
               case 8:
                 formatted = _schemaRegistry2.default.format(current.type, body);
-                _context6.next = 11;
+                _context7.next = 11;
                 return this.getChangelog(current.type).logChange(id, formatted);
 
               case 11:
-                entityRecord = _context6.sent;
+                entityRecord = _context7.sent;
                 entity = wrapEntity(current.type, entityRecord);
-                _context6.next = 15;
+                _context7.next = 15;
                 return this.searchIndex.add(entity);
 
               case 15:
-                return _context6.abrupt('return', entity);
+                return _context7.abrupt('return', entity);
 
               case 16:
               case 'end':
-                return _context6.stop();
+                return _context7.stop();
             }
           }
-        }, _callee6, this);
+        }, _callee7, this);
       }));
 
-      function update(_x8, _x9) {
-        return _ref6.apply(this, arguments);
+      function update(_x9, _x10) {
+        return _ref7.apply(this, arguments);
       }
 
       return update;

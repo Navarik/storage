@@ -14,6 +14,10 @@ var _searchIndexFactory2 = _interopRequireDefault(_searchIndexFactory);
 
 var _models = require('./models');
 
+var _schemaRegistry = require('./models/schema-registry');
+
+var _schemaRegistry2 = _interopRequireDefault(_schemaRegistry);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
@@ -48,6 +52,9 @@ var configure = function configure() {
     findSchema: function findSchema(params) {
       return schema.find(params);
     },
+    schemaNames: function schemaNames() {
+      return _schemaRegistry2.default.listUserTypes();
+    },
     createSchema: function createSchema(body) {
       return schema.create('schema', body);
     },
@@ -58,6 +65,15 @@ var configure = function configure() {
     find: function find(params) {
       return entity.find(params);
     },
+    findData: function findData(params) {
+      return entity.findData(params);
+    },
+    count: function count(params) {
+      return entity.findData(params).then(function (xs) {
+        return xs.length;
+      });
+    },
+
     get: function get(id, version) {
       return entity.get(id, version);
     },
