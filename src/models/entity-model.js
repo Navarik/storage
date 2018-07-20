@@ -89,7 +89,12 @@ class EntityModel {
 
   // Commands
   validate(type: string, body: Object) {
-    return schemaRegistry.validate(type, body)
+    const validationErrors = schemaRegistry.validate(type, body)
+    if (validationErrors.length) {
+      return `[Entity] Invalid value provided for: ${validationErrors.join(', ')}`
+    }
+
+    return ''
   }
 
   isValid(type: string, body: Object) {
@@ -100,9 +105,9 @@ class EntityModel {
   }
 
   async create(type: string, body: Object) {
-    const validationErrors = schemaRegistry.validate(type, body)
-    if (validationErrors.length) {
-      throw new Error(`[Entity] Invalid value provided for: ${validationErrors.join(', ')}`)
+    const validationError = this.validate(type, body)
+    if (validationError) {
+      throw new Error(validationError)
     }
 
     const log = this.getChangelog(type)

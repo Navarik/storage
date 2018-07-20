@@ -253,7 +253,12 @@ var EntityModel = function () {
   }, {
     key: 'validate',
     value: function validate(type, body) {
-      return _schemaRegistry2.default.validate(type, body);
+      var validationErrors = _schemaRegistry2.default.validate(type, body);
+      if (validationErrors.length) {
+        return '[Entity] Invalid value provided for: ' + validationErrors.join(', ');
+      }
+
+      return '';
     }
   }, {
     key: 'isValid',
@@ -267,19 +272,19 @@ var EntityModel = function () {
     key: 'create',
     value: function () {
       var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(type, body) {
-        var validationErrors, log, format, record, entity;
+        var validationError, log, format, record, entity;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                validationErrors = _schemaRegistry2.default.validate(type, body);
+                validationError = this.validate(type, body);
 
-                if (!validationErrors.length) {
+                if (!validationError) {
                   _context5.next = 3;
                   break;
                 }
 
-                throw new Error('[Entity] Invalid value provided for: ' + validationErrors.join(', '));
+                throw new Error(validationError);
 
               case 3:
                 log = this.getChangelog(type);
