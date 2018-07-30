@@ -59,7 +59,7 @@ var SchemaModel = function () {
     _classCallCheck(this, SchemaModel);
 
     this.searchIndex = new _searchIndex2.default('schema', config.searchIndex);
-    this.changeLog = new _changeLog2.default('schema', config.changeLog, generateId);
+    this.changeLog = new _changeLog2.default('schema', config.changeLog);
     this.signature = new _signatureProvider2.default(generateId);
     this.state = new _localState.InMemoryStateAdapter();
 

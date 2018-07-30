@@ -37,7 +37,7 @@ class EntityModel {
 
   getChangelog(type: string) {
     if (!this.changelogs[type]) {
-      this.changelogs[type] = new ChangeLog(type, this.changelogAdapter, generateId)
+      this.changelogs[type] = new ChangeLog(type, this.changelogAdapter)
       this.changelogs[type].onChange(async (record) => {
         const entity = { ...record, type }
         this.state.set(record.id, entity)
@@ -66,15 +66,13 @@ class EntityModel {
   }
 
   // Queries
-  async find(params: Object) {
-    const found = await this.searchIndex.find(params)
+  async find(params: Object, limit, skip) {
+    const found = await this.searchIndex.find(params, limit, skip)
     if (!found) {
       return []
     }
 
-    const entities = found.map(x =>
-      wrapEntity(x.type, this.state.get(x.id))
-    )
+    const entities = found.map(x => wrapEntity(x.type, this.state.get(x.id)))
 
     return entities
   }
@@ -82,7 +80,7 @@ class EntityModel {
   async findData(params: Object) {
     const found = await this.searchIndex.find(params)
     const entities = found.map(x => ({
-      ...this.state.get(x.id),
+      ...this.state.get(x.id).body,
       id: x.id
     }))
 

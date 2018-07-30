@@ -23,7 +23,7 @@ class SchemaModel {
 
   constructor(config: Object) {
     this.searchIndex = new SearchIndex('schema', config.searchIndex)
-    this.changeLog = new ChangeLog('schema', config.changeLog, generateId)
+    this.changeLog = new ChangeLog('schema', config.changeLog)
     this.signature = new SignatureProvider(generateId)
     this.state = new InMemoryStateAdapter()
 

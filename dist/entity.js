@@ -81,7 +81,7 @@ var EntityModel = function () {
       var _this = this;
 
       if (!this.changelogs[type]) {
-        this.changelogs[type] = new _changeLog2.default(type, this.changelogAdapter, generateId);
+        this.changelogs[type] = new _changeLog2.default(type, this.changelogAdapter);
         this.changelogs[type].onChange(function () {
           var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(record) {
             var entity;
@@ -160,7 +160,7 @@ var EntityModel = function () {
   }, {
     key: 'find',
     value: function () {
-      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(params) {
+      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(params, limit, skip) {
         var _this3 = this;
 
         var found, entities;
@@ -168,22 +168,26 @@ var EntityModel = function () {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                found = Object.values(this.state.getAll());
+                _context3.next = 2;
+                return this.searchIndex.find(params, limit, skip);
+
+              case 2:
+                found = _context3.sent;
 
                 if (found) {
-                  _context3.next = 3;
+                  _context3.next = 5;
                   break;
                 }
 
                 return _context3.abrupt('return', []);
 
-              case 3:
+              case 5:
                 entities = found.map(function (x) {
                   return wrapEntity(x.type, _this3.state.get(x.id));
                 });
                 return _context3.abrupt('return', entities);
 
-              case 5:
+              case 7:
               case 'end':
                 return _context3.stop();
             }
@@ -191,7 +195,7 @@ var EntityModel = function () {
         }, _callee3, this);
       }));
 
-      function find(_x2) {
+      function find(_x2, _x3, _x4) {
         return _ref3.apply(this, arguments);
       }
 
@@ -214,7 +218,7 @@ var EntityModel = function () {
               case 2:
                 found = _context4.sent;
                 entities = found.map(function (x) {
-                  return _extends({}, _this4.state.get(x.id), {
+                  return _extends({}, _this4.state.get(x.id).body, {
                     id: x.id
                   });
                 });
@@ -228,7 +232,7 @@ var EntityModel = function () {
         }, _callee4, this);
       }));
 
-      function findData(_x3) {
+      function findData(_x5) {
         return _ref4.apply(this, arguments);
       }
 
@@ -264,7 +268,7 @@ var EntityModel = function () {
         }, _callee5, this);
       }));
 
-      function get(_x4, _x5) {
+      function get(_x6, _x7) {
         return _ref5.apply(this, arguments);
       }
 
@@ -326,7 +330,7 @@ var EntityModel = function () {
         }, _callee6, this);
       }));
 
-      function create(_x6, _x7) {
+      function create(_x8, _x9) {
         return _ref6.apply(this, arguments);
       }
 
@@ -377,7 +381,7 @@ var EntityModel = function () {
         }, _callee7, this);
       }));
 
-      function update(_x8, _x9) {
+      function update(_x10, _x11) {
         return _ref7.apply(this, arguments);
       }
 

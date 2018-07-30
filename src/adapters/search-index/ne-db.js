@@ -25,8 +25,8 @@ class NeDbSearchIndexAdapter implements SearchIndexAdapterInterface {
     return this.collections[name]
   }
 
-  find(name: string, searchParams: Object) {
-    return this.getCollection(name).find(searchParams)
+  find(name: string, searchParams: Object, options) {
+    return this.getCollection(name).find(searchParams, options)
   }
 
   insert(name: string, documents: Collection<Searchable>) {

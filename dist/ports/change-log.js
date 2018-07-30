@@ -21,12 +21,11 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var ChangeLog = function () {
-  function ChangeLog(topic, adapter, generator) {
+  function ChangeLog(topic, adapter) {
     _classCallCheck(this, ChangeLog);
 
     this.adapter = adapter;
     this.topic = topic;
-    this.generateId = generator;
     this.listener = function () {};
   }
 

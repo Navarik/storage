@@ -2,24 +2,20 @@
 import uuidv5 from 'uuid/v5'
 import arraySort from 'array-sort'
 
-import type { IdGenerator, ChangelogInterface, ChangeRecord, Identifier, ChangelogAdapterInterface, Observer } from '../flowtypes'
-
-type GenericChangeRecord = ChangeRecord<any>
+import type { ChangelogInterface, ChangeRecord, Identifier, ChangelogAdapterInterface, Observer } from '../flowtypes'
 
 class ChangeLog implements ChangelogInterface {
   topic: string
-  generateId: IdGenerator
   adapter: ChangelogAdapterInterface
-  listener: GenericChangeRecord => void
+  listener: ChangeRecord => void
 
-  constructor(topic: string, adapter: ChangelogAdapterInterface, generator: IdGenerator) {
+  constructor(topic: string, adapter: ChangelogAdapterInterface) {
     this.adapter = adapter
     this.topic = topic
-    this.generateId = generator
     this.listener = () => {}
   }
 
-  onChange(func: GenericChangeRecord => void) {
+  onChange(func: ChangeRecord => void) {
     this.listener = func
   }
 
@@ -30,7 +26,7 @@ class ChangeLog implements ChangelogInterface {
     return log
   }
 
-  async register(document: GenericChangeRecord): Promise<GenericChangeRecord> {
+  async register(document: ChangeRecord): Promise<ChangeRecord> {
     await this.adapter.write(this.topic, document)
     this.listener(document)
   }

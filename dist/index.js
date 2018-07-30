@@ -61,8 +61,8 @@ var configure = function configure() {
       return schema.update(name, body);
     },
 
-    find: function find(params) {
-      return entity.find(params);
+    find: function find(params, limit, skip) {
+      return entity.find(params, limit, skip);
     },
     findData: function findData(params) {
       return entity.findData(params);

@@ -36,8 +36,8 @@ var NeDbSearchIndexAdapter = function () {
     }
   }, {
     key: 'find',
-    value: function find(name, searchParams) {
-      return this.getCollection(name).find(searchParams);
+    value: function find(name, searchParams, options) {
+      return this.getCollection(name).find(searchParams, options);
     }
   }, {
     key: 'insert',

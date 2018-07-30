@@ -10,23 +10,15 @@ var _nedb = require('nedb');
 
 var _nedb2 = _interopRequireDefault(_nedb);
 
-var _polyExclude = require('poly-exclude');
-
-var _polyExclude2 = _interopRequireDefault(_polyExclude);
-
 var _polyMap = require('poly-map');
 
 var _polyMap2 = _interopRequireDefault(_polyMap);
-
-var _utils = require('../../utils');
 
 var _neDb = require('./ne-db');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var format = (0, _utils.maybe)((0, _polyExclude2.default)(['_id']));
 
 var databaseError = function databaseError(err) {
   throw new Error('[NeDB] Database error: ' + err);
@@ -45,9 +37,19 @@ var NeDbClient = function () {
     value: function find(searchParameters) {
       var _this = this;
 
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
       return new Promise(function (resolve, reject) {
-        return _this.client.find(searchParameters, function (err, res) {
-          if (err) reject(databaseError(err));else resolve((0, _polyMap2.default)(format, res));
+        var query = _this.client.find(searchParameters);
+        if (options.skip) {
+          query.skip(options.skip);
+        }
+        if (options.limit) {
+          query.limit(options.limit);
+        }
+
+        query.exec(function (err, res) {
+          if (err) reject(databaseError(err));else resolve(res);
         });
       });
     }

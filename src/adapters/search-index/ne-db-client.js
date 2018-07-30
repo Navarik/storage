@@ -1,13 +1,9 @@
 //@flow
 import Database from 'nedb'
-import exclude from 'poly-exclude'
 import map from 'poly-map'
-import { maybe } from '../../utils'
 
 import type { Collection, Searchable } from '../../flowtypes'
 import { DBClientInterface } from './ne-db'
-
-const format = maybe(exclude(['_id']))
 
 const databaseError = (err: string): Error => {
   throw new Error(`[NeDB] Database error: ${err}`)
@@ -21,13 +17,21 @@ class NeDbClient implements DBClientInterface {
     this.client.ensureIndex({ fieldName: 'id', unique: true })
   }
 
-  find(searchParameters: Object) {
-    return new Promise((resolve, reject) =>
-      this.client.find(searchParameters, (err, res) => {
+  find(searchParameters: Object, options = {}) {
+    return new Promise((resolve, reject) => {
+      const query = this.client.find(searchParameters)
+      if (options.skip) {
+        query.skip(options.skip)
+      }
+      if (options.limit) {
+        query.limit(options.limit)
+      }
+
+      query.exec((err, res) => {
         if (err) reject(databaseError(err))
-        else resolve(map(format, res))
+        else resolve(res)
       })
-    )
+    })
   }
 
   insert(documents: Collection<Searchable>) {

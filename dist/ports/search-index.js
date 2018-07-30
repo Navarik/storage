@@ -134,11 +134,13 @@ var SearchIndex = function () {
     value: function () {
       var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
         var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+        var limit = arguments[1];
+        var skip = arguments[2];
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                return _context4.abrupt('return', this.adapter.find(this.name, (0, _polyMap2.default)(stringifyProperties, params)));
+                return _context4.abrupt('return', this.adapter.find(this.name, (0, _polyMap2.default)(stringifyProperties, params), { skip: skip, limit: limit }));
 
               case 1:
               case 'end':
