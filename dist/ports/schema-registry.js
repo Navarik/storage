@@ -14,10 +14,6 @@ var _polyMap = require('poly-map');
 
 var _polyMap2 = _interopRequireDefault(_polyMap);
 
-var _curry = require('curry');
-
-var _curry2 = _interopRequireDefault(_curry);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var registry = {};
@@ -40,14 +36,14 @@ var validate = function validate(type, data) {
   return errors;
 };
 
-var format = (0, _curry2.default)(function (type, data) {
+var formatData = function formatData(type, data) {
   var schema = _avsc2.default.Type.forSchema(type, { registry: registry });
   var response = _extends({}, schema.fromBuffer(schema.toBuffer(data)));
 
   return response;
-});
+};
 
-var formatSchema = function formatSchema(schema) {
+var format = function format(schema) {
   return _extends({}, schema, {
     type: 'record',
     description: schema.description || '',
@@ -55,50 +51,35 @@ var formatSchema = function formatSchema(schema) {
   });
 };
 
-var add = function add(schema) {
-  var formatted = formatSchema(schema);
+var register = function register(schema) {
+  var formatted = format(schema);
 
+  delete registry[formatted.name];
   _avsc2.default.Type.forSchema(formatted, { registry: registry });
 
   return formatted;
 };
 
-var update = function update(schema) {
-  var formatted = formatSchema(schema);
-  var type = formatted.name;
+var get = function get(name) {
+  return registry[name];
+};
 
-  if (!registry[type]) {
-    throw new Error('[SchemaRegistry] Cannot update non-existing schema: ' + type);
+var init = function init(source) {
+  Object.keys(registry).forEach(function (type) {
+    delete registry[type];
+  });
+
+  if (source) {
+    source.forEach(register);
   }
-
-  delete registry[type];
-  _avsc2.default.Type.forSchema(formatted, { registry: registry });
-
-  return formatted;
 };
 
-var get = function get(type) {
-  return registry[type];
-};
-
-var listAllTypes = function listAllTypes() {
-  return Object.keys(registry);
-};
 var listUserTypes = function listUserTypes() {
-  return listAllTypes().filter(function (x) {
+  return Object.keys(registry).filter(function (x) {
     return x.includes('.');
   });
 };
 
-var init = function init(source) {
-  listAllTypes().forEach(function (type) {
-    delete registry[type];
-  });
-  if (source) {
-    source.forEach(add);
-  }
-};
-
-var schemaRegistry = { add: add, update: update, get: get, format: format, init: init, validate: validate, listAllTypes: listAllTypes, listUserTypes: listUserTypes };
+var schemaRegistry = { format: format, register: register, get: get, init: init, validate: validate, formatData: formatData, listUserTypes: listUserTypes };
 
 exports.default = schemaRegistry;

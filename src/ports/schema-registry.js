@@ -1,7 +1,6 @@
 //@flow
 import avro from 'avsc'
 import map from 'poly-map'
-import curry from 'curry'
 
 import type { AvroSchema } from '../flowtypes'
 
@@ -24,56 +23,43 @@ const validate = (type: string, data: Object|Array<Object>): Array<Object> => {
   return errors
 }
 
-const format = curry((type: string, data: Object): Object => {
+const formatData = (type: string, data: Object): Object => {
   const schema = avro.Type.forSchema(type, { registry })
   const response = { ...schema.fromBuffer(schema.toBuffer(data)) }
 
   return response
-})
+}
 
-const formatSchema = schema => ({
+const format = schema => ({
   ...schema,
   type: 'record',
   description: schema.description || '',
   fields: schema.fields || []
 })
 
-const add = (schema: AvroSchema): AvroSchema => {
-  const formatted = formatSchema(schema)
+const register = (schema: AvroSchema): AvroSchema => {
+  const formatted = format(schema)
 
+  delete registry[formatted.name]
   avro.Type.forSchema(formatted, { registry })
 
   return formatted
 }
 
-const update = (schema: AvroSchema): AvroSchema => {
-  const formatted = formatSchema(schema)
-  const type = formatted.name
-
-  if (!registry[type]){
-    throw new Error(`[SchemaRegistry] Cannot update non-existing schema: ${type}`)
-  }
-
-  delete registry[type]
-  avro.Type.forSchema(formatted, { registry })
-
-  return formatted
+const get = (name: string): AvroType => {
+  return registry[name]
 }
-
-const get = (type: string): AvroType => {
-  return registry[type]
-}
-
-const listAllTypes = (): Array<string> => Object.keys(registry)
-const listUserTypes = (): Array<string> => listAllTypes().filter(x => x.includes('.'))
 
 const init = (source: ?Array<AvroSchema>) => {
-  listAllTypes().forEach(type => { delete registry[type] })
+  Object.keys(registry).forEach(type => { delete registry[type] })
+
   if (source) {
-    source.forEach(add)
+    source.forEach(register)
   }
 }
 
-const schemaRegistry = { add, update, get, format, init, validate, listAllTypes, listUserTypes }
+const listUserTypes = () => Object.keys(registry).filter(x => x.includes('.'))
+
+const schemaRegistry = { format, register, get, init, validate, formatData, listUserTypes }
 
 export default schemaRegistry

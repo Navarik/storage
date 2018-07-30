@@ -1,14 +1,8 @@
 // @flow
-import arraySort from 'array-sort'
-import groupBy from 'group-by'
 import map from 'poly-map'
-import pipe from 'function-pipe'
-import flatten from 'array-flatten'
-import { maybe, head } from '../utils'
+import { maybe } from '../utils'
 
-import type { SearchIndexInterface, Searchable, SearchIndexAdapterInterface, Collection } from '../flowtypes'
-
-const sortByVersionNumber = data => arraySort(data, 'version', { reverse: true })
+import type { ChangeRecord, DocumentBody, SearchIndexInterface, Searchable, SearchIndexAdapterInterface, Collection } from '../flowtypes'
 
 const stringifyProperties = maybe(value => (
   typeof value === 'object'
@@ -16,62 +10,40 @@ const stringifyProperties = maybe(value => (
     : String(value)
 ))
 
-const searchableFormat = document => ({
+const searchableFormat = (document: ChangeRecord) => ({
+  ...map(stringifyProperties, document.body),
   id: document.id,
   version: String(document.version),
   version_id: document.version_id,
-  type: document.type,
-  ...stringifyProperties(document.body)
+  type: document.type
 })
 
 class SearchIndex implements SearchIndexInterface {
   adapter: SearchIndexAdapterInterface
+  name: string
 
-  constructor(adapter: SearchIndexAdapterInterface) {
+  constructor(name: string, adapter: SearchIndexAdapterInterface) {
     this.adapter = adapter
+    this.name = name
   }
 
-  init(log: Collection<Searchable>) {
-    const versions = Object.values(groupBy(log, 'id'))
-    const latest = map(pipe(sortByVersionNumber, head), versions)
-
-    return this.adapter
-      .reset()
-      .then(() => Promise.all([
-        this.adapter.insert('versions', log.map(searchableFormat)),
-        this.adapter.insert('latest', latest.map(searchableFormat))
-      ])
-    )
+  async init(log: Collection<ChangeRecord>) {
+    await this.adapter.reset()
+    await this.adapter.insert(this.name, Object.values(log).map(searchableFormat))
   }
 
-  add(document: Object) {
+  async add(document: ChangeRecord) {
     const searchable = searchableFormat(document)
-
-    return Promise.all([
-      this.adapter.insert('versions', [searchable]),
-      this.adapter.update('latest', { id: document.id }, searchable)
-    ])
+    await this.adapter.update(this.name, { id: document.id }, searchable)
   }
 
-  addCollection(documents: Array<Object>) {
+  async addCollection(documents: Collection<ChangeRecord>) {
     const searchable = documents.map(searchableFormat)
-
-    return Promise.all([
-      this.adapter.insert('versions', searchable),
-      ...searchable.map(x => this.adapter.update('latest', { id: x.id }, x))
-    ])
+    return map(x => this.adapter.update(this.name, { id: x.id }, x), searchable)
   }
 
-  findLatest(params: Object) {
-    return this.adapter
-      .find('latest', stringifyProperties(params))
-      .then(xs => xs || [])
-  }
-
-  findVersions(params: Object) {
-    return this.adapter
-      .find('versions', stringifyProperties(params))
-      .then(xs => xs || [])
+  async find(params: Object = {}) {
+    return this.adapter.find(this.name, map(stringifyProperties, params))
   }
 }
 

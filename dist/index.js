@@ -8,11 +8,13 @@ var _changeLog = require('./adapters/change-log');
 
 var _searchIndex = require('./adapters/search-index');
 
-var _models = require('./models');
+var _schema = require('./schema');
 
-var _schemaRegistry = require('./models/schema-registry');
+var _schema2 = _interopRequireDefault(_schema);
 
-var _schemaRegistry2 = _interopRequireDefault(_schemaRegistry);
+var _entity = require('./entity');
+
+var _entity2 = _interopRequireDefault(_entity);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -32,12 +34,12 @@ var configure = function configure() {
 
   var entitySearchIndex = (0, _searchIndex.createSearchIndexAdapter)(index.entity || index);
 
-  var schema = new _models.SchemaModel({
+  var schema = new _schema2.default({
     changeLog: schemaChangeLog,
     searchIndex: schemaSearchIndex
   });
 
-  var entity = new _models.EntityModel({
+  var entity = new _entity2.default({
     changeLog: entityChangeLog,
     searchIndex: entitySearchIndex
   });
@@ -50,10 +52,10 @@ var configure = function configure() {
       return schema.find(params);
     },
     schemaNames: function schemaNames() {
-      return _schemaRegistry2.default.listUserTypes();
+      return schema.listTypes();
     },
     createSchema: function createSchema(body) {
-      return schema.create('schema', body);
+      return schema.create(body);
     },
     updateSchema: function updateSchema(name, body) {
       return schema.update(name, body);

@@ -37,6 +37,7 @@ var NeDbClient = function () {
     _classCallCheck(this, NeDbClient);
 
     this.client = new _nedb2.default();
+    this.client.ensureIndex({ fieldName: 'id', unique: true });
   }
 
   _createClass(NeDbClient, [{

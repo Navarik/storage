@@ -3,16 +3,17 @@ export type Collection<T: Object> = Array<T>
 
 export type Identifier = string
 export type DateTime = string
+export type DocumentBody = { [string]: any }
 export type IdGenerator = (data: Object) => Identifier
 
 export type AvroSchema = {
   name: string,
   type: string,
-  description: '',
+  description: string,
   fields: Array<Object>
 }
 
-export type Document<T> = {
+export type Document<T: Object> = {
   id: Identifier,
   body: T,
   created_at: DateTime
@@ -24,19 +25,23 @@ export type VersionInfo = {
   modified_at: DateTime
 }
 
-export type ChangeRecord<T> = Document<T> & VersionInfo
-
 export type TypeInfo = {
   type: string,
   schema: AvroSchema
 }
 
-export type Schema = ChangeRecord<AvroSchema>
-export type Entity = ChangeRecord<Object> & TypeInfo
+export type ChangeRecord = Document<DocumentBody> & VersionInfo
+export type Schema = Document<AvroSchema> & VersionInfo
+export type Entity = Document<DocumentBody> & VersionInfo & TypeInfo
 
-export type Searchable = Object
+export type Searchable = { [string]: ?string|Searchable }
 
 export type Observer = Object => void
+
+export interface SignatureProviderInterface {
+  signNew(body: DocumentBody): ChangeRecord;
+  signVersion(body: DocumentBody, previous: ChangeRecord): ChangeRecord;
+}
 
 export interface ChangelogAdapterInterface {
   on(topic: string, handler: Observer): void;
@@ -47,11 +52,12 @@ export interface ChangelogAdapterInterface {
 }
 
 export interface ChangelogInterface {
-  getVersion<T>(versionId: Identifier): ChangeRecord<T>;
-  getLatestVersion<T>(id: Identifier): ChangeRecord<T>;
-  logNew<T>(body: T): Promise<ChangeRecord<T>>;
-  logChange<T>(id: Identifier, body: T): Promise<ChangeRecord<T>>;
-  reconstruct<T>(): Promise<Collection<ChangeRecord<T>>>;
+  getVersion(versionId: Identifier): ChangeRecord;
+  getLatestVersion(id: Identifier): ChangeRecord;
+  logNew(body: Object): Promise<ChangeRecord>;
+  logChange(id: Identifier, body: DocumentBody): Promise<ChangeRecord>;
+  reconstruct(): Promise<Collection<ChangeRecord>>;
+  onChange(handler: Observer): void;
 }
 
 export interface SearchIndexAdapterInterface {
@@ -64,11 +70,10 @@ export interface SearchIndexAdapterInterface {
 }
 
 export interface SearchIndexInterface {
-  init(log: Collection<Searchable>): Promise<any>;
-  add(document: Object): Promise<any>;
-  addCollection(document: Collection<Object>): Promise<any>;
-  findLatest(params: Object): Promise<Collection<Searchable>>;
-  findVersions(params: Object): Promise<Collection<Searchable>>;
+  init(log: Collection<ChangeRecord>): Promise<any>;
+  add(document: ChangeRecord): Promise<any>;
+  addCollection(document: Collection<ChangeRecord>): Promise<any>;
+  find(params: Object): Promise<Collection<Searchable>>;
 }
 
 type AdapterConfiguration = string | Object

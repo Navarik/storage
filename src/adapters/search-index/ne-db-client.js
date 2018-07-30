@@ -18,6 +18,7 @@ class NeDbClient implements DBClientInterface {
 
   constructor() {
     this.client = new Database()
+    this.client.ensureIndex({ fieldName: 'id', unique: true })
   }
 
   find(searchParameters: Object) {

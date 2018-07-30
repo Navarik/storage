@@ -2,8 +2,8 @@
 import { createChangelogAdapter } from './adapters/change-log'
 import { createSearchIndexAdapter } from './adapters/search-index'
 
-import { SchemaModel, EntityModel } from './models'
-import schemaRegistry from './models/schema-registry'
+import SchemaModel from './schema'
+import EntityModel from './entity'
 import type { AvroSchema, Identifier, ModuleConfiguration } from './flowtypes'
 
 const configure = (config: ModuleConfiguration = {}) => {
@@ -39,8 +39,8 @@ const configure = (config: ModuleConfiguration = {}) => {
   return {
     getSchema: (name: string, version: ?string) => schema.get(name, version),
     findSchema: (params: Object) => schema.find(params),
-    schemaNames: () => schemaRegistry.listUserTypes(),
-    createSchema: (body: AvroSchema) => schema.create('schema', body),
+    schemaNames: () => schema.listTypes(),
+    createSchema: (body: AvroSchema) => schema.create(body),
     updateSchema: (name: string, body: AvroSchema) => schema.update(name, body),
 
     find: (params: Object) => entity.find(params),
