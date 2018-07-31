@@ -4,12 +4,12 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _neDb = require('./ne-db');
+var _neDbSearchIndexAdapter = require('./ne-db-search-index-adapter');
 
 Object.defineProperty(exports, 'NeDbSearchIndexAdapter', {
   enumerable: true,
   get: function get() {
-    return _interopRequireDefault(_neDb).default;
+    return _interopRequireDefault(_neDbSearchIndexAdapter).default;
   }
 });
 

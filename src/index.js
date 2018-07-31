@@ -50,7 +50,7 @@ const configure = (config: ModuleConfiguration = {}) => {
     get: (id: string, version: ?string) => entity.get(id, version),
     create: (type: string, body: Object | Array<Object>) => (
       body instanceof Array
-        ? entity.createCollection(type, body)
+        ? Promise.all(body.map(x => entity.create(type, x)))
         : entity.create(type, body)
     ),
     update: (id: Identifier, body: Object) => entity.update(id, body),

@@ -1,5 +1,5 @@
 // @flow
-import NeDbSearchIndexAdapter from './ne-db'
+import NeDbSearchIndexAdapter from './ne-db-search-index-adapter'
 
 const createSearchIndexAdapter = (type: any) => {
   if (type === 'default') {

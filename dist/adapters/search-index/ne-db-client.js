@@ -14,7 +14,7 @@ var _polyMap = require('poly-map');
 
 var _polyMap2 = _interopRequireDefault(_polyMap);
 
-var _neDb = require('./ne-db');
+var _neDbSearchIndexAdapter = require('./ne-db-search-index-adapter');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 

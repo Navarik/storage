@@ -54,17 +54,17 @@ describe("Entity creation flow", () => {
   })
 })
 
-// describe("Bulk entity creation", () => {
-//   before(() => storage.init())
+describe("Bulk entity creation", () => {
+  before(() => storage.init())
 
-//   it("correctly creates collection of new entities",
-//     canCreateCollection('timelog.timelog_event', fixturesEvents)
-//   )
-//   it("can find created entities", forAll(fixturesEvents, canFind))
+  it("correctly creates collection of new entities",
+    canCreateCollection('timelog.timelog_event', fixturesEvents)
+  )
+  it("can find created entities", forAll(fixturesEvents, canFind))
 
-//   it("correct number of entities is created", async () => {
-//     const response = await storage.find()
-//     expect(response).to.be.an('array')
-//     expect(response).to.have.length(5)
-//   })
-// })
+  it("correct number of entities is created", async () => {
+    const response = await storage.find()
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(5)
+  })
+})

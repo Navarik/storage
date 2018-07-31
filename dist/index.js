@@ -77,7 +77,9 @@ var configure = function configure() {
       return entity.get(id, version);
     },
     create: function create(type, body) {
-      return body instanceof Array ? entity.createCollection(type, body) : entity.create(type, body);
+      return body instanceof Array ? Promise.all(body.map(function (x) {
+        return entity.create(type, x);
+      })) : entity.create(type, body);
     },
     update: function update(id, body) {
       return entity.update(id, body);

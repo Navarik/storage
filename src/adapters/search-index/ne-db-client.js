@@ -3,7 +3,7 @@ import Database from 'nedb'
 import map from 'poly-map'
 
 import type { Collection, Searchable } from '../../flowtypes'
-import { DBClientInterface } from './ne-db'
+import { DBClientInterface } from './ne-db-search-index-adapter'
 
 const databaseError = (err: string): Error => {
   throw new Error(`[NeDB] Database error: ${err}`)
