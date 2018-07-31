@@ -2,7 +2,6 @@
 import uuidv4 from 'uuid/v4'
 import map from 'poly-map'
 import curry from 'curry'
-import flatten from 'array-flatten'
 import { InMemoryStateAdapter } from './adapters/local-state'
 import ChangeLog from './ports/change-log'
 import SearchIndex from './ports/search-index'
@@ -26,6 +25,7 @@ class EntityModel {
   changelogAdapter: ChangelogAdapterInterface
   changelogs: { [string]: ChangelogInterface }
   signature: SignatureProviderInterface
+  state: InMemoryStateAdapter
 
   constructor(config: Object) {
     this.searchIndex = new SearchIndex('entity', config.searchIndex)
@@ -66,7 +66,7 @@ class EntityModel {
   }
 
   // Queries
-  async find(params: Object, limit, skip) {
+  async find(params: Object, limit: ?number, skip: ?number) {
     const found = await this.searchIndex.find(params, limit, skip)
     if (!found) {
       return []
@@ -77,8 +77,8 @@ class EntityModel {
     return entities
   }
 
-  async findData(params: Object) {
-    const found = await this.searchIndex.find(params)
+  async findData(params: Object, limit: ?number, skip: ?number) {
+    const found = await this.searchIndex.find(params, limit, skip)
     const entities = found.map(x => ({
       ...this.state.get(x.id).body,
       id: x.id

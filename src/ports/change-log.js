@@ -26,9 +26,11 @@ class ChangeLog implements ChangelogInterface {
     return log
   }
 
-  async register(document: ChangeRecord): Promise<ChangeRecord> {
+  async register(document: ChangeRecord) {
     await this.adapter.write(this.topic, document)
     this.listener(document)
+
+    return document
   }
 }
 

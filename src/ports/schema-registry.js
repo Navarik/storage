@@ -30,7 +30,7 @@ const formatData = (type: string, data: Object): Object => {
   return response
 }
 
-const format = schema => ({
+const format = (schema: AvroSchema) => ({
   ...schema,
   type: 'record',
   description: schema.description || '',

@@ -43,8 +43,8 @@ const configure = (config: ModuleConfiguration = {}) => {
     createSchema: (body: AvroSchema) => schema.create(body),
     updateSchema: (name: string, body: AvroSchema) => schema.update(name, body),
 
-    find: (params: Object, limit, skip) => entity.find(params, limit, skip),
-    findData: (params: Object) => entity.findData(params),
+    find: (params: Object, limit: ?number, skip: ?number) => entity.find(params, limit, skip),
+    findData: (params: Object, limit: ?number, skip: ?number) => entity.findData(params, limit, skip),
     count: (params: Object) => entity.findData(params).then(xs => xs.length),
 
     get: (id: string, version: ?string) => entity.get(id, version),

@@ -17,7 +17,7 @@ class NeDbClient implements DBClientInterface {
     this.client.ensureIndex({ fieldName: 'id', unique: true })
   }
 
-  find(searchParameters: Object, options = {}) {
+  find(searchParameters: Object, options: Object = {}) {
     return new Promise((resolve, reject) => {
       const query = this.client.find(searchParameters)
       if (options.skip) {

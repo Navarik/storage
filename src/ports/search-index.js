@@ -42,7 +42,7 @@ class SearchIndex implements SearchIndexInterface {
     return map(x => this.adapter.update(this.name, { id: x.id }, x), searchable)
   }
 
-  async find(params: Object = {}, limit, skip) {
+  async find(params: Object = {}, limit: ?number, skip: ?number) {
     return this.adapter.find(this.name, map(stringifyProperties, params), { skip, limit })
   }
 }

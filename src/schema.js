@@ -1,6 +1,5 @@
 //@flow
 import uuidv5 from 'uuid/v5'
-import unique from 'array-unique'
 import map from 'poly-map'
 import { head, maybe } from './utils'
 import { InMemoryStateAdapter } from './adapters/local-state'
@@ -20,6 +19,7 @@ class SchemaModel {
   searchIndex: SearchIndexInterface
   changeLog: ChangelogInterface
   signature: SignatureProviderInterface
+  state: InMemoryStateAdapter
 
   constructor(config: Object) {
     this.searchIndex = new SearchIndex('schema', config.searchIndex)

@@ -52,16 +52,13 @@ export interface ChangelogAdapterInterface {
 }
 
 export interface ChangelogInterface {
-  getVersion(versionId: Identifier): ChangeRecord;
-  getLatestVersion(id: Identifier): ChangeRecord;
-  logNew(body: Object): Promise<ChangeRecord>;
-  logChange(id: Identifier, body: DocumentBody): Promise<ChangeRecord>;
+  register(body: ChangeRecord): Promise<ChangeRecord>;
   reconstruct(): Promise<Collection<ChangeRecord>>;
   onChange(handler: Observer): void;
 }
 
 export interface SearchIndexAdapterInterface {
-  find(name: string, searchParams: Object): Promise<Collection<Searchable>>;
+  find(name: string, searchParams: Object, options: Object): Promise<Collection<Searchable>>;
   insert(name: string, documents: Collection<Searchable>): Promise<number>;
   update(name: string, searchParams: Object, document: Object): Promise<number>;
   reset(): Promise<any>;
@@ -73,7 +70,7 @@ export interface SearchIndexInterface {
   init(log: Collection<ChangeRecord>): Promise<any>;
   add(document: ChangeRecord): Promise<any>;
   addCollection(document: Collection<ChangeRecord>): Promise<any>;
-  find(params: Object): Promise<Collection<Searchable>>;
+  find(params: Object, limit: ?number, skip: ?number): Promise<Collection<Searchable>>;
 }
 
 type AdapterConfiguration = string | Object
