@@ -1,10 +1,6 @@
 //@flow
 import uuidv5 from 'uuid/v5'
-import map from 'poly-map'
 import { head, maybe } from './utils'
-import { InMemoryStateAdapter } from './adapters/local-state'
-import ChangeLog from './ports/change-log'
-import SearchIndex from './ports/search-index'
 import schemaRegistry from './ports/schema-registry'
 import SignatureProvider from './ports/signature-provider'
 import { start, commit } from './transaction'
@@ -22,10 +18,10 @@ class SchemaModel {
   state: InMemoryStateAdapter
 
   constructor(config: Object) {
-    this.searchIndex = new SearchIndex('schema', config.searchIndex)
-    this.changeLog = new ChangeLog('schema', config.changeLog)
+    this.searchIndex = config.searchIndex
+    this.changeLog = config.changeLog
+    this.state = config.state
     this.signature = new SignatureProvider(generateId)
-    this.state = new InMemoryStateAdapter()
 
     this.changeLog.onChange(async (schema) => {
       schemaRegistry.register(schema.body)
@@ -36,7 +32,7 @@ class SchemaModel {
   }
 
   async init() {
-    let log = await this.changeLog.reconstruct()
+    let log = await this.changeLog.reconstruct('schema')
     log = log.map(record => (record.id ? record : this.signature.signNew(record)))
 
     this.state.reset()
@@ -86,7 +82,7 @@ class SchemaModel {
     const record = this.signature.signNew(schema)
 
     const transaction = start(record.version_id)
-    this.changeLog.register(record)
+    this.changeLog.register('schema', record)
 
     return transaction.promise
   }
@@ -108,7 +104,7 @@ class SchemaModel {
     }
 
     const transaction = start(next.version_id)
-    this.changeLog.register(next)
+    this.changeLog.register('schema', next)
 
     return transaction.promise
   }

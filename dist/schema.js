@@ -10,10 +10,6 @@ var _v = require('uuid/v5');
 
 var _v2 = _interopRequireDefault(_v);
 
-var _arrayUnique = require('array-unique');
-
-var _arrayUnique2 = _interopRequireDefault(_arrayUnique);
-
 var _polyMap = require('poly-map');
 
 var _polyMap2 = _interopRequireDefault(_polyMap);
@@ -59,7 +55,7 @@ var SchemaModel = function () {
     _classCallCheck(this, SchemaModel);
 
     this.searchIndex = new _searchIndex2.default('schema', config.searchIndex);
-    this.changeLog = new _changeLog2.default('schema', config.changeLog);
+    this.changeLog = new _changeLog2.default(config.changeLog);
     this.signature = new _signatureProvider2.default(generateId);
     this.state = new _localState.InMemoryStateAdapter();
 
@@ -103,7 +99,7 @@ var SchemaModel = function () {
             switch (_context2.prev = _context2.next) {
               case 0:
                 _context2.next = 2;
-                return this.changeLog.reconstruct();
+                return this.changeLog.reconstruct('schema');
 
               case 2:
                 log = _context2.sent;
@@ -251,7 +247,7 @@ var SchemaModel = function () {
                 record = this.signature.signNew(schema);
                 transaction = (0, _transaction.start)(record.version_id);
 
-                this.changeLog.register(record);
+                this.changeLog.register('schema', record);
 
                 return _context5.abrupt('return', transaction.promise);
 
@@ -308,7 +304,7 @@ var SchemaModel = function () {
               case 9:
                 transaction = (0, _transaction.start)(next.version_id);
 
-                this.changeLog.register(next);
+                this.changeLog.register('schema', next);
 
                 return _context6.abrupt('return', transaction.promise);
 

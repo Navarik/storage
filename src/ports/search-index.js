@@ -28,8 +28,13 @@ class SearchIndex implements SearchIndexInterface {
   }
 
   async init(log: Collection<ChangeRecord>) {
+    await this.adapter.connect()
     await this.adapter.reset()
     await this.adapter.insert(this.name, Object.values(log).map(searchableFormat))
+  }
+
+  isConnected() {
+    return this.adapter.isConnected()
   }
 
   async add(document: ChangeRecord) {

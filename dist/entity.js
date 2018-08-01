@@ -20,10 +20,6 @@ var _curry = require('curry');
 
 var _curry2 = _interopRequireDefault(_curry);
 
-var _arrayFlatten = require('array-flatten');
-
-var _arrayFlatten2 = _interopRequireDefault(_arrayFlatten);
-
 var _localState = require('./adapters/local-state');
 
 var _changeLog = require('./ports/change-log');
@@ -66,55 +62,43 @@ var wrapEntity = (0, _curry2.default)(function (type, document) {
 
 var EntityModel = function () {
   function EntityModel(config) {
+    var _this = this;
+
     _classCallCheck(this, EntityModel);
 
     this.searchIndex = new _searchIndex2.default('entity', config.searchIndex);
-    this.changelogAdapter = config.changeLog;
+    this.changeLog = new _changeLog2.default(config.changeLog);
     this.signature = new _signatureProvider2.default(generateId);
-    this.changelogs = {};
     this.state = new _localState.InMemoryStateAdapter();
+
+    this.changeLog.onChange(function () {
+      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(entity) {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _this.state.set(entity.id, entity);
+                _context.next = 3;
+                return _this.searchIndex.add(entity);
+
+              case 3:
+                (0, _transaction.commit)(entity.version_id, wrapEntity(entity.type, entity));
+
+              case 4:
+              case 'end':
+                return _context.stop();
+            }
+          }
+        }, _callee, _this);
+      }));
+
+      return function (_x) {
+        return _ref.apply(this, arguments);
+      };
+    }());
   }
 
   _createClass(EntityModel, [{
-    key: 'getChangelog',
-    value: function getChangelog(type) {
-      var _this = this;
-
-      if (!this.changelogs[type]) {
-        this.changelogs[type] = new _changeLog2.default(type, this.changelogAdapter);
-        this.changelogs[type].onChange(function () {
-          var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(record) {
-            var entity;
-            return regeneratorRuntime.wrap(function _callee$(_context) {
-              while (1) {
-                switch (_context.prev = _context.next) {
-                  case 0:
-                    entity = _extends({}, record, { type: type });
-
-                    _this.state.set(record.id, entity);
-                    _context.next = 4;
-                    return _this.searchIndex.add(entity);
-
-                  case 4:
-                    (0, _transaction.commit)(record.version_id, wrapEntity(type, record));
-
-                  case 5:
-                  case 'end':
-                    return _context.stop();
-                }
-              }
-            }, _callee, _this);
-          }));
-
-          return function (_x) {
-            return _ref.apply(this, arguments);
-          };
-        }());
-      }
-
-      return this.changelogs[type];
-    }
-  }, {
     key: 'init',
     value: function () {
       var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
@@ -130,7 +114,7 @@ var EntityModel = function () {
                 types = _schemaRegistry2.default.listUserTypes();
                 _context2.next = 4;
                 return Promise.all(types.map(function (type) {
-                  return _this2.getChangelog(type).reconstruct().then((0, _polyMap2.default)(function (record) {
+                  return _this2.changeLog.reconstruct(type).then((0, _polyMap2.default)(function (record) {
                     var entity = record.id ? record : _this2.signature.signNew(record);
                     _this2.state.set(entity.id, _extends({}, entity, { type: type }));
                   }));
@@ -204,7 +188,7 @@ var EntityModel = function () {
   }, {
     key: 'findData',
     value: function () {
-      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(params) {
+      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(params, limit, skip) {
         var _this4 = this;
 
         var found, entities;
@@ -213,7 +197,7 @@ var EntityModel = function () {
             switch (_context4.prev = _context4.next) {
               case 0:
                 _context4.next = 2;
-                return this.searchIndex.find(params);
+                return this.searchIndex.find(params, limit, skip);
 
               case 2:
                 found = _context4.sent;
@@ -232,7 +216,7 @@ var EntityModel = function () {
         }, _callee4, this);
       }));
 
-      function findData(_x5) {
+      function findData(_x5, _x6, _x7) {
         return _ref4.apply(this, arguments);
       }
 
@@ -268,7 +252,7 @@ var EntityModel = function () {
         }, _callee5, this);
       }));
 
-      function get(_x6, _x7) {
+      function get(_x8, _x9) {
         return _ref5.apply(this, arguments);
       }
 
@@ -318,7 +302,7 @@ var EntityModel = function () {
                 record = this.signature.signNew(entity);
                 transaction = (0, _transaction.start)(record.version_id);
 
-                this.getChangelog(type).register(record);
+                this.changeLog.register(type, record);
 
                 return _context6.abrupt('return', transaction.promise);
 
@@ -330,7 +314,7 @@ var EntityModel = function () {
         }, _callee6, this);
       }));
 
-      function create(_x8, _x9) {
+      function create(_x10, _x11) {
         return _ref6.apply(this, arguments);
       }
 
@@ -369,7 +353,7 @@ var EntityModel = function () {
                 next = this.signature.signVersion(entity, previous);
                 transaction = (0, _transaction.start)(next.version_id);
 
-                this.getChangelog(type).register(next);
+                this.changeLog.register(type, next);
 
                 return _context7.abrupt('return', transaction.promise);
 
@@ -381,7 +365,7 @@ var EntityModel = function () {
         }, _callee7, this);
       }));
 
-      function update(_x10, _x11) {
+      function update(_x12, _x13) {
         return _ref7.apply(this, arguments);
       }
 

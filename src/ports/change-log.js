@@ -1,34 +1,26 @@
-//@flow
 import uuidv5 from 'uuid/v5'
 import arraySort from 'array-sort'
 
-import type { ChangelogInterface, ChangeRecord, Identifier, ChangelogAdapterInterface, Observer } from '../flowtypes'
-
-class ChangeLog implements ChangelogInterface {
-  topic: string
-  adapter: ChangelogAdapterInterface
-  listener: ChangeRecord => void
-
-  constructor(topic: string, adapter: ChangelogAdapterInterface) {
+class ChangeLog {
+  constructor(adapter) {
     this.adapter = adapter
-    this.topic = topic
     this.listener = () => {}
   }
 
-  onChange(func: ChangeRecord => void) {
+  onChange(func) {
     this.listener = func
   }
 
-  async reconstruct() {
-    let log = await this.adapter.read(this.topic)
+  async reconstruct(topic) {
+    let log = await this.adapter.read(topic)
     log = arraySort(log, 'version')
 
     return log
   }
 
-  async register(document: ChangeRecord) {
-    await this.adapter.write(this.topic, document)
-    this.listener(document)
+  async register(topic, document) {
+    await this.adapter.write(topic, document)
+    this.listener({ ...document, type: topic })
 
     return document
   }

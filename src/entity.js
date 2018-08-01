@@ -2,9 +2,6 @@
 import uuidv4 from 'uuid/v4'
 import map from 'poly-map'
 import curry from 'curry'
-import { InMemoryStateAdapter } from './adapters/local-state'
-import ChangeLog from './ports/change-log'
-import SearchIndex from './ports/search-index'
 import schemaRegistry from './ports/schema-registry'
 import SignatureProvider from './ports/signature-provider'
 import { start, commit } from './transaction'
@@ -28,25 +25,16 @@ class EntityModel {
   state: InMemoryStateAdapter
 
   constructor(config: Object) {
-    this.searchIndex = new SearchIndex('entity', config.searchIndex)
-    this.changelogAdapter = config.changeLog
+    this.searchIndex = config.searchIndex
+    this.changeLog = config.changeLog
+    this.state = config.state
     this.signature = new SignatureProvider(generateId)
-    this.changelogs = {}
-    this.state = new InMemoryStateAdapter()
-  }
 
-  getChangelog(type: string) {
-    if (!this.changelogs[type]) {
-      this.changelogs[type] = new ChangeLog(type, this.changelogAdapter)
-      this.changelogs[type].onChange(async (record) => {
-        const entity = { ...record, type }
-        this.state.set(record.id, entity)
-        await this.searchIndex.add(entity)
-        commit(record.version_id, wrapEntity(type, record))
-      })
-    }
-
-    return this.changelogs[type]
+    this.changeLog.onChange(async (entity) => {
+      this.state.set(entity.id, entity)
+      await this.searchIndex.add(entity)
+      commit(entity.version_id, wrapEntity(entity.type, entity))
+    })
   }
 
   async init() {
@@ -54,8 +42,8 @@ class EntityModel {
 
     const types = schemaRegistry.listUserTypes()
     await Promise.all(types.map(type =>
-      this.getChangelog(type)
-        .reconstruct()
+      this.changeLog
+        .reconstruct(type)
         .then(map((record) => {
           const entity = record.id ? record : this.signature.signNew(record)
           this.state.set(entity.id, { ...entity, type })
@@ -127,7 +115,7 @@ class EntityModel {
     const entity = schemaRegistry.formatData(type, body)
     const record = this.signature.signNew(entity)
     const transaction = start(record.version_id)
-    this.getChangelog(type).register(record)
+    this.changeLog.register(type, record)
 
     return transaction.promise
   }
@@ -148,7 +136,7 @@ class EntityModel {
     const next = this.signature.signVersion(entity, previous)
 
     const transaction = start(next.version_id)
-    this.getChangelog(type).register(next)
+    this.changeLog.register(type, next)
 
     return transaction.promise
   }

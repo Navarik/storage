@@ -43,7 +43,7 @@ class NeDbSearchIndexAdapter implements SearchIndexAdapterInterface {
     return Promise.resolve(true)
   }
 
-  init() {
+  connect() {
     return Promise.resolve(true)
   }
 

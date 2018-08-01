@@ -1,6 +1,9 @@
 // @flow
 import { createChangelogAdapter } from './adapters/change-log'
 import { createSearchIndexAdapter } from './adapters/search-index'
+import { InMemoryStateAdapter } from './adapters/local-state'
+import ChangeLog from './ports/change-log'
+import SearchIndex from './ports/search-index'
 
 import SchemaModel from './schema'
 import EntityModel from './entity'
@@ -10,30 +13,32 @@ const configure = (config: ModuleConfiguration = {}) => {
   const log = config.log || 'default'
   const index = config.index || 'default'
 
-  const schemaChangeLog = config.schema
+  const schemaChangeLogAdapter = config.schema
     ? createChangelogAdapter({ schema: config.schema })
     : createChangelogAdapter(log.schema || log)
 
-  const entityChangeLog = config.data
+  const entityChangeLogAdapter = config.data
     ? createChangelogAdapter(config.data)
     : createChangelogAdapter(log.entity || log)
 
-  const schemaSearchIndex = createSearchIndexAdapter(
+  const schemaSearchIndexAdapter = createSearchIndexAdapter(
     index.schema || index
   )
 
-  const entitySearchIndex = createSearchIndexAdapter(
+  const entitySearchIndexAdapter = createSearchIndexAdapter(
     index.entity || index
   )
 
   const schema = new SchemaModel({
-    changeLog: schemaChangeLog,
-    searchIndex: schemaSearchIndex
+    changeLog: new ChangeLog(schemaChangeLogAdapter),
+    searchIndex: new SearchIndex('schema', schemaSearchIndexAdapter),
+    state: new InMemoryStateAdapter()
   })
 
   const entity = new EntityModel({
-    changeLog: entityChangeLog,
-    searchIndex: entitySearchIndex
+    changeLog: new ChangeLog(entityChangeLogAdapter),
+    searchIndex: new SearchIndex('entity', entitySearchIndexAdapter),
+    state: new InMemoryStateAdapter()
   })
 
   return {
@@ -60,10 +65,8 @@ const configure = (config: ModuleConfiguration = {}) => {
 
     init: async () => {
       await Promise.all([
-        schemaChangeLog.init(),
-        schemaSearchIndex.init(),
-        entityChangeLog.init(),
-        entitySearchIndex.init(),
+        schemaChangeLogAdapter.init(),
+        entityChangeLogAdapter.init()
       ])
 
       await schema.init()
@@ -71,10 +74,10 @@ const configure = (config: ModuleConfiguration = {}) => {
     },
 
     isConnected: () =>
-      schemaChangeLog.isConnected() &&
-      schemaSearchIndex.isConnected() &&
-      entityChangeLog.isConnected() &&
-      entitySearchIndex.isConnected()
+      schemaChangeLogAdapter.isConnected() &&
+      schemaSearchIndexAdapter.isConnected() &&
+      entityChangeLogAdapter.isConnected() &&
+      entitySearchIndexAdapter.isConnected()
   }
 }
 

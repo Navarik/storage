@@ -64,8 +64,8 @@ var configure = function configure() {
     find: function find(params, limit, skip) {
       return entity.find(params, limit, skip);
     },
-    findData: function findData(params) {
-      return entity.findData(params);
+    findData: function findData(params, limit, skip) {
+      return entity.findData(params, limit, skip);
     },
     count: function count(params) {
       return entity.findData(params).then(function (xs) {

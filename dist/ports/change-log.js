@@ -4,6 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _v = require('uuid/v5');
@@ -21,11 +23,10 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var ChangeLog = function () {
-  function ChangeLog(topic, adapter) {
+  function ChangeLog(adapter) {
     _classCallCheck(this, ChangeLog);
 
     this.adapter = adapter;
-    this.topic = topic;
     this.listener = function () {};
   }
 
@@ -37,14 +38,14 @@ var ChangeLog = function () {
   }, {
     key: 'reconstruct',
     value: function () {
-      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(topic) {
         var log;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return this.adapter.read(this.topic);
+                return this.adapter.read(topic);
 
               case 2:
                 log = _context.sent;
@@ -61,7 +62,7 @@ var ChangeLog = function () {
         }, _callee, this);
       }));
 
-      function reconstruct() {
+      function reconstruct(_x) {
         return _ref.apply(this, arguments);
       }
 
@@ -70,18 +71,20 @@ var ChangeLog = function () {
   }, {
     key: 'register',
     value: function () {
-      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(document) {
+      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(topic, document) {
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
                 _context2.next = 2;
-                return this.adapter.write(this.topic, document);
+                return this.adapter.write(topic, document);
 
               case 2:
-                this.listener(document);
+                this.listener(_extends({}, document, { type: topic }));
 
-              case 3:
+                return _context2.abrupt('return', document);
+
+              case 4:
               case 'end':
                 return _context2.stop();
             }
@@ -89,7 +92,7 @@ var ChangeLog = function () {
         }, _callee2, this);
       }));
 
-      function register(_x) {
+      function register(_x2, _x3) {
         return _ref2.apply(this, arguments);
       }
 
