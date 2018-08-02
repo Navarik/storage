@@ -2,8 +2,10 @@
 import { createChangelogAdapter } from './adapters/change-log'
 import { createSearchIndexAdapter } from './adapters/search-index'
 import { InMemoryStateAdapter } from './adapters/local-state'
-import ChangeLog from './ports/change-log'
-import SearchIndex from './ports/search-index'
+import { hashField, random } from './adapters/id-generator'
+import ChangeLog from './change-log'
+import SchemaRegistry from './schema-registry'
+import SearchIndex from './search-index'
 
 import SchemaModel from './schema'
 import EntityModel from './entity'
@@ -29,16 +31,20 @@ const configure = (config: ModuleConfiguration = {}) => {
     index.entity || index
   )
 
+  const schemaRegistry = new SchemaRegistry()
+
   const schema = new SchemaModel({
-    changeLog: new ChangeLog(schemaChangeLogAdapter),
+    changeLog: new ChangeLog(schemaChangeLogAdapter, hashField('name')),
     searchIndex: new SearchIndex(schemaSearchIndexAdapter),
-    state: new InMemoryStateAdapter()
+    state: new InMemoryStateAdapter(),
+    schemaRegistry
   })
 
   const entity = new EntityModel({
-    changeLog: new ChangeLog(entityChangeLogAdapter),
+    changeLog: new ChangeLog(entityChangeLogAdapter, random()),
     searchIndex: new SearchIndex(entitySearchIndexAdapter),
-    state: new InMemoryStateAdapter()
+    state: new InMemoryStateAdapter(),
+    schemaRegistry
   })
 
   return {

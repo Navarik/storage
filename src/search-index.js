@@ -1,6 +1,6 @@
 // @flow
 import map from 'poly-map'
-import { maybe } from '../utils'
+import { maybe } from './utils'
 
 import type { ChangeRecord, DocumentBody, SearchIndexInterface, Searchable, SearchIndexAdapterInterface, Collection } from '../flowtypes'
 

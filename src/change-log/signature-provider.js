@@ -1,7 +1,7 @@
 //@flow
 import uuidv5 from 'uuid/v5'
 
-import type { SignatureProviderInterface, DocumentBody, ChangeRecord, IdGenerator, Identifier } from '../flowtypes'
+import type { SignatureProviderInterface, DocumentBody, ChangeRecord, IdGenerator } from '../flowtypes'
 
 class SignatureProvider implements SignatureProviderInterface {
   generateId: IdGenerator

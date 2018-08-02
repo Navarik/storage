@@ -1,50 +1,44 @@
 //@flow
-import uuidv4 from 'uuid/v4'
 import map from 'poly-map'
 import curry from 'curry'
-import schemaRegistry from './ports/schema-registry'
-import SignatureProvider from './ports/signature-provider'
 
-import type { SignatureProviderInterface, Entity, Identifier, ChangelogInterface, ChangeRecord, ChangelogAdapterInterface, SearchIndexInterface, Collection } from '../flowtypes'
-
-const generateId = body => uuidv4()
-const isDefined = x => x !== undefined
-
-const wrapEntity = curry((type: string, document: ChangeRecord<Object>): Entity => ({
-  ...document,
-  type,
-  schema: schemaRegistry.get(type).schema()
-}))
+import type { Entity, Identifier, ChangelogInterface, ChangeRecord, ChangelogAdapterInterface, SearchIndexInterface, Collection } from '../flowtypes'
 
 class EntityModel {
   searchIndex: SearchIndexInterface
   changelogAdapter: ChangelogAdapterInterface
   changelogs: { [string]: ChangelogInterface }
-  signature: SignatureProviderInterface
   state: InMemoryStateAdapter
 
   constructor(config: Object) {
     this.searchIndex = config.searchIndex
     this.changeLog = config.changeLog
     this.state = config.state
-    this.signature = new SignatureProvider(generateId)
+    this.schemaRegistry = config.schemaRegistry
 
     this.changeLog.onChange(async (entity) => {
       this.state.set(entity.id, entity)
       await this.searchIndex.add(entity)
-      return wrapEntity(entity.type, entity)
+      return this.wrapEntity(entity.type, entity)
     })
+  }
+
+  wrapEntity(type: string, document: ChangeRecord<Object>) {
+    return {
+      ...document,
+      type,
+      schema: this.schemaRegistry.get(type).schema()
+    }
   }
 
   async init() {
     this.state.reset()
 
-    const types = schemaRegistry.listUserTypes()
+    const types = this.schemaRegistry.listUserTypes()
     await Promise.all(types.map(type =>
       this.changeLog
         .reconstruct(type)
-        .then(map((record) => {
-          const entity = record.id ? record : this.signature.signNew(record)
+        .then(map((entity) => {
           this.state.set(entity.id, { ...entity, type })
         }))
     ))
@@ -59,7 +53,7 @@ class EntityModel {
       return []
     }
 
-    const entities = found.map(x => wrapEntity(x.type, this.state.get(x.id)))
+    const entities = found.map(x => this.wrapEntity(x.type, this.state.get(x.id)))
 
     return entities
   }
@@ -83,14 +77,18 @@ class EntityModel {
       return undefined
     }
 
-    const entity = wrapEntity(found.type, found)
+    const entity = this.wrapEntity(found.type, found)
 
     return entity
   }
 
   // Commands
   validate(type: string, body: Object) {
-    const validationErrors = schemaRegistry.validate(type, body)
+    if (!this.schemaRegistry.exists(type)) {
+      return `[Entity] Unknown type: ${type}`
+    }
+
+    const validationErrors = this.schemaRegistry.validate(type, body)
     if (validationErrors.length) {
       return `[Entity] Invalid value provided for: ${validationErrors.join(', ')}`
     }
@@ -99,7 +97,7 @@ class EntityModel {
   }
 
   isValid(type: string, body: Object) {
-    const validationErrors = schemaRegistry.validate(type, body)
+    const validationErrors = this.schemaRegistry.validate(type, body)
     const isValid = (validationErrors.length === 0)
 
     return isValid
@@ -111,10 +109,9 @@ class EntityModel {
       throw new Error(validationError)
     }
 
-    const entity = schemaRegistry.formatData(type, body)
-    const record = this.signature.signNew(entity)
+    const entity = this.schemaRegistry.format(type, body)
 
-    return this.changeLog.register(type, record)
+    return this.changeLog.registerNew(type, entity)
   }
 
   async update(id: Identifier, body: Object) {
@@ -129,10 +126,9 @@ class EntityModel {
       throw new Error(validationError)
     }
 
-    const entity = schemaRegistry.formatData(type, body)
-    const next = this.signature.signVersion(entity, previous)
+    const next = this.schemaRegistry.format(type, body)
 
-    return this.changeLog.register(type, next)
+    return this.changeLog.registerUpdate(type, previous, next)
   }
 }
 
