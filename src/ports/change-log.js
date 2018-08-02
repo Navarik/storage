@@ -19,9 +19,9 @@ class ChangeLog {
 
   async register(topic, document) {
     await this.adapter.write(topic, document)
-    this.listener({ ...document, type: topic })
+    const response = await this.listener({ ...document, type: topic })
 
-    return document
+    return response
   }
 }
 

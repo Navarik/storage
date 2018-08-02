@@ -3,7 +3,6 @@ import uuidv5 from 'uuid/v5'
 import { head, maybe } from './utils'
 import schemaRegistry from './ports/schema-registry'
 import SignatureProvider from './ports/signature-provider'
-import { start, commit } from './transaction'
 
 import type { SignatureProviderInterface, ChangelogInterface, SearchIndexInterface, AvroSchema } from './flowtypes'
 
@@ -27,7 +26,8 @@ class SchemaModel {
       schemaRegistry.register(schema.body)
       this.state.set(schema.body.name, schema)
       await this.searchIndex.add(schema)
-      commit(schema.version_id, schema)
+
+      return schema
     })
   }
 
@@ -81,10 +81,7 @@ class SchemaModel {
     const schema = schemaRegistry.format(body)
     const record = this.signature.signNew(schema)
 
-    const transaction = start(record.version_id)
-    this.changeLog.register('schema', record)
-
-    return transaction.promise
+    return this.changeLog.register('schema', record)
   }
 
   async update(name: string, body: AvroSchema) {
@@ -103,10 +100,7 @@ class SchemaModel {
       return previous
     }
 
-    const transaction = start(next.version_id)
-    this.changeLog.register('schema', next)
-
-    return transaction.promise
+    return this.changeLog.register('schema', next)
   }
 }
 

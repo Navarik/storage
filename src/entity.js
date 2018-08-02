@@ -4,7 +4,6 @@ import map from 'poly-map'
 import curry from 'curry'
 import schemaRegistry from './ports/schema-registry'
 import SignatureProvider from './ports/signature-provider'
-import { start, commit } from './transaction'
 
 import type { SignatureProviderInterface, Entity, Identifier, ChangelogInterface, ChangeRecord, ChangelogAdapterInterface, SearchIndexInterface, Collection } from '../flowtypes'
 
@@ -33,7 +32,7 @@ class EntityModel {
     this.changeLog.onChange(async (entity) => {
       this.state.set(entity.id, entity)
       await this.searchIndex.add(entity)
-      commit(entity.version_id, wrapEntity(entity.type, entity))
+      return wrapEntity(entity.type, entity)
     })
   }
 
@@ -114,10 +113,8 @@ class EntityModel {
 
     const entity = schemaRegistry.formatData(type, body)
     const record = this.signature.signNew(entity)
-    const transaction = start(record.version_id)
-    this.changeLog.register(type, record)
 
-    return transaction.promise
+    return this.changeLog.register(type, record)
   }
 
   async update(id: Identifier, body: Object) {
@@ -135,10 +132,7 @@ class EntityModel {
     const entity = schemaRegistry.formatData(type, body)
     const next = this.signature.signVersion(entity, previous)
 
-    const transaction = start(next.version_id)
-    this.changeLog.register(type, next)
-
-    return transaction.promise
+    return this.changeLog.register(type, next)
   }
 }
 
