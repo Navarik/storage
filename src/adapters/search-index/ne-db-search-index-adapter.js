@@ -1,44 +1,59 @@
 //@flow
 import Database from 'nedb'
-import NeDbClient from './ne-db-client'
+import map from 'poly-map'
 
-import type { SearchIndexAdapterInterface, Collection, Searchable } from '../../flowtypes'
+import type { Collection, Searchable } from '../../flowtypes'
+import { DBClientInterface } from './ne-db-search-index-adapter'
 
-export interface DBClientInterface {
-  find(searchParameters: Object, options: Object): Promise<Collection<Searchable>>;
-  insert(documents: Collection<Searchable>): Promise<number>;
-  update(searchParams: Object, document: Object): Promise<number>;
+const databaseError = (err: string): Error => {
+  throw new Error(`[NeDB] Database error: ${err}`)
 }
 
-class NeDbSearchIndexAdapter implements SearchIndexAdapterInterface {
-  collections: { [string]: DBClientInterface }
+class NeDbClient implements DBClientInterface {
+  client: Object
 
   constructor() {
-    this.collections = {}
+    this.reset()
   }
 
-  getCollection(name: string) {
-    if (!this.collections[name]) {
-      this.collections[name] = new NeDbClient()
-    }
+  find(searchParameters: Object, options: Object = {}) {
+    return new Promise((resolve, reject) => {
+      const query = this.client.find(searchParameters)
+      if (options.skip) {
+        query.skip(options.skip)
+      }
+      if (options.limit) {
+        query.limit(options.limit)
+      }
 
-    return this.collections[name]
+      query.exec((err, res) => {
+        if (err) reject(databaseError(err))
+        else resolve(res)
+      })
+    })
   }
 
-  find(name: string, searchParams: Object, options: Object) {
-    return this.getCollection(name).find(searchParams, options)
+  insert(documents: Collection<Searchable>) {
+    return new Promise((resolve, reject) =>
+      this.client.insert(documents, (err, res) => {
+        if (err) reject(databaseError(err))
+        else resolve(res)
+      })
+    )
   }
 
-  insert(name: string, documents: Collection<Searchable>) {
-    return this.getCollection(name).insert(documents)
-  }
-
-  update(name: string, searchParams: Object, document: Object) {
-    return this.getCollection(name).update(searchParams, document)
+  update(searchParams: Object, document: Object) {
+    return new Promise((resolve, reject) =>
+      this.client.update(searchParams, document, { upsert: true, multi: true }, (err, res) => {
+        if (err) reject(databaseError(err))
+        else resolve(res)
+      })
+    )
   }
 
   reset() {
-    this.collections = {}
+    this.client = new Database()
+    this.client.ensureIndex({ fieldName: 'id', unique: true })
 
     return Promise.resolve(true)
   }
@@ -52,4 +67,4 @@ class NeDbSearchIndexAdapter implements SearchIndexAdapterInterface {
   }
 }
 
-export default NeDbSearchIndexAdapter
+export default NeDbClient

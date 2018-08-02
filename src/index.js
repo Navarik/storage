@@ -31,13 +31,13 @@ const configure = (config: ModuleConfiguration = {}) => {
 
   const schema = new SchemaModel({
     changeLog: new ChangeLog(schemaChangeLogAdapter),
-    searchIndex: new SearchIndex('schema', schemaSearchIndexAdapter),
+    searchIndex: new SearchIndex(schemaSearchIndexAdapter),
     state: new InMemoryStateAdapter()
   })
 
   const entity = new EntityModel({
     changeLog: new ChangeLog(entityChangeLogAdapter),
-    searchIndex: new SearchIndex('entity', entitySearchIndexAdapter),
+    searchIndex: new SearchIndex(entitySearchIndexAdapter),
     state: new InMemoryStateAdapter()
   })
 

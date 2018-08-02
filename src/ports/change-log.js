@@ -1,4 +1,3 @@
-import uuidv5 from 'uuid/v5'
 import arraySort from 'array-sort'
 
 class ChangeLog {

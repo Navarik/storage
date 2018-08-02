@@ -22,15 +22,14 @@ class SearchIndex implements SearchIndexInterface {
   adapter: SearchIndexAdapterInterface
   name: string
 
-  constructor(name: string, adapter: SearchIndexAdapterInterface) {
+  constructor(adapter: SearchIndexAdapterInterface) {
     this.adapter = adapter
-    this.name = name
   }
 
   async init(log: Collection<ChangeRecord>) {
     await this.adapter.connect()
     await this.adapter.reset()
-    await this.adapter.insert(this.name, Object.values(log).map(searchableFormat))
+    await this.adapter.insert(Object.values(log).map(searchableFormat))
   }
 
   isConnected() {
@@ -39,16 +38,16 @@ class SearchIndex implements SearchIndexInterface {
 
   async add(document: ChangeRecord) {
     const searchable = searchableFormat(document)
-    await this.adapter.update(this.name, { id: document.id }, searchable)
+    await this.adapter.update({ id: document.id }, searchable)
   }
 
   async addCollection(documents: Collection<ChangeRecord>) {
     const searchable = documents.map(searchableFormat)
-    return map(x => this.adapter.update(this.name, { id: x.id }, x), searchable)
+    return map(x => this.adapter.update({ id: x.id }, x), searchable)
   }
 
   async find(params: Object = {}, limit: ?number, skip: ?number) {
-    return this.adapter.find(this.name, map(stringifyProperties, params), { skip, limit })
+    return this.adapter.find(map(stringifyProperties, params), { skip, limit })
   }
 }
 
