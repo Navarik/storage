@@ -2,6 +2,7 @@
 import { createChangelogAdapter } from './adapters/change-log'
 import { createSearchIndexAdapter } from './adapters/search-index'
 import { hashField, random } from './adapters/id-generator'
+import TransactionManager from './transaction'
 import ChangeLog from './change-log'
 import SchemaRegistry from './schema-registry'
 import LocalState from './local-state'
@@ -13,16 +14,25 @@ import EntityModel from './commands/entity'
 const configure = (config = {}) => {
   const log = config.log || 'default'
   const index = config.index || 'default'
+  const transactionManager = new TransactionManager()
 
   const schemaChangeLogAdapter = config.schema
     ? createChangelogAdapter({ schema: config.schema })
     : createChangelogAdapter(log.schema || log)
-  const schemaChangeLog = new ChangeLog(schemaChangeLogAdapter, hashField('name'))
+  const schemaChangeLog = new ChangeLog(
+    schemaChangeLogAdapter,
+    hashField('name'),
+    transactionManager
+  )
 
   const entityChangeLogAdapter = config.data
     ? createChangelogAdapter(config.data)
     : createChangelogAdapter(log.entity || log)
-  const entityChangeLog = new ChangeLog(entityChangeLogAdapter, random())
+  const entityChangeLog = new ChangeLog(
+    entityChangeLogAdapter,
+    random(),
+    transactionManager
+  )
 
   const schemaState = new LocalState(
     createSearchIndexAdapter(index.schema || index),

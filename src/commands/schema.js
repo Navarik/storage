@@ -3,13 +3,13 @@ class SchemaModel {
     this.changeLog = changeLog
     this.state = state
     this.schemaRegistry = schemaRegistry
+  }
 
-    this.changeLog.onChange(async (schema) => {
-      this.schemaRegistry.register(schema.body)
-      await this.state.set(schema)
+  async handleChange(schema) {
+    this.schemaRegistry.register(schema.body)
+    await this.state.set(schema)
 
-      return schema
-    })
+    return schema
   }
 
   async init() {
@@ -17,10 +17,9 @@ class SchemaModel {
     this.state.reset()
 
     const log = await this.changeLog.reconstruct('schema')
-    await Promise.all(log.map((schema) => {
-      this.schemaRegistry.register(schema.body)
-      return this.state.set(schema)
-    }))
+    await Promise.all(log.map(x => this.handleChange(x)))
+
+    this.changeLog.onChange('schema', x => this.handleChange(x))
   }
 
   // Commands

@@ -2,14 +2,17 @@ import arraySort from 'array-sort'
 import SignatureProvider from './signature-provider'
 
 class ChangeLog {
-  constructor(adapter, generateId) {
+  constructor(adapter, generateId, transactionManager) {
     this.adapter = adapter
     this.signature = new SignatureProvider(generateId)
-    this.listener = () => {}
+    this.transactionManager = transactionManager
   }
 
-  onChange(func) {
-    this.listener = func
+  onChange(type, func) {
+    this.adapter.on(type, async (record) => {
+      const result = await func(record)
+      this.transactionManager.commit(record.version_id, result)
+    })
   }
 
   isConnected() {
@@ -27,10 +30,11 @@ class ChangeLog {
 
   async registerNew(type, document) {
     const record = this.signature.signNew(document)
-    await this.adapter.write(type, record)
-    const response = await this.listener({ ...record, type })
 
-    return response
+    const transaction = this.transactionManager.start(record.version_id)
+    await this.adapter.write(type, record)
+
+    return transaction.promise
   }
 
   async registerUpdate(type, oldVersion, document) {
@@ -39,10 +43,10 @@ class ChangeLog {
       return previous
     }
 
-    await this.adapter.write(type, newVersion)
-    const response = await this.listener({ ...newVersion, type })
+    const transaction = this.transactionManager.start(newVersion.version_id)
+    this.adapter.write(type, newVersion)
 
-    return response
+    return transaction.promise
   }
 }
 

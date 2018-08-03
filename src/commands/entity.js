@@ -5,22 +5,22 @@ class EntityModel {
     this.changeLog = changeLog
     this.state = state
     this.schemaRegistry = schemaRegistry
+  }
 
-    this.changeLog.onChange(async (entity) => {
-      await this.state.set(entity)
-      return entity
-    })
+  async handleChange(entity) {
+    await this.state.set(entity)
+    return entity
   }
 
   async init() {
     this.state.reset()
 
     const types = this.schemaRegistry.listUserTypes()
-    await Promise.all(types.map(type =>
-      this.changeLog
-        .reconstruct(type)
-        .then(map((entity) => { this.state.set({ ...entity, type }) }))
-    ))
+    await Promise.all(types.map(async (type) => {
+      const log = await this.changeLog.reconstruct(type)
+      await Promise.all(log.map(x => this.handleChange({ ...x, type })))
+      this.changeLog.onChange(type, x => this.handleChange({ ...x, type }))
+    }))
   }
 
   async create(type, body) {
