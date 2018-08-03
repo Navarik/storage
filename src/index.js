@@ -7,8 +7,8 @@ import SchemaRegistry from './schema-registry'
 import LocalState from './local-state'
 import createEntityView from './view'
 
-import SchemaModel from './schema'
-import EntityModel from './entity'
+import SchemaModel from './commands/schema'
+import EntityModel from './commands/entity'
 
 const configure = (config = {}) => {
   const log = config.log || 'default'
@@ -17,10 +17,12 @@ const configure = (config = {}) => {
   const schemaChangeLogAdapter = config.schema
     ? createChangelogAdapter({ schema: config.schema })
     : createChangelogAdapter(log.schema || log)
+  const schemaChangeLog = new ChangeLog(schemaChangeLogAdapter, hashField('name'))
 
   const entityChangeLogAdapter = config.data
     ? createChangelogAdapter(config.data)
     : createChangelogAdapter(log.entity || log)
+  const entityChangeLog = new ChangeLog(entityChangeLogAdapter, random())
 
   const schemaState = new LocalState(
     createSearchIndexAdapter(index.schema || index),
@@ -35,17 +37,8 @@ const configure = (config = {}) => {
   const schemaRegistry = new SchemaRegistry()
   const entityView = createEntityView(schemaRegistry)
 
-  const schema = new SchemaModel({
-    changeLog: new ChangeLog(schemaChangeLogAdapter, hashField('name')),
-    state: schemaState,
-    schemaRegistry
-  })
-
-  const entity = new EntityModel({
-    changeLog: new ChangeLog(entityChangeLogAdapter, random()),
-    state: entityState,
-    schemaRegistry
-  })
+  const schema = new SchemaModel(schemaChangeLog, schemaState, schemaRegistry)
+  const entity = new EntityModel(entityChangeLog, entityState, schemaRegistry)
 
   return {
     getSchema: (name, version) => Promise.resolve(schemaState.get(name, version)),
@@ -71,19 +64,14 @@ const configure = (config = {}) => {
     isValid: (type, body) => schemaRegistry.isValid(type, body),
 
     init: async () => {
-      await Promise.all([
-        schemaChangeLogAdapter.init(),
-        entityChangeLogAdapter.init()
-      ])
-
       await schema.init()
       await entity.init()
     },
 
     isConnected: () =>
-      schemaChangeLogAdapter.isConnected() &&
+      schemaChangeLog.isConnected() &&
       schemaState.isConnected() &&
-      entityChangeLogAdapter.isConnected() &&
+      entityChangeLog.isConnected() &&
       entityState.isConnected()
   }
 }

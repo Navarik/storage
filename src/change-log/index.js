@@ -12,7 +12,12 @@ class ChangeLog {
     this.listener = func
   }
 
+  isConnected() {
+    return this.adapter.isConnected()
+  }
+
   async reconstruct(topic) {
+    await this.adapter.init()
     let log = await this.adapter.read(topic)
     log = log.map(record => (record.id ? record : this.signature.signNew(record)))
     log = arraySort(log, 'version')

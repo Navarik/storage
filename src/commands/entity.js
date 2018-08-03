@@ -1,10 +1,10 @@
 import map from 'poly-map'
 
 class EntityModel {
-  constructor(config) {
-    this.changeLog = config.changeLog
-    this.state = config.state
-    this.schemaRegistry = config.schemaRegistry
+  constructor(changeLog, state, schemaRegistry) {
+    this.changeLog = changeLog
+    this.state = state
+    this.schemaRegistry = schemaRegistry
 
     this.changeLog.onChange(async (entity) => {
       await this.state.set(entity)
@@ -23,7 +23,6 @@ class EntityModel {
     ))
   }
 
-  // Commands
   async create(type, body) {
     const entity = this.schemaRegistry.format(type, body)
     const transaction = this.changeLog.registerNew(type, entity)

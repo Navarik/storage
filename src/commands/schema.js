@@ -1,8 +1,8 @@
 class SchemaModel {
-  constructor(config) {
-    this.changeLog = config.changeLog
-    this.state = config.state
-    this.schemaRegistry = config.schemaRegistry
+  constructor(changeLog, state, schemaRegistry) {
+    this.changeLog = changeLog
+    this.state = state
+    this.schemaRegistry = schemaRegistry
 
     this.changeLog.onChange(async (schema) => {
       this.schemaRegistry.register(schema.body)

@@ -13,11 +13,11 @@ class NeDbClient {
   find(searchParameters, options = {}) {
     return new Promise((resolve, reject) => {
       const query = this.client.find(searchParameters, { id: 1, type: 1, _id: 0 })
-      if (options.skip) {
-        query.skip(options.skip)
-      }
       if (options.offset) {
-        query.limit(options.offset)
+        query.skip(options.offset)
+      }
+      if (options.limit) {
+        query.limit(options.limit)
       }
 
       query.exec((err, res) => {
