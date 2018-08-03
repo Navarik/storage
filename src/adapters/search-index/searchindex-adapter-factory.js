@@ -1,7 +1,6 @@
-// @flow
 import NeDbSearchIndexAdapter from './ne-db-search-index-adapter'
 
-const createSearchIndexAdapter = (type: any) => {
+const createSearchIndexAdapter = (type) => {
   if (type === 'default') {
     return new NeDbSearchIndexAdapter()
   }

@@ -1,17 +1,16 @@
 // @flow
 import { createChangelogAdapter } from './adapters/change-log'
 import { createSearchIndexAdapter } from './adapters/search-index'
-import { InMemoryStateAdapter } from './adapters/local-state'
 import { hashField, random } from './adapters/id-generator'
 import ChangeLog from './change-log'
 import SchemaRegistry from './schema-registry'
-import SearchIndex from './search-index'
+import LocalState from './local-state'
+import createEntityView from './view'
 
 import SchemaModel from './schema'
 import EntityModel from './entity'
-import type { AvroSchema, Identifier, ModuleConfiguration } from './flowtypes'
 
-const configure = (config: ModuleConfiguration = {}) => {
+const configure = (config = {}) => {
   const log = config.log || 'default'
   const index = config.index || 'default'
 
@@ -23,51 +22,53 @@ const configure = (config: ModuleConfiguration = {}) => {
     ? createChangelogAdapter(config.data)
     : createChangelogAdapter(log.entity || log)
 
-  const schemaSearchIndexAdapter = createSearchIndexAdapter(
-    index.schema || index
+  const schemaState = new LocalState(
+    createSearchIndexAdapter(index.schema || index),
+    'body.name'
   )
 
-  const entitySearchIndexAdapter = createSearchIndexAdapter(
-    index.entity || index
+  const entityState = new LocalState(
+    createSearchIndexAdapter(index.entity || index),
+    'id'
   )
 
   const schemaRegistry = new SchemaRegistry()
+  const entityView = createEntityView(schemaRegistry)
 
   const schema = new SchemaModel({
     changeLog: new ChangeLog(schemaChangeLogAdapter, hashField('name')),
-    searchIndex: new SearchIndex(schemaSearchIndexAdapter),
-    state: new InMemoryStateAdapter(),
+    state: schemaState,
     schemaRegistry
   })
 
   const entity = new EntityModel({
     changeLog: new ChangeLog(entityChangeLogAdapter, random()),
-    searchIndex: new SearchIndex(entitySearchIndexAdapter),
-    state: new InMemoryStateAdapter(),
+    state: entityState,
     schemaRegistry
   })
 
   return {
-    getSchema: (name: string, version: ?string) => schema.get(name, version),
-    findSchema: (params: Object) => schema.find(params),
-    schemaNames: () => schema.listTypes(),
-    createSchema: (body: AvroSchema) => schema.create(body),
-    updateSchema: (name: string, body: AvroSchema) => schema.update(name, body),
+    getSchema: (name, version) => Promise.resolve(schemaState.get(name, version)),
+    findSchema: (query, parameters = {}) => schemaState.find(query, parameters),
+    schemaNames: () => schemaRegistry.listUserTypes(),
+    createSchema: (body) => schema.create(body),
+    updateSchema: (name, body) => schema.update(name, body),
 
-    find: (params: Object, limit: ?number, skip: ?number) => entity.find(params, limit, skip),
-    findData: (params: Object, limit: ?number, skip: ?number) => entity.findData(params, limit, skip),
-    count: (params: Object) => entity.findData(params).then(xs => xs.length),
+    get: (id, version, options = {}) =>
+      Promise.resolve(entityState.get(id, version)).then(entityView(options.view)),
+    find: (query = {}, parameters = {}, options = {}) =>
+      entityState.find(query, parameters).then(entityView(options.view)),
+    count: (query = {}) => entityState.count(query),
 
-    get: (id: string, version: ?string) => entity.get(id, version),
-    create: (type: string, body: Object | Array<Object>) => (
+    create: (type, body = {}, options = {}) => (
       body instanceof Array
         ? Promise.all(body.map(x => entity.create(type, x)))
-        : entity.create(type, body)
-    ),
-    update: (id: Identifier, body: Object) => entity.update(id, body),
+        : entity.create(type, body)).then(entityView(options.view)),
+    update: (id, body, options = {}) =>
+      entity.update(id, body).then(entityView(options.view)),
 
-    validate: (type: string, body: Object) => entity.validate(type, body),
-    isValid: (type: string, body: Object) => entity.isValid(type, body),
+    validate: (type, body) => schemaRegistry.validate(type, body),
+    isValid: (type, body) => schemaRegistry.isValid(type, body),
 
     init: async () => {
       await Promise.all([
@@ -81,9 +82,9 @@ const configure = (config: ModuleConfiguration = {}) => {
 
     isConnected: () =>
       schemaChangeLogAdapter.isConnected() &&
-      schemaSearchIndexAdapter.isConnected() &&
+      schemaState.isConnected() &&
       entityChangeLogAdapter.isConnected() &&
-      entitySearchIndexAdapter.isConnected()
+      entityState.isConnected()
   }
 }
 

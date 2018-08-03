@@ -20,6 +20,7 @@
     "function-pipe": "^1.2.1",
     "group-by": "0.0.1",
     "nedb": "^1.8.0",
+    "object-path": "^0.11.4",
     "poly-exclude": "^1.0.4",
     "poly-filter": "^1.0.2",
     "poly-map": "^2.2.1",
@@ -35,9 +36,7 @@
     "babel-plugin-transform-object-rest-spread": "^6.23.0",
     "babel-plugin-transform-regenerator": "^6.26.0",
     "babel-preset-env": "^1.7.0",
-    "babel-preset-flow": "^6.23.0",
     "expect.js": "^0.3.1",
-    "flow-bin": "^0.70.0",
     "mocha": "^5.2.0"
   }
 }

@@ -35,21 +35,38 @@ class SchemaRegistry {
   }
 
   validate(type, data) {
-    const schema = this.get(type)
-    const errors = []
-    const validator = body =>
-      schema.isValid(body, { errorHook: (path) => { errors.push(path.join()) } })
-
-    if (data instanceof Array) {
-      data.map(validator)
+    if (type === 'schema') {
+      if (!data || !data.name) {
+        return '[Storage] Schema cannot be empty!'
+      }
     } else {
-      validator(data)
+      if (!this.exists(type)) {
+        return `[Storage] Unknown type: ${type}`
+      }
+
+      const errors = []
+      this.get(type).isValid(data, { errorHook: (path) => { errors.push(path.join()) } })
+      if (errors.length) {
+        return `[Storage] Invalid value provided for: ${validationErrors.join(', ')}`
+      }
     }
 
-    return errors
+    return ''
+  }
+
+  isValid(type, body) {
+    const validationErrors = this.validate(type, body)
+    const isValid = (validationErrors.length === 0)
+
+    return isValid
   }
 
   format(type, data) {
+    const validationError = this.validate(type, data)
+    if (validationError) {
+      throw new Error(validationError)
+    }
+
     if (type === 'schema') {
       return {
         ...data,

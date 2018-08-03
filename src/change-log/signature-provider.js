@@ -1,16 +1,11 @@
-//@flow
 import uuidv5 from 'uuid/v5'
 
-import type { SignatureProviderInterface, DocumentBody, ChangeRecord, IdGenerator } from '../flowtypes'
-
-class SignatureProvider implements SignatureProviderInterface {
-  generateId: IdGenerator
-
-  constructor(generator: IdGenerator) {
+class SignatureProvider {
+  constructor(generator) {
     this.generateId = generator
   }
 
-  signNew(body: DocumentBody) {
+  signNew(body) {
     const id = this.generateId(body)
     const version_id = uuidv5(JSON.stringify(body), id)
     const now = new Date()
@@ -27,7 +22,7 @@ class SignatureProvider implements SignatureProviderInterface {
     return document
   }
 
-  signVersion(body: DocumentBody, previous: ChangeRecord) {
+  signVersion(body, previous) {
     const id = previous.id
     const version_id = uuidv5(JSON.stringify(body), id)
     const now = new Date()

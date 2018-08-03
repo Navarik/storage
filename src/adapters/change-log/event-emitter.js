@@ -1,28 +1,22 @@
-// @flow
 import eventEmitter from 'event-emitter'
 
-import type { ChangelogAdapterInterface, Observer } from '../../flowtypes'
-
-class DefaultChangelogAdapter implements ChangelogAdapterInterface {
-  emitter: Object
-  log: { [string]: Array<Object> }
-
-  constructor(config: Object) {
+class DefaultChangelogAdapter {
+  constructor(config) {
     this.emitter = eventEmitter()
     this.log = config.log || {}
   }
 
-  on(topic: string, handler: Observer) {
+  on(topic, handler) {
     this.emitter.on(topic, handler)
   }
 
-  write(topic: string, message: Object) {
+  write(topic, message) {
     this.emitter.emit(topic, message)
 
     return Promise.resolve(message)
   }
 
-  read(topic: string) {
+  read(topic) {
     return Promise.resolve(this.log[topic] || [])
   }
 
