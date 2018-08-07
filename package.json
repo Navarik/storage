@@ -1,7 +1,7 @@
 {
   "name": "@navarik/storage",
   "description": "Document storage with schemas and versions",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "scripts": {
     "build": "rm -rf dist/* && babel src --out-dir dist",
     "test": "mocha --require babel-core/register --require babel-polyfill test/**/*.test.js"
