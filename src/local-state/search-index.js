@@ -9,7 +9,7 @@ const stringifyProperties = maybe(value => (
 ))
 
 const stringifyContent = value => (
-  typeof value === 'object'
+  (typeof value === 'object' && value !== null)
     ? Object.values(value).reduce((acc, next) => acc + stringifyContent(next), '')
     : String(value || '')
 )

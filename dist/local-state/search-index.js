@@ -31,7 +31,7 @@ var stringifyProperties = (0, _utils.maybe)(function (value) {
 });
 
 var stringifyContent = function stringifyContent(value) {
-  return (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' ? Object.values(value).reduce(function (acc, next) {
+  return (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value !== null ? Object.values(value).reduce(function (acc, next) {
     return acc + stringifyContent(next);
   }, '') : String(value || '');
 };
