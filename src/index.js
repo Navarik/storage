@@ -37,7 +37,7 @@ const configure = (config = {}) => {
   const entityCommands = new EntityModel(entityChangeLog, entityState, schemaRegistry)
 
   return {
-    getSchema: (name, version) => Promise.resolve(schemaState.get(name, version)),
+    getSchema: async (name, version) => schemaState.get(name, version),
     findSchema: (query, parameters = {}) => schemaState.find(query, parameters),
     schemaNames: () => schemaRegistry.listUserTypes(),
     createSchema: (body) => schemaCommands.create(body),
