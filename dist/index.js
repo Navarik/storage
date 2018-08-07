@@ -4,15 +4,33 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _changeLog = require('./adapters/change-log');
+var _idGenerator = require('./id-generator');
 
-var _searchIndex = require('./adapters/search-index');
+var _transaction = require('./transaction');
 
-var _schema = require('./schema');
+var _transaction2 = _interopRequireDefault(_transaction);
+
+var _changeLog = require('./change-log');
+
+var _changeLog2 = _interopRequireDefault(_changeLog);
+
+var _schemaRegistry = require('./schema-registry');
+
+var _schemaRegistry2 = _interopRequireDefault(_schemaRegistry);
+
+var _localState = require('./local-state');
+
+var _localState2 = _interopRequireDefault(_localState);
+
+var _view = require('./view');
+
+var _view2 = _interopRequireDefault(_view);
+
+var _schema = require('./commands/schema');
 
 var _schema2 = _interopRequireDefault(_schema);
 
-var _entity = require('./entity');
+var _entity = require('./commands/entity');
 
 var _entity2 = _interopRequireDefault(_entity);
 
@@ -25,91 +43,114 @@ var configure = function configure() {
 
   var log = config.log || 'default';
   var index = config.index || 'default';
+  var transactionManager = new _transaction2.default();
 
-  var schemaChangeLog = config.schema ? (0, _changeLog.createChangelogAdapter)({ schema: config.schema }) : (0, _changeLog.createChangelogAdapter)(log.schema || log);
-
-  var entityChangeLog = config.data ? (0, _changeLog.createChangelogAdapter)(config.data) : (0, _changeLog.createChangelogAdapter)(log.entity || log);
-
-  var schemaSearchIndex = (0, _searchIndex.createSearchIndexAdapter)(index.schema || index);
-
-  var entitySearchIndex = (0, _searchIndex.createSearchIndexAdapter)(index.entity || index);
-
-  var schema = new _schema2.default({
-    changeLog: schemaChangeLog,
-    searchIndex: schemaSearchIndex
+  var schemaChangeLog = new _changeLog2.default({
+    type: log.schema || log,
+    content: config.schema ? { schema: config.schema } : undefined,
+    idGenerator: (0, _idGenerator.hashField)('name'),
+    transactionManager: transactionManager
   });
 
-  var entity = new _entity2.default({
-    changeLog: entityChangeLog,
-    searchIndex: entitySearchIndex
+  var entityChangeLog = new _changeLog2.default({
+    type: log.entity || log,
+    content: config.data,
+    idGenerator: (0, _idGenerator.random)(),
+    transactionManager: transactionManager
   });
+
+  var schemaState = new _localState2.default(index.schema || index, 'body.name');
+  var entityState = new _localState2.default(index.entity || index, 'id');
+
+  var schemaRegistry = new _schemaRegistry2.default();
+  var entityView = (0, _view2.default)(schemaRegistry);
+
+  var schemaCommands = new _schema2.default(schemaChangeLog, schemaState, schemaRegistry);
+  var entityCommands = new _entity2.default(entityChangeLog, entityState, schemaRegistry);
 
   return {
     getSchema: function getSchema(name, version) {
-      return schema.get(name, version);
+      return Promise.resolve(schemaState.get(name, version));
     },
-    findSchema: function findSchema(params) {
-      return schema.find(params);
+    findSchema: function findSchema(query) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      return schemaState.find(query, options);
     },
     schemaNames: function schemaNames() {
-      return schema.listTypes();
+      return schemaRegistry.listUserTypes();
     },
     createSchema: function createSchema(body) {
-      return schema.create(body);
+      return schemaCommands.create(body);
     },
     updateSchema: function updateSchema(name, body) {
-      return schema.update(name, body);
-    },
-
-    find: function find(params, limit, skip) {
-      return entity.find(params, limit, skip);
-    },
-    findData: function findData(params) {
-      return entity.findData(params);
-    },
-    count: function count(params) {
-      return entity.findData(params).then(function (xs) {
-        return xs.length;
-      });
+      return schemaCommands.update(name, body);
     },
 
     get: function get(id, version) {
-      return entity.get(id, version);
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      return Promise.resolve(entityState.get(id, version)).then(entityView(options.view));
     },
-    create: function create(type, body) {
-      return body instanceof Array ? Promise.all(body.map(function (x) {
-        return entity.create(type, x);
-      })) : entity.create(type, body);
+
+    find: function find() {
+      var query = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+      var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+          limit = _ref.limit,
+          offset = _ref.offset,
+          view = _ref.view;
+
+      return entityState.find(query, { limit: limit, offset: offset }).then(entityView(view));
+    },
+
+    findContent: function findContent() {
+      var text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+
+      var _ref2 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+          limit = _ref2.limit,
+          offset = _ref2.offset,
+          view = _ref2.view;
+
+      return entityState.findContent(text, { limit: limit, offset: offset }).then(entityView(view));
+    },
+
+    count: function count() {
+      var query = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return entityState.count(query);
+    },
+
+    create: function create(type) {
+      var body = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      return (body instanceof Array ? Promise.all(body.map(function (x) {
+        return entityCommands.create(type, x);
+      })) : entityCommands.create(type, body)).then(entityView(options.view));
     },
     update: function update(id, body) {
-      return entity.update(id, body);
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      return entityCommands.update(id, body).then(entityView(options.view));
     },
 
     validate: function validate(type, body) {
-      return entity.validate(type, body);
+      return schemaRegistry.validate(type, body);
     },
     isValid: function isValid(type, body) {
-      return entity.isValid(type, body);
+      return schemaRegistry.isValid(type, body);
     },
 
     init: function () {
-      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return Promise.all([schemaChangeLog.init(), schemaSearchIndex.init(), entityChangeLog.init(), entitySearchIndex.init()]);
+                return schemaCommands.init();
 
               case 2:
                 _context.next = 4;
-                return schema.init();
+                return entityCommands.init();
 
               case 4:
-                _context.next = 6;
-                return entity.init();
-
-              case 6:
               case 'end':
                 return _context.stop();
             }
@@ -118,14 +159,14 @@ var configure = function configure() {
       }));
 
       function init() {
-        return _ref.apply(this, arguments);
+        return _ref3.apply(this, arguments);
       }
 
       return init;
     }(),
 
     isConnected: function isConnected() {
-      return schemaChangeLog.isConnected() && schemaSearchIndex.isConnected() && entityChangeLog.isConnected() && entitySearchIndex.isConnected();
+      return schemaChangeLog.isConnected() && schemaState.isConnected() && entityChangeLog.isConnected() && entityState.isConnected();
     }
   };
 };

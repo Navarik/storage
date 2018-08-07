@@ -1,7 +1,3 @@
-//@flow
-type Maybe<T> = T | typeof undefined
-type LiftToMaybe = <A: any, B: any>(f: (A => B)) => (Maybe<A> => Maybe<B>)
-export const maybe: LiftToMaybe = f => x => (x === undefined || x === null ? x : f(x))
-
-type Iterable<T> = { [string|number]: T } | Array<T>
-export const head = <T: any>(xs: Iterable<T>): ?T => { for (let x of xs) return x }
+export const maybe = f => x => (x === undefined || x === null ? x : f(x))
+export const head = (xs) => { for (let x of xs) return x }
+export const liftToArray = f => x => (x instanceof Array ? x.map(f) : f(x))

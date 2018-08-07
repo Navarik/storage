@@ -1,24 +1,30 @@
 import Transaction from './transaction'
 
-const transactions = {}
+class TransactionManager {
+  constructor() {
+    this.transactions = {}
+  }
 
-export const commit = (key, message) => {
-  if (transactions[key]) {
-    transactions[key].resolve(message)
-    delete transactions[key]
+  commit(key, message) {
+    if (this.transactions[key]) {
+      this.transactions[key].resolve(message)
+      delete this.transactions[key]
+    }
+  }
+
+  reject(key, message) {
+    if (this.transactions[key]) {
+      this.transactions[key].reject(message)
+      delete this.transactions[key]
+    }
+  }
+
+  start(key) {
+    const transaction = new Transaction()
+    this.transactions[key] = transaction
+
+    return transaction
   }
 }
 
-export const reject = (key, message) => {
-  if (transactions[key]) {
-    transactions[key].reject(message)
-    delete transactions[key]
-  }
-}
-
-export const start = (key) => {
-  const transaction = new Transaction()
-  transactions[key] = transaction
-
-  return transaction
-}
+export default TransactionManager

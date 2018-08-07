@@ -1,80 +1,79 @@
-// @flow
-import { createChangelogAdapter } from './adapters/change-log'
-import { createSearchIndexAdapter } from './adapters/search-index'
+import { hashField, random } from './id-generator'
+import TransactionManager from './transaction'
+import ChangeLog from './change-log'
+import SchemaRegistry from './schema-registry'
+import LocalState from './local-state'
+import createEntityView from './view'
 
-import SchemaModel from './schema'
-import EntityModel from './entity'
-import type { AvroSchema, Identifier, ModuleConfiguration } from './flowtypes'
+import SchemaModel from './commands/schema'
+import EntityModel from './commands/entity'
 
-const configure = (config: ModuleConfiguration = {}) => {
+const configure = (config = {}) => {
   const log = config.log || 'default'
   const index = config.index || 'default'
+  const transactionManager = new TransactionManager()
 
-  const schemaChangeLog = config.schema
-    ? createChangelogAdapter({ schema: config.schema })
-    : createChangelogAdapter(log.schema || log)
-
-  const entityChangeLog = config.data
-    ? createChangelogAdapter(config.data)
-    : createChangelogAdapter(log.entity || log)
-
-  const schemaSearchIndex = createSearchIndexAdapter(
-    index.schema || index
-  )
-
-  const entitySearchIndex = createSearchIndexAdapter(
-    index.entity || index
-  )
-
-  const schema = new SchemaModel({
-    changeLog: schemaChangeLog,
-    searchIndex: schemaSearchIndex
+  const schemaChangeLog = new ChangeLog({
+    type: log.schema || log,
+    content: config.schema ? { schema: config.schema } : undefined,
+    idGenerator: hashField('name'),
+    transactionManager
   })
 
-  const entity = new EntityModel({
-    changeLog: entityChangeLog,
-    searchIndex: entitySearchIndex
+  const entityChangeLog = new ChangeLog({
+    type: log.entity || log,
+    content: config.data,
+    idGenerator: random(),
+    transactionManager
   })
+
+  const schemaState = new LocalState(index.schema || index, 'body.name')
+  const entityState = new LocalState(index.entity || index, 'id')
+
+  const schemaRegistry = new SchemaRegistry()
+  const entityView = createEntityView(schemaRegistry)
+
+  const schemaCommands = new SchemaModel(schemaChangeLog, schemaState, schemaRegistry)
+  const entityCommands = new EntityModel(entityChangeLog, entityState, schemaRegistry)
 
   return {
-    getSchema: (name: string, version: ?string) => schema.get(name, version),
-    findSchema: (params: Object) => schema.find(params),
-    schemaNames: () => schema.listTypes(),
-    createSchema: (body: AvroSchema) => schema.create(body),
-    updateSchema: (name: string, body: AvroSchema) => schema.update(name, body),
+    getSchema: (name, version) => Promise.resolve(schemaState.get(name, version)),
+    findSchema: (query, options = {}) => schemaState.find(query, options),
+    schemaNames: () => schemaRegistry.listUserTypes(),
+    createSchema: (body) => schemaCommands.create(body),
+    updateSchema: (name, body) => schemaCommands.update(name, body),
 
-    find: (params: Object, limit: ?number, skip: ?number) => entity.find(params, limit, skip),
-    findData: (params: Object, limit: ?number, skip: ?number) => entity.findData(params, limit, skip),
-    count: (params: Object) => entity.findData(params).then(xs => xs.length),
+    get: (id, version, options = {}) =>
+      Promise.resolve(entityState.get(id, version)).then(entityView(options.view)),
 
-    get: (id: string, version: ?string) => entity.get(id, version),
-    create: (type: string, body: Object | Array<Object>) => (
+    find: (query = {}, { limit, offset, view } = {}) =>
+      entityState.find(query, { limit, offset }).then(entityView(view)),
+
+    findContent: (text = '', { limit, offset, view } = {}) =>
+      entityState.findContent(text, { limit, offset }).then(entityView(view)),
+
+    count: (query = {}) => entityState.count(query),
+
+    create: (type, body = {}, options = {}) => (
       body instanceof Array
-        ? Promise.all(body.map(x => entity.create(type, x)))
-        : entity.create(type, body)
-    ),
-    update: (id: Identifier, body: Object) => entity.update(id, body),
+        ? Promise.all(body.map(x => entityCommands.create(type, x)))
+        : entityCommands.create(type, body)).then(entityView(options.view)),
+    update: (id, body, options = {}) =>
+      entityCommands.update(id, body).then(entityView(options.view)),
 
-    validate: (type: string, body: Object) => entity.validate(type, body),
-    isValid: (type: string, body: Object) => entity.isValid(type, body),
+    validate: (type, body) => schemaRegistry.validate(type, body),
+    isValid: (type, body) => schemaRegistry.isValid(type, body),
 
     init: async () => {
-      await Promise.all([
-        schemaChangeLog.init(),
-        schemaSearchIndex.init(),
-        entityChangeLog.init(),
-        entitySearchIndex.init(),
-      ])
-
-      await schema.init()
-      await entity.init()
+      await schemaCommands.init()
+      await entityCommands.init()
     },
 
     isConnected: () =>
       schemaChangeLog.isConnected() &&
-      schemaSearchIndex.isConnected() &&
+      schemaState.isConnected() &&
       entityChangeLog.isConnected() &&
-      entitySearchIndex.isConnected()
+      entityState.isConnected()
   }
 }
 

@@ -4,24 +4,17 @@
   "version": "5.6.0",
   "scripts": {
     "build": "rm -rf dist/* && babel src --out-dir dist",
-    "flow": "flow",
     "test": "mocha --require babel-core/register --require babel-polyfill test/**/*.test.js"
   },
   "main": "dist",
   "author": "Navarik Corp.",
   "dependencies": {
-    "array-flatten": "^2.1.1",
     "array-sort": "^1.0.0",
-    "array-unique": "^0.3.2",
     "avsc": "^5.4.1",
     "babel-polyfill": "^6.26.0",
     "event-emitter": "^0.3.5",
-    "file-extension": "^4.0.5",
-    "function-pipe": "^1.2.1",
-    "group-by": "0.0.1",
     "nedb": "^1.8.0",
-    "poly-exclude": "^1.0.4",
-    "poly-filter": "^1.0.2",
+    "object-path": "^0.11.4",
     "poly-map": "^2.2.1",
     "uuid": "^3.3.2"
   },
@@ -35,9 +28,7 @@
     "babel-plugin-transform-object-rest-spread": "^6.23.0",
     "babel-plugin-transform-regenerator": "^6.26.0",
     "babel-preset-env": "^1.7.0",
-    "babel-preset-flow": "^6.23.0",
     "expect.js": "^0.3.1",
-    "flow-bin": "^0.70.0",
     "mocha": "^5.2.0"
   }
 }
