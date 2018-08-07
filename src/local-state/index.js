@@ -1,12 +1,13 @@
 import objectPath from 'object-path'
 import SearchIndex from './search-index'
+import createSearchIndexAdapter from './searchindex-adapter-factory'
 
 class LocalState {
   constructor(indexAdapter, idField) {
     this.versions = {}
     this.latest = {}
     this.idField = idField
-    this.index = new SearchIndex(indexAdapter, this.idField)
+    this.index = new SearchIndex(createSearchIndexAdapter(indexAdapter), this.idField)
   }
 
   exists(key) {

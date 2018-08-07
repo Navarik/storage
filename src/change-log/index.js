@@ -1,10 +1,11 @@
 import arraySort from 'array-sort'
 import SignatureProvider from './signature-provider'
+import createChangelogAdapter from './changelog-adapter-factory'
 
 class ChangeLog {
-  constructor(adapter, generateId, transactionManager) {
-    this.adapter = adapter
-    this.signature = new SignatureProvider(generateId)
+  constructor({ type, content, idGenerator, transactionManager }) {
+    this.adapter = createChangelogAdapter(type, content)
+    this.signature = new SignatureProvider(idGenerator)
     this.transactionManager = transactionManager
   }
 

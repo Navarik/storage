@@ -1,7 +1,4 @@
-// @flow
-import { createChangelogAdapter } from './adapters/change-log'
-import { createSearchIndexAdapter } from './adapters/search-index'
-import { hashField, random } from './adapters/id-generator'
+import { hashField, random } from './id-generator'
 import TransactionManager from './transaction'
 import ChangeLog from './change-log'
 import SchemaRegistry from './schema-registry'
@@ -16,46 +13,35 @@ const configure = (config = {}) => {
   const index = config.index || 'default'
   const transactionManager = new TransactionManager()
 
-  const schemaChangeLogAdapter = config.schema
-    ? createChangelogAdapter({ schema: config.schema })
-    : createChangelogAdapter(log.schema || log)
-  const schemaChangeLog = new ChangeLog(
-    schemaChangeLogAdapter,
-    hashField('name'),
+  const schemaChangeLog = new ChangeLog({
+    type: log.schema || log,
+    content: config.schema ? { schema: config.schema } : undefined,
+    idGenerator: hashField('name'),
     transactionManager
-  )
+  })
 
-  const entityChangeLogAdapter = config.data
-    ? createChangelogAdapter(config.data)
-    : createChangelogAdapter(log.entity || log)
-  const entityChangeLog = new ChangeLog(
-    entityChangeLogAdapter,
-    random(),
+  const entityChangeLog = new ChangeLog({
+    type: log.entity || log,
+    content: config.data,
+    idGenerator: random(),
     transactionManager
-  )
+  })
 
-  const schemaState = new LocalState(
-    createSearchIndexAdapter(index.schema || index),
-    'body.name'
-  )
-
-  const entityState = new LocalState(
-    createSearchIndexAdapter(index.entity || index),
-    'id'
-  )
+  const schemaState = new LocalState(index.schema || index, 'body.name')
+  const entityState = new LocalState(index.entity || index, 'id')
 
   const schemaRegistry = new SchemaRegistry()
   const entityView = createEntityView(schemaRegistry)
 
-  const schema = new SchemaModel(schemaChangeLog, schemaState, schemaRegistry)
-  const entity = new EntityModel(entityChangeLog, entityState, schemaRegistry)
+  const schemaCommands = new SchemaModel(schemaChangeLog, schemaState, schemaRegistry)
+  const entityCommands = new EntityModel(entityChangeLog, entityState, schemaRegistry)
 
   return {
     getSchema: (name, version) => Promise.resolve(schemaState.get(name, version)),
     findSchema: (query, parameters = {}) => schemaState.find(query, parameters),
     schemaNames: () => schemaRegistry.listUserTypes(),
-    createSchema: (body) => schema.create(body),
-    updateSchema: (name, body) => schema.update(name, body),
+    createSchema: (body) => schemaCommands.create(body),
+    updateSchema: (name, body) => schemaCommands.update(name, body),
 
     get: (id, version, options = {}) =>
       Promise.resolve(entityState.get(id, version)).then(entityView(options.view)),
@@ -65,17 +51,17 @@ const configure = (config = {}) => {
 
     create: (type, body = {}, options = {}) => (
       body instanceof Array
-        ? Promise.all(body.map(x => entity.create(type, x)))
-        : entity.create(type, body)).then(entityView(options.view)),
+        ? Promise.all(body.map(x => entityCommands.create(type, x)))
+        : entityCommands.create(type, body)).then(entityView(options.view)),
     update: (id, body, options = {}) =>
-      entity.update(id, body).then(entityView(options.view)),
+      entityCommands.update(id, body).then(entityView(options.view)),
 
     validate: (type, body) => schemaRegistry.validate(type, body),
     isValid: (type, body) => schemaRegistry.isValid(type, body),
 
     init: async () => {
-      await schema.init()
-      await entity.init()
+      await schemaCommands.init()
+      await entityCommands.init()
     },
 
     isConnected: () =>
