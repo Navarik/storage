@@ -47,7 +47,7 @@ class SchemaRegistry {
       const errors = []
       this.get(type).isValid(data, { errorHook: (path) => { errors.push(path.join()) } })
       if (errors.length) {
-        return `[Storage] Invalid value provided for: ${validationErrors.join(', ')}`
+        return `[Storage] Invalid value provided for: ${errors.join(', ')}`
       }
     }
 
