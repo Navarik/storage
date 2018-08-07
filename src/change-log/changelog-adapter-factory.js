@@ -1,5 +1,5 @@
 // @flow
-import DefaultChangelogAdapter from './event-emitter'
+import DefaultChangelogAdapter from './default-changelog-adapter'
 
 const createChangelogAdapter = (type, content) => {
   if (type === 'default') {

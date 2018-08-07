@@ -38,7 +38,7 @@ const configure = (config = {}) => {
 
   return {
     getSchema: (name, version) => Promise.resolve(schemaState.get(name, version)),
-    findSchema: (query, parameters = {}) => schemaState.find(query, parameters),
+    findSchema: (query, options = {}) => schemaState.find(query, options),
     schemaNames: () => schemaRegistry.listUserTypes(),
     createSchema: (body) => schemaCommands.create(body),
     updateSchema: (name, body) => schemaCommands.update(name, body),
@@ -48,6 +48,9 @@ const configure = (config = {}) => {
 
     find: (query = {}, { limit, offset, view } = {}) =>
       entityState.find(query, { limit, offset }).then(entityView(view)),
+
+    findContent: (text = '', { limit, offset, view } = {}) =>
+      entityState.findContent(text, { limit, offset }).then(entityView(view)),
 
     count: (query = {}) => entityState.count(query),
 

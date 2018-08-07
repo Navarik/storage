@@ -5,7 +5,7 @@ const databaseError = (err) => {
   throw new Error(`[NeDB] Database error: ${err}`)
 }
 
-class NeDbClient {
+class NeDbIndexAdapter {
   constructor() {
     this.reset()
   }
@@ -22,7 +22,7 @@ class NeDbClient {
 
       query.exec((err, res) => {
         if (err) reject(databaseError(err))
-        else resolve(res)
+        else resolve(res || [])
       })
     })
   }
@@ -70,4 +70,4 @@ class NeDbClient {
   }
 }
 
-export default NeDbClient
+export default NeDbIndexAdapter

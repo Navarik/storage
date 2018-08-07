@@ -8,7 +8,6 @@ var maybe = exports.maybe = function maybe(f) {
     return x === undefined || x === null ? x : f(x);
   };
 };
-
 var head = exports.head = function head(xs) {
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
@@ -33,4 +32,9 @@ var head = exports.head = function head(xs) {
       }
     }
   }
+};
+var liftToArray = exports.liftToArray = function liftToArray(f) {
+  return function (x) {
+    return x instanceof Array ? x.map(f) : f(x);
+  };
 };

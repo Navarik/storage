@@ -8,8 +8,15 @@ const stringifyProperties = maybe(value => (
     : String(value)
 ))
 
+const stringifyContent = value => (
+  typeof value === 'object'
+    ? Object.values(value).reduce((acc, next) => acc + stringifyContent(next), '')
+    : String(value || '')
+)
+
 const searchableFormat = (idField, document) => ({
   ...map(stringifyProperties, document.body),
+  ___content: stringifyContent(document.body),
   id: objectPath.get(document, idField),
   version: String(document.version),
   version_id: document.version_id,
@@ -40,9 +47,13 @@ class SearchIndex {
     const query = map(stringifyProperties, params)
     const results = await this.adapter.find(query, options)
 
-    if (!results) {
-      return []
-    }
+    return results
+  }
+
+  async findContent(text, options) {
+    const regex = (text instanceof RegExp) ? text : new RegExp(text, 'gi')
+    const query = { $where: function () { return this.___content.match(regex) !== null } }
+    const results = await this.adapter.find(query, options)
 
     return results
   }

@@ -1,13 +1,13 @@
 import objectPath from 'object-path'
 import SearchIndex from './search-index'
-import createSearchIndexAdapter from './searchindex-adapter-factory'
+import createIndexAdapter from './index-adapter-factory'
 
 class LocalState {
   constructor(indexAdapter, idField) {
     this.versions = {}
     this.latest = {}
     this.idField = idField
-    this.index = new SearchIndex(createSearchIndexAdapter(indexAdapter), this.idField)
+    this.searchIndex = new SearchIndex(createIndexAdapter(indexAdapter), this.idField)
   }
 
   exists(key) {
@@ -24,7 +24,7 @@ class LocalState {
     this.versions[key].push(item)
     this.latest[key] = item
 
-    await this.index.add(item)
+    await this.searchIndex.add(item)
   }
 
   get(key, version) {
@@ -40,22 +40,29 @@ class LocalState {
   async reset() {
     this.latest = {}
     this.versions = {}
-    await this.index.reset()
+    await this.searchIndex.reset()
   }
 
   isConnected() {
-    return this.index.isConnected()
+    return this.searchIndex.isConnected()
   }
 
-  async find(query, parameters) {
-    const found = await this.index.find(query, parameters)
+  async find(query, options) {
+    const found = await this.searchIndex.find(query, options)
+    const collection = found.map(x => this.get(x.id))
+
+    return collection
+  }
+
+  async findContent(text, options) {
+    const found = await this.searchIndex.findContent(text, options)
     const collection = found.map(x => this.get(x.id))
 
     return collection
   }
 
   async count(query) {
-    return this.index.count(query)
+    return this.searchIndex.count(query)
   }
 }
 

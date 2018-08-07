@@ -72,4 +72,16 @@ describe("Entity search", () => {
     expect(response).to.be.an('array')
     expect(response).to.have.length(2)
   })
+
+  it("can find entities by piece of content of one or many fields", async () => {
+    let response = await storage.findContent('immediate acceptance')
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(2)
+    response.forEach(expectEntity)
+
+    response = await storage.findContent('load')
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(5)
+    response.forEach(expectEntity)
+  })
 })
