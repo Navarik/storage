@@ -5,14 +5,14 @@ import createChangelogAdapter from './changelog-adapter-factory'
 class ChangeLog {
   constructor({ type, content, idGenerator, transactionManager }) {
     this.adapter = createChangelogAdapter(type, content)
-    this.signature = new SignatureProvider(idGenerator)
+    this.signatureProvider = new SignatureProvider(idGenerator)
     this.transactionManager = transactionManager
   }
 
-  onChange(type, func) {
-    this.adapter.on(type, async (record) => {
+  onChange(func) {
+    this.adapter.observe(async (record) => {
       const result = await func(record)
-      this.transactionManager.commit(record.version_id, result)
+      return this.transactionManager.commit(record.version_id, result)
     })
   }
 
@@ -20,17 +20,12 @@ class ChangeLog {
     return this.adapter.isConnected()
   }
 
-  async reconstruct(topic) {
-    await this.adapter.init()
-    let log = await this.adapter.read(topic)
-    log = log.map(record => (record.id ? record : this.signature.signNew(record)))
-    log = arraySort(log, 'version')
-
-    return log
+  reconstruct(topics) {
+    return this.adapter.init(topics, this.signatureProvider)
   }
 
   async registerNew(type, document) {
-    const record = this.signature.signNew(document)
+    const record = this.signatureProvider.signNew(document)
 
     const transaction = this.transactionManager.start(record.version_id)
     await this.adapter.write(type, record)
@@ -39,7 +34,7 @@ class ChangeLog {
   }
 
   async registerUpdate(type, oldVersion, document) {
-    const newVersion = this.signature.signVersion(document, oldVersion)
+    const newVersion = this.signatureProvider.signVersion(document, oldVersion)
     if (oldVersion.version_id === newVersion.version_id) {
       return previous
     }

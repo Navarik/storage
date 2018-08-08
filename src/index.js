@@ -65,8 +65,16 @@ const configure = (config = {}) => {
     isValid: (type, body) => schemaRegistry.isValid(type, body),
 
     init: async () => {
-      await schemaCommands.init()
-      await entityCommands.init()
+      schemaRegistry.reset()
+      schemaState.reset()
+      entityState.reset()
+
+      schemaChangeLog.onChange(x => schemaCommands.handleChange(x))
+      entityChangeLog.onChange(x => entityCommands.handleChange(x))
+
+      await schemaChangeLog.reconstruct(['schema'])
+      const types = schemaRegistry.listUserTypes()
+      await entityChangeLog.reconstruct(types)
     },
 
     isConnected: () =>

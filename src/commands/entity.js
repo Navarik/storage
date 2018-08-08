@@ -12,17 +12,6 @@ class EntityModel {
     return entity
   }
 
-  async init() {
-    this.state.reset()
-
-    const types = this.schemaRegistry.listUserTypes()
-    await Promise.all(types.map(async (type) => {
-      const log = await this.changeLog.reconstruct(type)
-      await Promise.all(log.map(x => this.handleChange({ ...x, type })))
-      this.changeLog.onChange(type, x => this.handleChange({ ...x, type }))
-    }))
-  }
-
   async create(type, body) {
     const entity = this.schemaRegistry.format(type, body)
     const transaction = this.changeLog.registerNew(type, entity)

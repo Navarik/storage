@@ -1,27 +1,28 @@
-import eventEmitter from 'event-emitter'
+import map from 'poly-map'
 
 class DefaultChangelogAdapter {
   constructor(config) {
-    this.emitter = eventEmitter()
+    this.observer = () => {}
     this.log = config.log || {}
   }
 
-  on(topic, handler) {
-    this.emitter.on(topic, handler)
+  observe(handler) {
+    this.observer = handler
   }
 
-  write(topic, message) {
-    this.emitter.emit(topic, message)
-
-    return Promise.resolve(message)
+  write(type, message) {
+    return this.observer({ ...message, type })
   }
 
-  read(topic) {
-    return Promise.resolve(this.log[topic] || [])
-  }
-
-  init() {
-    return Promise.resolve(true)
+  async init(types, signatureProvider) {
+    await map(async (type) => {
+      if (this.log[type]) {
+        for (let data of this.log[type]) {
+          const record = data.id ? data : signatureProvider.signNew(data)
+          await this.write(type, record)
+        }
+      }
+    }, types)
   }
 
   isConnected() {

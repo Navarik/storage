@@ -40,7 +40,12 @@ class SearchIndex {
 
   async add(document) {
     const searchable = searchableFormat(this.idField, document)
-    await this.adapter.update({ id: searchable.id }, searchable)
+    const current = await this.adapter.find({ id: searchable.id })
+    if (current) {
+      await this.adapter.update({ id: searchable.id }, searchable)
+    } else {
+      await this.adapter.insert([searchable])
+    }
   }
 
   async find(params, options) {

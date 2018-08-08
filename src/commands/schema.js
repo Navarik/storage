@@ -12,16 +12,6 @@ class SchemaModel {
     return schema
   }
 
-  async init() {
-    this.schemaRegistry.reset()
-    this.state.reset()
-
-    const log = await this.changeLog.reconstruct('schema')
-    await Promise.all(log.map(x => this.handleChange(x)))
-
-    this.changeLog.onChange('schema', x => this.handleChange(x))
-  }
-
   // Commands
   async create(body) {
     if (this.schemaRegistry.exists(body.name)) {

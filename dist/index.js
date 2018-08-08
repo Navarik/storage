@@ -139,18 +139,31 @@ var configure = function configure() {
 
     init: function () {
       var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+        var types;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _context.next = 2;
-                return schemaCommands.init();
+                schemaRegistry.reset();
+                schemaState.reset();
+                entityState.reset();
 
-              case 2:
-                _context.next = 4;
-                return entityCommands.init();
+                schemaChangeLog.onChange(function (x) {
+                  return schemaCommands.handleChange(x);
+                });
+                entityChangeLog.onChange(function (x) {
+                  return entityCommands.handleChange(x);
+                });
 
-              case 4:
+                _context.next = 7;
+                return schemaChangeLog.reconstruct(['schema']);
+
+              case 7:
+                types = schemaRegistry.listUserTypes();
+                _context.next = 10;
+                return entityChangeLog.reconstruct(types);
+
+              case 10:
               case 'end':
                 return _context.stop();
             }

@@ -34,16 +34,16 @@ var ChangeLog = function () {
     _classCallCheck(this, ChangeLog);
 
     this.adapter = (0, _changelogAdapterFactory2.default)(type, content);
-    this.signature = new _signatureProvider2.default(idGenerator);
+    this.signatureProvider = new _signatureProvider2.default(idGenerator);
     this.transactionManager = transactionManager;
   }
 
   _createClass(ChangeLog, [{
     key: 'onChange',
-    value: function onChange(type, func) {
+    value: function onChange(func) {
       var _this = this;
 
-      this.adapter.on(type, function () {
+      this.adapter.observe(function () {
         var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(record) {
           var result;
           return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -55,8 +55,7 @@ var ChangeLog = function () {
 
                 case 2:
                   result = _context.sent;
-
-                  _this.transactionManager.commit(record.version_id, result);
+                  return _context.abrupt('return', _this.transactionManager.commit(record.version_id, result));
 
                 case 4:
                 case 'end':
@@ -78,33 +77,27 @@ var ChangeLog = function () {
     }
   }, {
     key: 'reconstruct',
+    value: function reconstruct(topics) {
+      return this.adapter.init(topics, this.signatureProvider);
+    }
+  }, {
+    key: 'registerNew',
     value: function () {
-      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(topic) {
-        var _this2 = this;
-
-        var log;
+      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(type, document) {
+        var record, transaction;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                _context2.next = 2;
-                return this.adapter.init();
-
-              case 2:
+                record = this.signatureProvider.signNew(document);
+                transaction = this.transactionManager.start(record.version_id);
                 _context2.next = 4;
-                return this.adapter.read(topic);
+                return this.adapter.write(type, record);
 
               case 4:
-                log = _context2.sent;
+                return _context2.abrupt('return', transaction.promise);
 
-                log = log.map(function (record) {
-                  return record.id ? record : _this2.signature.signNew(record);
-                });
-                log = (0, _arraySort2.default)(log, 'version');
-
-                return _context2.abrupt('return', log);
-
-              case 8:
+              case 5:
               case 'end':
                 return _context2.stop();
             }
@@ -112,39 +105,8 @@ var ChangeLog = function () {
         }, _callee2, this);
       }));
 
-      function reconstruct(_x2) {
+      function registerNew(_x2, _x3) {
         return _ref3.apply(this, arguments);
-      }
-
-      return reconstruct;
-    }()
-  }, {
-    key: 'registerNew',
-    value: function () {
-      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(type, document) {
-        var record, transaction;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                record = this.signature.signNew(document);
-                transaction = this.transactionManager.start(record.version_id);
-                _context3.next = 4;
-                return this.adapter.write(type, record);
-
-              case 4:
-                return _context3.abrupt('return', transaction.promise);
-
-              case 5:
-              case 'end':
-                return _context3.stop();
-            }
-          }
-        }, _callee3, this);
-      }));
-
-      function registerNew(_x3, _x4) {
-        return _ref4.apply(this, arguments);
       }
 
       return registerNew;
@@ -152,38 +114,38 @@ var ChangeLog = function () {
   }, {
     key: 'registerUpdate',
     value: function () {
-      var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(type, oldVersion, document) {
+      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(type, oldVersion, document) {
         var newVersion, transaction;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context4.prev = _context4.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
-                newVersion = this.signature.signVersion(document, oldVersion);
+                newVersion = this.signatureProvider.signVersion(document, oldVersion);
 
                 if (!(oldVersion.version_id === newVersion.version_id)) {
-                  _context4.next = 3;
+                  _context3.next = 3;
                   break;
                 }
 
-                return _context4.abrupt('return', previous);
+                return _context3.abrupt('return', previous);
 
               case 3:
                 transaction = this.transactionManager.start(newVersion.version_id);
 
                 this.adapter.write(type, newVersion);
 
-                return _context4.abrupt('return', transaction.promise);
+                return _context3.abrupt('return', transaction.promise);
 
               case 6:
               case 'end':
-                return _context4.stop();
+                return _context3.stop();
             }
           }
-        }, _callee4, this);
+        }, _callee3, this);
       }));
 
-      function registerUpdate(_x5, _x6, _x7) {
-        return _ref5.apply(this, arguments);
+      function registerUpdate(_x4, _x5, _x6) {
+        return _ref4.apply(this, arguments);
       }
 
       return registerUpdate;

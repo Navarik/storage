@@ -92,16 +92,35 @@ var SearchIndex = function () {
     key: 'add',
     value: function () {
       var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(document) {
-        var searchable;
+        var searchable, current;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
                 searchable = searchableFormat(this.idField, document);
                 _context2.next = 3;
-                return this.adapter.update({ id: searchable.id }, searchable);
+                return this.adapter.find({ id: searchable.id });
 
               case 3:
+                current = _context2.sent;
+
+                if (!current) {
+                  _context2.next = 9;
+                  break;
+                }
+
+                _context2.next = 7;
+                return this.adapter.update({ id: searchable.id }, searchable);
+
+              case 7:
+                _context2.next = 11;
+                break;
+
+              case 9:
+                _context2.next = 11;
+                return this.adapter.insert([searchable]);
+
+              case 11:
               case 'end':
                 return _context2.stop();
             }

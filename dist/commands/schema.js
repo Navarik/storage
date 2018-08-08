@@ -48,64 +48,20 @@ var SchemaModel = function () {
 
       return handleChange;
     }()
-  }, {
-    key: 'init',
-    value: function () {
-      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-        var _this = this;
-
-        var log;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                this.schemaRegistry.reset();
-                this.state.reset();
-
-                _context2.next = 4;
-                return this.changeLog.reconstruct('schema');
-
-              case 4:
-                log = _context2.sent;
-                _context2.next = 7;
-                return Promise.all(log.map(function (x) {
-                  return _this.handleChange(x);
-                }));
-
-              case 7:
-
-                this.changeLog.onChange('schema', function (x) {
-                  return _this.handleChange(x);
-                });
-
-              case 8:
-              case 'end':
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-
-      function init() {
-        return _ref2.apply(this, arguments);
-      }
-
-      return init;
-    }()
 
     // Commands
 
   }, {
     key: 'create',
     value: function () {
-      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(body) {
+      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(body) {
         var schema, transaction;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context3.prev = _context3.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
                 if (!this.schemaRegistry.exists(body.name)) {
-                  _context3.next = 2;
+                  _context2.next = 2;
                   break;
                 }
 
@@ -114,18 +70,18 @@ var SchemaModel = function () {
               case 2:
                 schema = this.schemaRegistry.format('schema', body);
                 transaction = this.changeLog.registerNew('schema', schema);
-                return _context3.abrupt('return', transaction);
+                return _context2.abrupt('return', transaction);
 
               case 5:
               case 'end':
-                return _context3.stop();
+                return _context2.stop();
             }
           }
-        }, _callee3, this);
+        }, _callee2, this);
       }));
 
       function create(_x2) {
-        return _ref3.apply(this, arguments);
+        return _ref2.apply(this, arguments);
       }
 
       return create;
@@ -133,14 +89,14 @@ var SchemaModel = function () {
   }, {
     key: 'update',
     value: function () {
-      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(name, body) {
+      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(name, body) {
         var previous, next, transaction;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context4.prev = _context4.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
                 if (this.state.exists(name)) {
-                  _context4.next = 2;
+                  _context3.next = 2;
                   break;
                 }
 
@@ -150,18 +106,18 @@ var SchemaModel = function () {
                 previous = this.state.get(name);
                 next = this.schemaRegistry.format('schema', body);
                 transaction = this.changeLog.registerUpdate('schema', previous, next);
-                return _context4.abrupt('return', transaction);
+                return _context3.abrupt('return', transaction);
 
               case 6:
               case 'end':
-                return _context4.stop();
+                return _context3.stop();
             }
           }
-        }, _callee4, this);
+        }, _callee3, this);
       }));
 
       function update(_x3, _x4) {
-        return _ref4.apply(this, arguments);
+        return _ref3.apply(this, arguments);
       }
 
       return update;
