@@ -25,22 +25,22 @@ class ChangeLog {
   }
 
   async registerNew(type, document) {
-    const record = this.signatureProvider.signNew(document)
+    const record = this.signatureProvider.signNew(type, document)
 
     const transaction = this.transactionManager.start(record.version_id)
-    await this.adapter.write(type, record)
+    await this.adapter.write(record)
 
     return transaction.promise
   }
 
   async registerUpdate(type, oldVersion, document) {
-    const newVersion = this.signatureProvider.signVersion(document, oldVersion)
+    const newVersion = this.signatureProvider.signVersion(type, document, oldVersion)
     if (oldVersion.version_id === newVersion.version_id) {
       return previous
     }
 
     const transaction = this.transactionManager.start(newVersion.version_id)
-    this.adapter.write(type, newVersion)
+    this.adapter.write(newVersion)
 
     return transaction.promise
   }

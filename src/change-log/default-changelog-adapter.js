@@ -10,16 +10,16 @@ class DefaultChangelogAdapter {
     this.observer = handler
   }
 
-  write(type, message) {
-    return this.observer({ ...message, type })
+  write(message) {
+    return this.observer(message)
   }
 
   async init(types, signatureProvider) {
     await map(async (type) => {
       if (this.log[type]) {
         for (let data of this.log[type]) {
-          const record = data.id ? data : signatureProvider.signNew(data)
-          await this.write(type, record)
+          const record = data.id ? data : signatureProvider.signNew(type, data)
+          await this.write(record)
         }
       }
     }, types)

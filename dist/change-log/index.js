@@ -89,10 +89,10 @@ var ChangeLog = function () {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                record = this.signatureProvider.signNew(document);
+                record = this.signatureProvider.signNew(type, document);
                 transaction = this.transactionManager.start(record.version_id);
                 _context2.next = 4;
-                return this.adapter.write(type, record);
+                return this.adapter.write(record);
 
               case 4:
                 return _context2.abrupt('return', transaction.promise);
@@ -120,7 +120,7 @@ var ChangeLog = function () {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                newVersion = this.signatureProvider.signVersion(document, oldVersion);
+                newVersion = this.signatureProvider.signVersion(type, document, oldVersion);
 
                 if (!(oldVersion.version_id === newVersion.version_id)) {
                   _context3.next = 3;
@@ -132,7 +132,7 @@ var ChangeLog = function () {
               case 3:
                 transaction = this.transactionManager.start(newVersion.version_id);
 
-                this.adapter.write(type, newVersion);
+                this.adapter.write(newVersion);
 
                 return _context3.abrupt('return', transaction.promise);
 

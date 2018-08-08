@@ -23,7 +23,7 @@ var SignatureProvider = function () {
 
   _createClass(SignatureProvider, [{
     key: 'signNew',
-    value: function signNew(body) {
+    value: function signNew(type, body) {
       var id = this.generateId(body);
       var version_id = (0, _v2.default)(JSON.stringify(body), id);
       var now = new Date();
@@ -34,6 +34,7 @@ var SignatureProvider = function () {
         version: 1,
         created_at: now.toISOString(),
         modified_at: now.toISOString(),
+        type: type,
         body: body
       };
 
@@ -41,7 +42,7 @@ var SignatureProvider = function () {
     }
   }, {
     key: 'signVersion',
-    value: function signVersion(body, previous) {
+    value: function signVersion(type, body, previous) {
       var id = previous.id;
       var version_id = (0, _v2.default)(JSON.stringify(body), id);
       var now = new Date();
@@ -52,6 +53,7 @@ var SignatureProvider = function () {
         version: previous.version + 1,
         created_at: previous.created_at,
         modified_at: now.toISOString(),
+        type: type,
         body: body
       };
 

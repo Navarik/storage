@@ -5,7 +5,7 @@ class SignatureProvider {
     this.generateId = generator
   }
 
-  signNew(body) {
+  signNew(type, body) {
     const id = this.generateId(body)
     const version_id = uuidv5(JSON.stringify(body), id)
     const now = new Date()
@@ -16,13 +16,14 @@ class SignatureProvider {
       version: 1,
       created_at: now.toISOString(),
       modified_at: now.toISOString(),
+      type,
       body
     }
 
     return document
   }
 
-  signVersion(body, previous) {
+  signVersion(type, body, previous) {
     const id = previous.id
     const version_id = uuidv5(JSON.stringify(body), id)
     const now = new Date()
@@ -33,6 +34,7 @@ class SignatureProvider {
       version: previous.version + 1,
       created_at: previous.created_at,
       modified_at: now.toISOString(),
+      type,
       body
     }
 
