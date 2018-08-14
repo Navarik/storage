@@ -1,5 +1,9 @@
 const createCommand = (changeLog, schemaRegistry) => {
   const create = async (type, body) => {
+    if (body instanceof Array) {
+      return Promise.all(body.map(x => create(type, x)))
+    }
+
     if (type === 'schema' && schemaRegistry.exists(body.name)) {
       throw new Error(`[Storage] Attempting to create schema that already exists: ${name}.`)
     }

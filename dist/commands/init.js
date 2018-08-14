@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
-var initCommand = function initCommand(schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry) {
+var initCommand = function initCommand(schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry, observer) {
   var init = function () {
     var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
       var types;
@@ -50,13 +50,14 @@ var initCommand = function initCommand(schemaChangeLog, entityChangeLog, schemaS
                     while (1) {
                       switch (_context2.prev = _context2.next) {
                         case 0:
-                          _context2.next = 2;
+                          observer.emit(entity);
+                          _context2.next = 3;
                           return entityState.set(entity);
 
-                        case 2:
+                        case 3:
                           return _context2.abrupt('return', entity);
 
-                        case 3:
+                        case 4:
                         case 'end':
                           return _context2.stop();
                       }

@@ -4,6 +4,7 @@ import TransactionManager from './transaction'
 import ChangeLog from './change-log'
 import SchemaRegistry from './schema-registry'
 import LocalState from './local-state'
+import Observer from './observer'
 import createEntityView from './view'
 
 import createCommand from './commands/create'
@@ -32,6 +33,8 @@ const configure = (config = {}) => {
   const schemaState = new LocalState(index.schema || index, 'body.name')
   const entityState = new LocalState(index.entity || index, 'id')
 
+  const observer = new Observer()
+
   const schemaRegistry = new SchemaRegistry()
   const entityView = createEntityView(schemaRegistry)
 
@@ -41,7 +44,7 @@ const configure = (config = {}) => {
   const updateSchema = updateCommand(schemaChangeLog, schemaState, schemaRegistry)
   const updateEntity = updateCommand(entityChangeLog, entityState, schemaRegistry)
 
-  const init = initCommand(schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry)
+  const init = initCommand(schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry, observer)
 
   return {
     getSchema: (name, version) => Promise.resolve(schemaState.get(name, version)),
@@ -61,11 +64,8 @@ const configure = (config = {}) => {
 
     count: (query = {}) => entityState.count(query),
 
-    create: (type, body = {}, options = {}) => (
-      body instanceof Array
-        ? Promise.all(body.map(x => createEntity(type, x)))
-        : createEntity(type, body)
-      ).then(entityView(options.view)),
+    create: (type, body = {}, options = {}) =>
+      createEntity(type, body).then(entityView(options.view)),
 
     update: (id, body, options = {}) =>
       updateEntity(id, body).then(entityView(options.view)),
@@ -73,8 +73,9 @@ const configure = (config = {}) => {
     validate: (type, body) => schemaRegistry.validate(type, body),
     isValid: (type, body) => schemaRegistry.isValid(type, body),
 
-    init,
+    observe: (handler, filter = {}) => observer.listen(filter, handler),
 
+    init,
     isConnected: () =>
       schemaChangeLog.isConnected() &&
       schemaState.isConnected() &&

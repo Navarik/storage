@@ -24,6 +24,10 @@ var _localState = require('./local-state');
 
 var _localState2 = _interopRequireDefault(_localState);
 
+var _observer = require('./observer');
+
+var _observer2 = _interopRequireDefault(_observer);
+
 var _view = require('./view');
 
 var _view2 = _interopRequireDefault(_view);
@@ -66,6 +70,8 @@ var configure = function configure() {
   var schemaState = new _localState2.default(index.schema || index, 'body.name');
   var entityState = new _localState2.default(index.entity || index, 'id');
 
+  var observer = new _observer2.default();
+
   var schemaRegistry = new _schemaRegistry2.default();
   var entityView = (0, _view2.default)(schemaRegistry);
 
@@ -75,7 +81,7 @@ var configure = function configure() {
   var _updateSchema = (0, _update2.default)(schemaChangeLog, schemaState, schemaRegistry);
   var updateEntity = (0, _update2.default)(entityChangeLog, entityState, schemaRegistry);
 
-  var init = (0, _init2.default)(schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry);
+  var init = (0, _init2.default)(schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry, observer);
 
   return {
     getSchema: function getSchema(name, version) {
@@ -130,9 +136,7 @@ var configure = function configure() {
     create: function create(type) {
       var body = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-      return (body instanceof Array ? Promise.all(body.map(function (x) {
-        return createEntity(type, x);
-      })) : createEntity(type, body)).then(entityView(options.view));
+      return createEntity(type, body).then(entityView(options.view));
     },
 
     update: function update(id, body) {
@@ -147,8 +151,12 @@ var configure = function configure() {
       return schemaRegistry.isValid(type, body);
     },
 
-    init: init,
+    observe: function observe(handler) {
+      var filter = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      return observer.listen(filter, handler);
+    },
 
+    init: init,
     isConnected: function isConnected() {
       return schemaChangeLog.isConnected() && schemaState.isConnected() && entityChangeLog.isConnected() && entityState.isConnected();
     }

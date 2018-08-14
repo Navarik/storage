@@ -14,19 +14,29 @@ var createCommand = function createCommand(changeLog, schemaRegistry) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              if (!(type === 'schema' && schemaRegistry.exists(body.name))) {
+              if (!(body instanceof Array)) {
                 _context.next = 2;
+                break;
+              }
+
+              return _context.abrupt('return', Promise.all(body.map(function (x) {
+                return create(type, x);
+              })));
+
+            case 2:
+              if (!(type === 'schema' && schemaRegistry.exists(body.name))) {
+                _context.next = 4;
                 break;
               }
 
               throw new Error('[Storage] Attempting to create schema that already exists: ' + name + '.');
 
-            case 2:
+            case 4:
               document = schemaRegistry.format(type, body);
               transaction = changeLog.registerNew(type, document);
               return _context.abrupt('return', transaction);
 
-            case 5:
+            case 7:
             case 'end':
               return _context.stop();
           }
