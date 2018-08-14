@@ -1,12 +1,15 @@
+import 'babel-polyfill'
 import { hashField, random } from './id-generator'
 import TransactionManager from './transaction'
 import ChangeLog from './change-log'
 import SchemaRegistry from './schema-registry'
 import LocalState from './local-state'
+import Observer from './observer'
 import createEntityView from './view'
 
-import SchemaModel from './commands/schema'
-import EntityModel from './commands/entity'
+import createCommand from './commands/create'
+import updateCommand from './commands/update'
+import initCommand from './commands/init'
 
 const configure = (config = {}) => {
   const log = config.log || 'default'
@@ -30,18 +33,25 @@ const configure = (config = {}) => {
   const schemaState = new LocalState(index.schema || index, 'body.name')
   const entityState = new LocalState(index.entity || index, 'id')
 
+  const observer = new Observer()
+
   const schemaRegistry = new SchemaRegistry()
   const entityView = createEntityView(schemaRegistry)
 
-  const schemaCommands = new SchemaModel(schemaChangeLog, schemaState, schemaRegistry)
-  const entityCommands = new EntityModel(entityChangeLog, entityState, schemaRegistry)
+  const createSchema = createCommand(schemaChangeLog, schemaRegistry)
+  const createEntity = createCommand(entityChangeLog, schemaRegistry)
+
+  const updateSchema = updateCommand(schemaChangeLog, schemaState, schemaRegistry)
+  const updateEntity = updateCommand(entityChangeLog, entityState, schemaRegistry)
+
+  const init = initCommand(schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry, observer)
 
   return {
     getSchema: (name, version) => Promise.resolve(schemaState.get(name, version)),
     findSchema: (query, options = {}) => schemaState.find(query, options),
     schemaNames: () => schemaRegistry.listUserTypes(),
-    createSchema: (body) => schemaCommands.create(body),
-    updateSchema: (name, body) => schemaCommands.update(name, body),
+    createSchema: (body) => createSchema('schema', body),
+    updateSchema: (name, body) => updateSchema(name, body),
 
     get: (id, version, options = {}) =>
       Promise.resolve(entityState.get(id, version)).then(entityView(options.view)),
@@ -54,29 +64,18 @@ const configure = (config = {}) => {
 
     count: (query = {}) => entityState.count(query),
 
-    create: (type, body = {}, options = {}) => (
-      body instanceof Array
-        ? Promise.all(body.map(x => entityCommands.create(type, x)))
-        : entityCommands.create(type, body)).then(entityView(options.view)),
+    create: (type, body = {}, options = {}) =>
+      createEntity(type, body).then(entityView(options.view)),
+
     update: (id, body, options = {}) =>
-      entityCommands.update(id, body).then(entityView(options.view)),
+      updateEntity(id, body).then(entityView(options.view)),
 
     validate: (type, body) => schemaRegistry.validate(type, body),
     isValid: (type, body) => schemaRegistry.isValid(type, body),
 
-    init: async () => {
-      schemaRegistry.reset()
-      schemaState.reset()
-      entityState.reset()
+    observe: (handler, filter = {}) => observer.listen(filter, handler),
 
-      schemaChangeLog.onChange(x => schemaCommands.handleChange(x))
-      entityChangeLog.onChange(x => entityCommands.handleChange(x))
-
-      await schemaChangeLog.reconstruct(['schema'])
-      const types = schemaRegistry.listUserTypes()
-      await entityChangeLog.reconstruct(types)
-    },
-
+    init,
     isConnected: () =>
       schemaChangeLog.isConnected() &&
       schemaState.isConnected() &&

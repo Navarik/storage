@@ -4,6 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+require('babel-polyfill');
+
 var _idGenerator = require('./id-generator');
 
 var _transaction = require('./transaction');
@@ -22,21 +24,27 @@ var _localState = require('./local-state');
 
 var _localState2 = _interopRequireDefault(_localState);
 
+var _observer = require('./observer');
+
+var _observer2 = _interopRequireDefault(_observer);
+
 var _view = require('./view');
 
 var _view2 = _interopRequireDefault(_view);
 
-var _schema = require('./commands/schema');
+var _create = require('./commands/create');
 
-var _schema2 = _interopRequireDefault(_schema);
+var _create2 = _interopRequireDefault(_create);
 
-var _entity = require('./commands/entity');
+var _update = require('./commands/update');
 
-var _entity2 = _interopRequireDefault(_entity);
+var _update2 = _interopRequireDefault(_update);
+
+var _init = require('./commands/init');
+
+var _init2 = _interopRequireDefault(_init);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 var configure = function configure() {
   var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -62,11 +70,18 @@ var configure = function configure() {
   var schemaState = new _localState2.default(index.schema || index, 'body.name');
   var entityState = new _localState2.default(index.entity || index, 'id');
 
+  var observer = new _observer2.default();
+
   var schemaRegistry = new _schemaRegistry2.default();
   var entityView = (0, _view2.default)(schemaRegistry);
 
-  var schemaCommands = new _schema2.default(schemaChangeLog, schemaState, schemaRegistry);
-  var entityCommands = new _entity2.default(entityChangeLog, entityState, schemaRegistry);
+  var _createSchema = (0, _create2.default)(schemaChangeLog, schemaRegistry);
+  var createEntity = (0, _create2.default)(entityChangeLog, schemaRegistry);
+
+  var _updateSchema = (0, _update2.default)(schemaChangeLog, schemaState, schemaRegistry);
+  var updateEntity = (0, _update2.default)(entityChangeLog, entityState, schemaRegistry);
+
+  var init = (0, _init2.default)(schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry, observer);
 
   return {
     getSchema: function getSchema(name, version) {
@@ -80,10 +95,10 @@ var configure = function configure() {
       return schemaRegistry.listUserTypes();
     },
     createSchema: function createSchema(body) {
-      return schemaCommands.create(body);
+      return _createSchema('schema', body);
     },
     updateSchema: function updateSchema(name, body) {
-      return schemaCommands.update(name, body);
+      return _updateSchema(name, body);
     },
 
     get: function get(id, version) {
@@ -121,13 +136,12 @@ var configure = function configure() {
     create: function create(type) {
       var body = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-      return (body instanceof Array ? Promise.all(body.map(function (x) {
-        return entityCommands.create(type, x);
-      })) : entityCommands.create(type, body)).then(entityView(options.view));
+      return createEntity(type, body).then(entityView(options.view));
     },
+
     update: function update(id, body) {
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-      return entityCommands.update(id, body).then(entityView(options.view));
+      return updateEntity(id, body).then(entityView(options.view));
     },
 
     validate: function validate(type, body) {
@@ -137,47 +151,12 @@ var configure = function configure() {
       return schemaRegistry.isValid(type, body);
     },
 
-    init: function () {
-      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-        var types;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                schemaRegistry.reset();
-                schemaState.reset();
-                entityState.reset();
+    observe: function observe(handler) {
+      var filter = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      return observer.listen(filter, handler);
+    },
 
-                schemaChangeLog.onChange(function (x) {
-                  return schemaCommands.handleChange(x);
-                });
-                entityChangeLog.onChange(function (x) {
-                  return entityCommands.handleChange(x);
-                });
-
-                _context.next = 7;
-                return schemaChangeLog.reconstruct(['schema']);
-
-              case 7:
-                types = schemaRegistry.listUserTypes();
-                _context.next = 10;
-                return entityChangeLog.reconstruct(types);
-
-              case 10:
-              case 'end':
-                return _context.stop();
-            }
-          }
-        }, _callee, undefined);
-      }));
-
-      function init() {
-        return _ref3.apply(this, arguments);
-      }
-
-      return init;
-    }(),
-
+    init: init,
     isConnected: function isConnected() {
       return schemaChangeLog.isConnected() && schemaState.isConnected() && entityChangeLog.isConnected() && entityState.isConnected();
     }
