@@ -1,0 +1,16 @@
+const createCommand = (changeLog, schemaRegistry) => {
+  const create = async (type, body) => {
+    if (type === 'schema' && schemaRegistry.exists(body.name)) {
+      throw new Error(`[Storage] Attempting to create schema that already exists: ${name}.`)
+    }
+
+    const document = schemaRegistry.format(type, body)
+    const transaction = changeLog.registerNew(type, document)
+
+    return transaction
+  }
+
+  return create
+}
+
+export default createCommand
