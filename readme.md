@@ -16,7 +16,7 @@ npm install @navarik/storage
 ## Configuration
 There are several ways a storage instance can be constructed. It is also possible to have multiple storage instances simultaneously within your application. Here are the main configuration setups with their respective use-cases.
 
-### Fully static setup
+#### Fully static setup
 The storage instance always boots up from exactly the same externally controlled state. Ideal for test automation or as a source of static read-only reference data.
 
 ```javascript
@@ -32,7 +32,7 @@ storage.init()
 
 Note, that with this setup it is still possible to create schemas or entities, however these changes will not survive the application restart since the storage will be re-initialized from the static configuration each time `storage.init()` is called.
 
-### Static schema setup
+#### Static schema setup
 Empty storage instance with pre-defined schemas. Entity persistance guarantee depends entirely on the provided entity changelog adapter. This setup most closely resembles classical RDBMS in the fact that schema changes would require code re-deployment and data changes would not.
 
 ```javascript
@@ -49,7 +49,7 @@ const storage = createStorage({
 storage.init()
 ```
 
-### Fully dynamic setup
+#### Fully dynamic setup
 Both, entity and schema persistance guarantee depends entirely on the given changelog adapter. The instance starts completely empty. Useful for multi-tenant services or user-controlled structured data storages.
 
 ```javascript
@@ -87,7 +87,7 @@ main()
 ```
 
 ## API
-### Factory & Configuration
+#### Factory & Configuration
 Storage library's only export is factory function that is designed to generate storage instances based on provided configuration. Here are the configuratino options:
   `schema: Array<Object>` - provide static schemata in a form of an array of Avro-compatible schema definition JS objects.
   `entity: Array<Object>` - provide static entities in a form of an array of JS objects.
@@ -97,12 +97,12 @@ Storage library's only export is factory function that is designed to generate s
   `index: 'default'|SearchIndexAdapter` - global override for the local state's search   `index.schema: 'default'|SearchIndexAdapter` - override for the schema search index adapter
   `index.entity: 'default'|SearchIndexAdapter` - override for the entity search index adapter
 
-### Instance API
+#### Instance API
   `init(): Promise<void>` - initialize storage instance, read change-logs, re-generate search index. Usually this method is called once before any other API functions could be accessed.
 
   `isConnected(): boolean` - returns true if all the adapters are connected and operational, false otherwize. Default in-memory adapters are always connected.
 
-### Schema management
+#### Schema management
   `getSchema: (name: string, [version: integer]): Promise<Schema>` - returns schema for a given type name, undefined if no schema is found. Returns a specific version of the schema if `version` argument is provided, uses the latest version by default.
 
   `findSchema(filter: Object, [options: Object]): Promise<Array<Schema>>` - looks for schemas that match provided filter. Supported search options: limit, offset. Returns empty array if there is no schemas matching the filter.
@@ -113,7 +113,7 @@ Storage library's only export is factory function that is designed to generate s
 
   `updateSchema(name: string, body: Object): Promise<Schema>` - updates existing schema
 
-### Entity management
+#### Entity management
   `get(id: string, [version: number, options = {}]): Promise<Entity>` - fetches a single entity by its unique ID. Fetches a particular version if version argument is provided, otherwise uses the latest known version. Supported options: view ('brief' or 'canonical').
 
   `find(filter: Object, options: Object): Promise<Array<Entity>>` - search for entities that match given filter. Supported search options: limit, offset, view ('brief' or 'canonical').
