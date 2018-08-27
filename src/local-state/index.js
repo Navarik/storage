@@ -3,10 +3,11 @@ import SearchIndex from './search-index'
 import createIndexAdapter from './index-adapter-factory'
 
 class LocalState {
-  constructor(indexAdapter, idField) {
+  constructor(indexAdapter, idField, trackVersions) {
     this.versions = {}
     this.latest = {}
     this.idField = idField
+    this.trackVersions = trackVersions
     this.searchIndex = new SearchIndex(createIndexAdapter(indexAdapter), this.idField)
   }
 
@@ -17,17 +18,24 @@ class LocalState {
   async set(item) {
     const key = objectPath.get(item, this.idField)
 
-    if (!this.versions[key]) {
-      this.versions[key] = []
+    if (this.trackVersions) {
+      if (!this.versions[key]) {
+        this.versions[key] = []
+      }
+
+      this.versions[key].push(item)
     }
 
-    this.versions[key].push(item)
     this.latest[key] = item
 
     await this.searchIndex.add(item)
   }
 
   get(key, version) {
+    if (version && this.trackVersions === false) {
+      throw new Error('[Storage] Local State is running without version tracking.')
+    }
+
     return version
       ? this.versions[key][version - 1]
       : this.latest[key]
