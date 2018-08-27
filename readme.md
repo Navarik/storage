@@ -89,13 +89,14 @@ main()
 ## API
 #### Factory & Configuration
 Storage library's only export is factory function that is designed to generate storage instances based on provided configuration. Here are the configuratino options:
-  `schema: Array<Object>` - provide static schemata in a form of an array of Avro-compatible schema definition JS objects.
-  `entity: Array<Object>` - provide static entities in a form of an array of JS objects.
-  `log: 'default'|ChangeLogAdapter` - global override for the change-log adapter
-  `log.schema: 'default'|ChangeLogAdapter` - override for the schema change-log adapter
-  `log.entity: 'default'|ChangeLogAdapter` - override for the entity change-log adapter
-  `index: 'default'|SearchIndexAdapter` - global override for the local state's search   `index.schema: 'default'|SearchIndexAdapter` - override for the schema search index adapter
-  `index.entity: 'default'|SearchIndexAdapter` - override for the entity search index adapter
+  - `schema: Array<Object>` - provide static schemata in a form of an array of Avro-compatible schema definition JS objects.
+  - `entity: Array<Object>` - provide static entities in a form of an array of JS objects.
+  - `log: 'default'|ChangeLogAdapter` - global override for the change-log adapter
+  - `log.schema: 'default'|ChangeLogAdapter` - override for the schema change-log adapter
+  - `log.entity: 'default'|ChangeLogAdapter` - override for the entity change-log adapter
+  - `index: 'default'|SearchIndexAdapter` - global override for the local state's search   `index.schema: 'default'|SearchIndexAdapter` - override for the schema search index adapter
+  - `index.entity: 'default'|SearchIndexAdapter` - override for the entity search index adapter
+  - `trackVersions: true|Boolean` - enable or disable version tracking for local state.
 
 #### Instance API
   `init(): Promise<void>` - initialize storage instance, read change-logs, re-generate search index. Usually this method is called once before any other API functions could be accessed.

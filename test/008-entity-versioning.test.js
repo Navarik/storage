@@ -90,7 +90,7 @@ describe('Entity versioning disabled (trackVersions=false)', () => {
       const response = await storageNoVer.get(id, index + 1)
       expect(response).to.be.empty() // should not reach here, expects exception
     } catch (e) {
-      expect(e.message).to.eql('[Storage] Storage is running with versioning disabled.')
+      expect(e.message).to.eql('[Storage] Local State is running without version tracking.')
     }
   }))
 })

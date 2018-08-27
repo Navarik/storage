@@ -4,13 +4,10 @@ import createIndexAdapter from './index-adapter-factory'
 
 class LocalState {
   constructor(indexAdapter, idField, trackVersions) {
-    // only init versions if trackVersions is enabled
-    // this.versions will be used as a flag use to determine if version related logic should be triggered.
-    if (trackVersions) {
-      this.versions = {}
-    }
+    this.versions = {}
     this.latest = {}
     this.idField = idField
+    this.trackVersions = trackVersions
     this.searchIndex = new SearchIndex(createIndexAdapter(indexAdapter), this.idField)
   }
 
@@ -21,7 +18,7 @@ class LocalState {
   async set(item) {
     const key = objectPath.get(item, this.idField)
 
-    if (this.versions) {
+    if (this.trackVersions) {
       if (!this.versions[key]) {
         this.versions[key] = []
       }
@@ -35,8 +32,8 @@ class LocalState {
   }
 
   get(key, version) {
-    if (version && !this.versions) {
-      throw new Error('[Storage] Storage is running with versioning disabled.')
+    if (version && this.trackVersions === false) {
+      throw new Error('[Storage] Local State is running without version tracking.')
     }
 
     return version
@@ -50,9 +47,7 @@ class LocalState {
 
   async reset() {
     this.latest = {}
-    if (this.versions) {
-      this.versions = {}
-    }
+    this.versions = {}
     await this.searchIndex.reset()
   }
 
