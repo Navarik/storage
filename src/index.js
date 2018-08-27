@@ -15,6 +15,7 @@ const configure = (config = {}) => {
   const log = config.log || 'default'
   const index = config.index || 'default'
   const transactionManager = new TransactionManager()
+  const trackVersions = (typeof(config.trackVersions) === 'boolean') ? config.trackVersions : true
 
   const schemaChangeLog = new ChangeLog({
     type: log.schema || log,
@@ -30,8 +31,8 @@ const configure = (config = {}) => {
     transactionManager
   })
 
-  const schemaState = new LocalState(index.schema || index, 'body.name')
-  const entityState = new LocalState(index.entity || index, 'id')
+  const schemaState = new LocalState(index.schema || index, 'body.name', trackVersions)
+  const entityState = new LocalState(index.entity || index, 'id', trackVersions)
 
   const observer = new Observer()
 
