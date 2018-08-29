@@ -3,7 +3,7 @@
   "description": "Document storage with schemas and versions",
   "version": "6.2.2",
   "scripts": {
-    "build": "rm -rf dist/* && babel src --out-dir dist",
+    "build": "rimraf ./dist && mkdirp ./dist && babel src --out-dir dist",
     "test": "mocha --require babel-core/register --require babel-polyfill test/**/*.test.js"
   },
   "main": "dist",
@@ -29,6 +29,8 @@
     "babel-plugin-transform-regenerator": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "expect.js": "^0.3.1",
-    "mocha": "^5.2.0"
+    "mkdirp": "^0.5.1",
+    "mocha": "^5.2.0",
+    "rimraf": "^2.6.2"
   }
 }

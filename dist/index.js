@@ -52,6 +52,7 @@ var configure = function configure() {
   var log = config.log || 'default';
   var index = config.index || 'default';
   var transactionManager = new _transaction2.default();
+  var trackVersions = typeof config.trackVersions === 'boolean' ? config.trackVersions : true;
 
   var schemaChangeLog = new _changeLog2.default({
     type: log.schema || log,
@@ -67,8 +68,8 @@ var configure = function configure() {
     transactionManager: transactionManager
   });
 
-  var schemaState = new _localState2.default(index.schema || index, 'body.name');
-  var entityState = new _localState2.default(index.entity || index, 'id');
+  var schemaState = new _localState2.default(index.schema || index, 'body.name', trackVersions);
+  var entityState = new _localState2.default(index.entity || index, 'id', trackVersions);
 
   var observer = new _observer2.default();
 
@@ -157,8 +158,13 @@ var configure = function configure() {
     },
 
     init: init,
+
     isConnected: function isConnected() {
       return schemaChangeLog.isConnected() && schemaState.isConnected() && entityChangeLog.isConnected() && entityState.isConnected();
+    },
+
+    isTrackingVersions: function isTrackingVersions() {
+      return trackVersions;
     }
   };
 };

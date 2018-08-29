@@ -25,12 +25,13 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var LocalState = function () {
-  function LocalState(indexAdapter, idField) {
+  function LocalState(indexAdapter, idField, trackVersions) {
     _classCallCheck(this, LocalState);
 
     this.versions = {};
     this.latest = {};
     this.idField = idField;
+    this.trackVersions = trackVersions;
     this.searchIndex = new _searchIndex2.default((0, _indexAdapterFactory2.default)(indexAdapter), this.idField);
   }
 
@@ -51,17 +52,20 @@ var LocalState = function () {
                 key = _objectPath2.default.get(item, this.idField);
 
 
-                if (!this.versions[key]) {
-                  this.versions[key] = [];
+                if (this.trackVersions) {
+                  if (!this.versions[key]) {
+                    this.versions[key] = [];
+                  }
+
+                  this.versions[key].push(item);
                 }
 
-                this.versions[key].push(item);
                 this.latest[key] = item;
 
-                _context.next = 6;
+                _context.next = 5;
                 return this.searchIndex.add(item);
 
-              case 6:
+              case 5:
               case 'end':
                 return _context.stop();
             }
@@ -78,6 +82,10 @@ var LocalState = function () {
   }, {
     key: 'get',
     value: function get(key, version) {
+      if (version && this.trackVersions === false) {
+        throw new Error('[Storage] Local State is running without version tracking.');
+      }
+
       return version ? this.versions[key][version - 1] : this.latest[key];
     }
   }, {
