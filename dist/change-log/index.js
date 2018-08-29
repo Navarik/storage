@@ -127,7 +127,7 @@ var ChangeLog = function () {
                   break;
                 }
 
-                return _context3.abrupt('return', previous);
+                return _context3.abrupt('return', oldVersion);
 
               case 3:
                 transaction = this.transactionManager.start(newVersion.version_id);

@@ -77,11 +77,14 @@ const configure = (config = {}) => {
     observe: (handler, filter = {}) => observer.listen(filter, handler),
 
     init,
+
     isConnected: () =>
       schemaChangeLog.isConnected() &&
       schemaState.isConnected() &&
       entityChangeLog.isConnected() &&
-      entityState.isConnected()
+      entityState.isConnected(),
+
+    isTrackingVersions: () => trackVersions
   }
 }
 
