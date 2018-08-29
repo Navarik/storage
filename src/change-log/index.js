@@ -36,7 +36,7 @@ class ChangeLog {
   async registerUpdate(type, oldVersion, document) {
     const newVersion = this.signatureProvider.signVersion(type, document, oldVersion)
     if (oldVersion.version_id === newVersion.version_id) {
-      return previous
+      return oldVersion
     }
 
     const transaction = this.transactionManager.start(newVersion.version_id)
