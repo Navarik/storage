@@ -29,7 +29,7 @@ var createCommand = function createCommand(changeLog, schemaRegistry) {
                 break;
               }
 
-              throw new Error('[Storage] Attempting to create schema that already exists: ' + name + '.');
+              throw new Error('[Storage.Commands] Attempting to create schema that already exists: ' + name + '.');
 
             case 4:
               document = schemaRegistry.format(type, body);

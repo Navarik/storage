@@ -41,9 +41,9 @@ describe("Entity validation", () => {
 
   it("can tell what is wrong with invalid entities", async () => {
     let response = await storage.validate('profile.user', invalidData)
-    expect(response).to.be.equal('[Storage] Invalid value provided for: role, last_name, first_name')
+    expect(response).to.be.equal('[Storage.SchemaRegistry] Invalid value provided for: role, last_name, first_name')
 
     response = await storage.validate('wow.such.doge!', invalidData)
-    expect(response).to.be.equal('[Storage] Unknown type: wow.such.doge!')
+    expect(response).to.be.equal('[Storage.SchemaRegistry] Unknown type: wow.such.doge!')
   })
 })

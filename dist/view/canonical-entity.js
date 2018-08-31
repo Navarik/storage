@@ -11,7 +11,7 @@ var _utils = require('../utils');
 var canonicalEntityView = function canonicalEntityView(schemaRegistry) {
   return (0, _utils.liftToArray)(function (data) {
     return _extends({}, data, {
-      schema: schemaRegistry.get(data.type).schema()
+      schema: data.type ? schemaRegistry.get(data.type).schema() : {}
     });
   });
 };

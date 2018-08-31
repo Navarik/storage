@@ -42,6 +42,11 @@ var SchemaRegistry = function () {
   }, {
     key: 'get',
     value: function get(name) {
+
+      if (!name) {
+        throw new Error('[Storage.SchemaRegistry] name is required to get schema.');
+      }
+
       var schema = _avsc2.default.Type.forSchema(name, { registry: this.registry });
 
       return schema;
@@ -66,11 +71,11 @@ var SchemaRegistry = function () {
     value: function validate(type, data) {
       if (type === 'schema') {
         if (!data || !data.name) {
-          return '[Storage] Schema cannot be empty!';
+          return '[Storage.SchemaRegistry] Schema cannot be empty!';
         }
       } else {
         if (!this.exists(type)) {
-          return '[Storage] Unknown type: ' + type;
+          return '[Storage.SchemaRegistry] Unknown type: ' + type;
         }
 
         var errors = [];
@@ -78,7 +83,7 @@ var SchemaRegistry = function () {
             errors.push(path.join());
           } });
         if (errors.length) {
-          return '[Storage] Invalid value provided for: ' + errors.join(', ');
+          return '[Storage.SchemaRegistry] Invalid value provided for: ' + errors.join(', ');
         }
       }
 

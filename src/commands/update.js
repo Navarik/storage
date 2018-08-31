@@ -1,12 +1,17 @@
 const updateCommand = (changeLog, state, schemaRegistry) => {
-  const update = async (id, body) => {
+  const update = async (id, body, options) => {
     if (!state.exists(id)) {
-      throw new Error(`[Storage] Can't update ${id}: it doesn't exist.`)
+      throw new Error(`[Storage.Commands] Can't update ${id}: it doesn't exist.`)
     }
 
     const previous = state.get(id)
-    const next = schemaRegistry.format(previous.type, body)
-    const transaction = changeLog.registerUpdate(previous.type, previous, next)
+    var type = previous.type || options.type
+    if (!type) {
+      throw new Error(`[Storage.Commands] Type is required from previous.type or options.type for id ${id}.`)
+    }
+
+    const next = schemaRegistry.format(type, body)
+    const transaction = changeLog.registerUpdate(type, previous, next)
 
     return transaction
   }

@@ -8,8 +8,8 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
 var updateCommand = function updateCommand(changeLog, state, schemaRegistry) {
   var update = function () {
-    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id, body) {
-      var previous, next, transaction;
+    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id, body, options) {
+      var previous, type, next, transaction;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
@@ -19,15 +19,25 @@ var updateCommand = function updateCommand(changeLog, state, schemaRegistry) {
                 break;
               }
 
-              throw new Error("[Storage] Can't update " + id + ": it doesn't exist.");
+              throw new Error("[Storage.Commands] Can't update " + id + ": it doesn't exist.");
 
             case 2:
               previous = state.get(id);
-              next = schemaRegistry.format(previous.type, body);
-              transaction = changeLog.registerUpdate(previous.type, previous, next);
-              return _context.abrupt("return", transaction);
+              type = previous.type || options.type;
+
+              if (type) {
+                _context.next = 6;
+                break;
+              }
+
+              throw new Error("[Storage.Commands] Type is required from previous.type or options.type for id " + id + ".");
 
             case 6:
+              next = schemaRegistry.format(type, body);
+              transaction = changeLog.registerUpdate(type, previous, next);
+              return _context.abrupt("return", transaction);
+
+            case 9:
             case "end":
               return _context.stop();
           }
@@ -35,7 +45,7 @@ var updateCommand = function updateCommand(changeLog, state, schemaRegistry) {
       }, _callee, undefined);
     }));
 
-    return function update(_x, _x2) {
+    return function update(_x, _x2, _x3) {
       return _ref.apply(this, arguments);
     };
   }();

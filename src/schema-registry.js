@@ -20,6 +20,11 @@ class SchemaRegistry {
   }
 
   get(name) {
+
+    if (!name) {
+      throw new Error(`[Storage.SchemaRegistry] name is required to get schema.`)
+    }
+
     const schema = avro.Type.forSchema(name, { registry: this.registry })
 
     return schema
@@ -37,17 +42,17 @@ class SchemaRegistry {
   validate(type, data) {
     if (type === 'schema') {
       if (!data || !data.name) {
-        return '[Storage] Schema cannot be empty!'
+        return '[Storage.SchemaRegistry] Schema cannot be empty!'
       }
     } else {
       if (!this.exists(type)) {
-        return `[Storage] Unknown type: ${type}`
+        return `[Storage.SchemaRegistry] Unknown type: ${type}`
       }
 
       const errors = []
       this.get(type).isValid(data, { errorHook: (path) => { errors.push(path.join()) } })
       if (errors.length) {
-        return `[Storage] Invalid value provided for: ${errors.join(', ')}`
+        return `[Storage.SchemaRegistry] Invalid value provided for: ${errors.join(', ')}`
       }
     }
 

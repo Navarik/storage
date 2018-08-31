@@ -69,7 +69,7 @@ const configure = (config = {}) => {
       createEntity(type, body).then(entityView(options.view)),
 
     update: (id, body, options = {}) =>
-      updateEntity(id, body).then(entityView(options.view)),
+      updateEntity(id, body, options).then(entityView(options.view)),
 
     validate: (type, body) => schemaRegistry.validate(type, body),
     isValid: (type, body) => schemaRegistry.isValid(type, body),

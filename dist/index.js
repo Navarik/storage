@@ -142,7 +142,7 @@ var configure = function configure() {
 
     update: function update(id, body) {
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-      return updateEntity(id, body).then(entityView(options.view));
+      return updateEntity(id, body, options).then(entityView(options.view));
     },
 
     validate: function validate(type, body) {
