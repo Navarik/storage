@@ -10,7 +10,7 @@ Dynamic entity storage
 
 ## Installation
 ```bash
-npm install @navarik/storage
+npm install refdata-storage
 ```
 
 ## Configuration
