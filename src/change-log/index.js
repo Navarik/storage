@@ -40,7 +40,7 @@ class ChangeLog {
     }
 
     const transaction = this.transactionManager.start(newVersion.version_id)
-    this.adapter.write(newVersion)
+    await this.adapter.write(newVersion)
 
     return transaction.promise
   }
