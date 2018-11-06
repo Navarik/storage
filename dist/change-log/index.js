@@ -131,12 +131,13 @@ var ChangeLog = function () {
 
               case 3:
                 transaction = this.transactionManager.start(newVersion.version_id);
-
-                this.adapter.write(newVersion);
-
-                return _context3.abrupt('return', transaction.promise);
+                _context3.next = 6;
+                return this.adapter.write(newVersion);
 
               case 6:
+                return _context3.abrupt('return', transaction.promise);
+
+              case 7:
               case 'end':
                 return _context3.stop();
             }
