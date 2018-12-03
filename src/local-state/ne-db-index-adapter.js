@@ -1,5 +1,6 @@
 import Database from 'nedb'
 import map from 'poly-map'
+import {convertSortQueriesToPairs as convertSortQueriesToPairs} from '../utils'
 
 const databaseError = (err) => {
   throw new Error(`[NeDB] Database error: ${err}`)
@@ -18,6 +19,16 @@ class NeDbIndexAdapter {
       }
       if (options.limit) {
         query.limit(options.limit)
+      }
+      if (options.sort) {
+        // Translate the array of sort queries from Express format to NeDB cursor.sort() format. Example:
+        //    received this:         [ 'vessels:asc', 'foo.bar.baz:desc', ... ]
+        //    helper function makes: [ ['vessels', 1], ['foo.bar.baz', -1], ...]
+        //    NeDB wants this:       { vessels: 1 , 'foo.bar.baz': -1, ... }
+        let nedbSortingObject = {}
+        convertSortQueriesToPairs(options.sort).map(pair => nedbSortingObject[pair[0]] = pair[1])
+
+        query.sort(nedbSortingObject)
       }
 
       query.exec((err, res) => {
