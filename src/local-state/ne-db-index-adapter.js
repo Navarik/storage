@@ -1,6 +1,6 @@
 import Database from 'nedb'
 import map from 'poly-map'
-import {convertSortQueriesToPairs as convertSortQueriesToPairs} from '../utils'
+import {convertSortQueriesToPairs } from '../utils'
 
 const databaseError = (err) => {
   throw new Error(`[NeDB] Database error: ${err}`)
