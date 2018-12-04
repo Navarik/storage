@@ -15,11 +15,11 @@ export const convertSortQueriesToPairs = (sortQueries) => {
   // Convert sortQueries to an array if it is singular.
   sortQueries = sortQueries.constructor !== Array ? [sortQueries] : sortQueries
   // Translate an array of sort queries to an array of [string, number] pairs.
-  let arrayOfSorts = Array()
+  const arrayOfSorts = Array()
   sortQueries.forEach( (sortQuery) => {
-    let sortPieces = sortQuery.split(':')
-    let sortField = sortPieces.shift()
-    let sortOrder = sortPieces.includes('desc') ? -1 : 1
+    const sortPieces = sortQuery.split(':')
+    const sortField = sortPieces.shift()
+    const sortOrder = sortPieces.includes('desc') ? -1 : 1
     arrayOfSorts.push([sortField, sortOrder])
   });
   return arrayOfSorts
