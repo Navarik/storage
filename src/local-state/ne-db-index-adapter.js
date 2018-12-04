@@ -25,7 +25,7 @@ class NeDbIndexAdapter {
         //    received this:         [ 'vessels:asc', 'foo.bar.baz:desc', ... ]
         //    helper function makes: [ ['vessels', 1], ['foo.bar.baz', -1], ...]
         //    NeDB wants this:       { vessels: 1 , 'foo.bar.baz': -1, ... }
-        let nedbSortingObject = {}
+        const nedbSortingObject = {}
         convertSortQueriesToPairs(options.sort).map(pair => nedbSortingObject[pair[0]] = pair[1])
 
         query.sort(nedbSortingObject)
