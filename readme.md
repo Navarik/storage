@@ -117,9 +117,9 @@ Storage library's only export is factory function that is designed to generate s
 #### Entity management
   `get(id: string, [version: number, options = {}]): Promise<Entity>` - fetches a single entity by its unique ID. Fetches a particular version if version argument is provided, otherwise uses the latest known version. Supported options: view ('brief' or 'canonical').
 
-  `find(filter: Object, options: Object): Promise<Array<Entity>>` - search for entities that match given filter. Supported search options: limit, offset, view ('brief' or 'canonical').
+  `find(filter: Object, options: Object): Promise<Array<Entity>>` - search for entities that match given filter. Supported search options: limit, offset, sort, view ('brief' or 'canonical'). The sort option will sort the results by the given field or sort in reverese if :desc is appended to the field. Multiple sort fields can be given to sub-sort by additional fields.
 
-  `findContent(text: string, options: Object): Promise<Array<Entity>>` - search for all the entities that have at least one field where the value includes given text. Supported options: view ('brief' or 'canonical').
+  `findContent(text: string, options: Object): Promise<Array<Entity>>` - search for all the entities that have at least one field where the value includes given text. Supported options: view ('brief' or 'canonical'). Refer to find() for additional search options.
 
   `count(filter: Object): Promise<number>` - count the number of entities satisfying the given filter.
 

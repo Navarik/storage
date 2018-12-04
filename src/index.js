@@ -57,11 +57,11 @@ const configure = (config = {}) => {
     get: (id, version, options = {}) =>
       Promise.resolve(entityState.get(id, version)).then(entityView(options.view)),
 
-    find: (query = {}, { limit, offset, view } = {}) =>
-      entityState.find(query, { limit, offset }).then(entityView(view)),
+    find: (query = {}, { limit, offset, sort, view } = {}) =>
+      entityState.find(query, { limit, offset, sort }).then(entityView(view)),
 
-    findContent: (text = '', { limit, offset, view } = {}) =>
-      entityState.findContent(text, { limit, offset }).then(entityView(view)),
+    findContent: (text = '', { limit, offset, sort, view } = {}) =>
+      entityState.findContent(text, { limit, offset, sort }).then(entityView(view)),
 
     count: (query = {}) => entityState.count(query),
 
