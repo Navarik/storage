@@ -185,5 +185,217 @@
         "description": "Job order"
       }
     ]
+  },
+  {
+    "name": "dataEntry.task",
+    "description": "Data Entry Task",
+    "type": "record",
+    "fields": [
+      {
+        "name": "inspection",
+        "type": {
+          "type": "record",
+          "fields": [
+            {
+              "name": "contract",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "vesselQuantity",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "terminalQuantity",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "timeLog",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "vefLog",
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "name": "summary",
+        "type": {
+          "type": "record",
+          "fields": [
+            {
+              "name": "fileFormat",
+              "type": "string"
+            },
+            {
+              "name": "fileName",
+              "type": "string"
+            },
+            {
+              "name": "vefInspReportId",
+              "type": "int"
+            },
+            {
+              "name": "vefInspReportIdStr",
+              "type": "string"
+            },
+            {
+              "name": "niWorksheetId",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "assignedUserId",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "createdAt",
+              "type": "string"
+            },
+            {
+              "name": "status",
+              "type": "string"
+            },
+            {
+              "name": "producedBy",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "clients",
+              "type": {
+                "type": "array",
+                "items": "string"
+              }
+            },
+            {
+              "name": "grades",
+              "type": {
+                "type": "array",
+                "items": "string"
+              }
+            },
+            {
+              "name": "locations",
+              "type": {
+                "type": "array",
+                "items": "string"
+              }
+            },
+            {
+              "name": "vessels",
+              "type": {
+                "type": "array",
+                "items": "string"
+              }
+            },
+            {
+              "name": "hasVefLog",
+              "type": [
+                "null",
+                "boolean"
+              ]
+            },
+            {
+              "name": "hasPortCall",
+              "type": [
+                "null",
+                "boolean"
+              ]
+            },
+            {
+              "name": "isScan",
+              "type": [
+                "null",
+                "boolean"
+              ]
+            },
+            {
+              "name": "contract",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "fields": [
+                    {
+                      "name": "inspectionCompanies",
+                      "type": {
+                        "type": "array",
+                        "items": "string"
+                      }
+                    },
+                    {
+                      "name": "clientCompanies",
+                      "type": {
+                        "type": "array",
+                        "items": "string"
+                      }
+                    },
+                    {
+                      "name": "vessels",
+                      "type": {
+                        "type": "array",
+                        "items": "string"
+                      }
+                    },
+                    {
+                      "name": "cargos",
+                      "type": {
+                        "type": "array",
+                        "items": "string"
+                      }
+                    },
+                    {
+                      "name": "ports",
+                      "type": {
+                        "type": "array",
+                        "items": "string"
+                      }
+                    },
+                    {
+                      "name": "terminals",
+                      "type": {
+                        "type": "array",
+                        "items": "string"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "name": "taskIdBeforeMigration",
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    ]
   }
 ]
