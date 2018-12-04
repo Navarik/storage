@@ -113,9 +113,10 @@ var configure = function configure() {
       var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
           limit = _ref.limit,
           offset = _ref.offset,
+          sort = _ref.sort,
           view = _ref.view;
 
-      return entityState.find(query, { limit: limit, offset: offset }).then(entityView(view));
+      return entityState.find(query, { limit: limit, offset: offset, sort: sort }).then(entityView(view));
     },
 
     findContent: function findContent() {
@@ -124,9 +125,10 @@ var configure = function configure() {
       var _ref2 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
           limit = _ref2.limit,
           offset = _ref2.offset,
+          sort = _ref2.sort,
           view = _ref2.view;
 
-      return entityState.findContent(text, { limit: limit, offset: offset }).then(entityView(view));
+      return entityState.findContent(text, { limit: limit, offset: offset, sort: sort }).then(entityView(view));
     },
 
     count: function count() {

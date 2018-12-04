@@ -14,6 +14,8 @@ var _polyMap = require('poly-map');
 
 var _polyMap2 = _interopRequireDefault(_polyMap);
 
+var _utils = require('../utils');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -43,6 +45,18 @@ var NeDbIndexAdapter = function () {
         }
         if (options.limit) {
           query.limit(options.limit);
+        }
+        if (options.sort) {
+          // Translate the array of sort queries from Express format to NeDB cursor.sort() format. Example:
+          //    received this:         [ 'vessels:asc', 'foo.bar.baz:desc', ... ]
+          //    helper function makes: [ ['vessels', 1], ['foo.bar.baz', -1], ...]
+          //    NeDB wants this:       { vessels: 1 , 'foo.bar.baz': -1, ... }
+          var nedbSortingObject = {};
+          (0, _utils.convertSortQueriesToPairs)(options.sort).map(function (pair) {
+            return nedbSortingObject[pair[0]] = pair[1];
+          });
+
+          query.sort(nedbSortingObject);
         }
 
         query.exec(function (err, res) {
