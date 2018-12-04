@@ -19,7 +19,7 @@ export const convertSortQueriesToPairs = (sortQueries) => {
   sortQueries.forEach( (sortQuery) => {
     let sortPieces = sortQuery.split(':')
     let sortField = sortPieces.shift()
-    let sortOrder = sortPieces.some((x) => x === 'desc') ? -1 : 1
+    let sortOrder = sortPieces.includes('desc') ? -1 : 1
     arrayOfSorts.push([sortField, sortOrder])
   });
   return arrayOfSorts
