@@ -207,17 +207,4 @@ describe("Sorting of search results", () => {
     expect(arraysAreSame(propertyOrder, correctPropertyOrder)).to.be.ok()
     response.forEach(expectEntity)
   })
-
-  // REMOVE THIS LATER
-  it("TEMPORARY TEST", async () => {
-    const testSort = 'created_at'
-    const searchLimitations = {type: 'dataEntry.task'}
-    const inspectProperty = 'body.created_at'
-
-    const response = await storage.find(searchLimitations, { sort: testSort})
-    // console.log(JSON.stringify(response))
-    // console.log(typeof(response[0]['created_at']))
-
-    response.forEach(expectEntity)
-  })
 })
