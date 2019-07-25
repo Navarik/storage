@@ -41,7 +41,7 @@ class SearchIndex {
   async add(document) {
     const searchable = searchableFormat(this.idField, document)
     const current = await this.adapter.find({ id: searchable.id })
-    if (current) {
+    if (current.length) {
       await this.adapter.update({ id: searchable.id }, searchable)
     } else {
       await this.adapter.insert([searchable])
@@ -57,7 +57,10 @@ class SearchIndex {
 
   async findContent(text, options) {
     const regex = (text instanceof RegExp) ? text : new RegExp(text, 'gi')
-    const query = { $where: function () { return this.___content.match(regex) !== null } }
+
+    const query = this.adapter.supportsRegex ? { ___content: { $regex: regex } } :
+      { $where: function () { return this.___content.match(regex) !== null } }
+
     const results = await this.adapter.find(query, options)
 
     return results

@@ -104,7 +104,7 @@ var SearchIndex = function () {
               case 3:
                 current = _context2.sent;
 
-                if (!current) {
+                if (!current.length) {
                   _context2.next = 9;
                   break;
                 }
@@ -175,7 +175,7 @@ var SearchIndex = function () {
             switch (_context4.prev = _context4.next) {
               case 0:
                 regex = text instanceof RegExp ? text : new RegExp(text, 'gi');
-                query = { $where: function $where() {
+                query = this.adapter.supportsRegex ? { ___content: { $regex: regex } } : { $where: function $where() {
                     return this.___content.match(regex) !== null;
                   } };
                 _context4.next = 4;

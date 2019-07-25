@@ -6,22 +6,29 @@ import fixtureSchemata from './fixtures/schemata/schemata.json'
 import { forAll } from './steps/generic'
 import createSchemaSteps from './steps/schema'
 import createEntitySteps from './steps/entities'
+import generateConfig from './config/adapter-list'
 
-const storage = createStorage({
-  schema: fixtureSchemata,
-  data: {
-    'timelog.timelog_event': fixturesEvents,
-    'document.job_order': fixturesJobs
-  }
-})
 
-const schemaSteps = createSchemaSteps(storage)
-const entitySteps = createEntitySteps(storage)
+const run = config => {
+  const storage = createStorage({
+    schema: fixtureSchemata,
+    data: {
+      'timelog.timelog_event': fixturesEvents,
+      'document.job_order': fixturesJobs,
+    },
+    ...config,
+  })
 
-describe("State reconstruction", () => {
-  before(() => storage.init())
+  const schemaSteps = createSchemaSteps(storage)
+  const entitySteps = createEntitySteps(storage)
 
-  it("should have pre-defined schemas", forAll(fixtureSchemata, schemaSteps.canFind))
-  it("should have pre-defined entities", forAll(fixturesEvents, entitySteps.canFind))
-  it("should have pre-defined entities of a different type", forAll(fixturesJobs, entitySteps.canFind))
-})
+  describe(`State reconstruction, index type [${config.index.description || config.index}]`, () => {
+    before(() => storage.init())
+
+    it("should have pre-defined schemas", forAll(fixtureSchemata, schemaSteps.canFind))
+    it("should have pre-defined entities", forAll(fixturesEvents, entitySteps.canFind))
+    it("should have pre-defined entities of a different type", forAll(fixturesJobs, entitySteps.canFind))
+  })
+}
+
+generateConfig().forEach(c => run(c))

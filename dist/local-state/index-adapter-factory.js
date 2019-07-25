@@ -10,12 +10,12 @@ var _neDbIndexAdapter2 = _interopRequireDefault(_neDbIndexAdapter);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var createIndexAdapter = function createIndexAdapter(type) {
-  if (type === 'default') {
+var createIndexAdapter = function createIndexAdapter(adapter) {
+  if (adapter === 'default') {
     return new _neDbIndexAdapter2.default();
   }
 
-  return type;
+  return adapter;
 };
 
 exports.default = createIndexAdapter;
