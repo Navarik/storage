@@ -18,6 +18,11 @@ const run = config => {
 
   describe(`Bulk entity creation, index type [${config.index.description || config.index}]`, () => {
     before(() => storage.init())
+    after(() => {
+      if (config.index.cleanup) {
+        return config.index.cleanup()
+      }
+    })
 
     it("correctly creates collection of new entities",
       canCreateCollection('timelog.timelog_event', fixturesEvents)

@@ -25,6 +25,11 @@ const run = config => {
         id = entity.id
       })
     )
+    after(() => {
+      if (config.index.cleanup) {
+        return config.index.cleanup()
+      }
+    })
 
     it('can\'t update nonexistent entity', cannotUpdate('wow-such-much-doge', { a: 100, b: 500 }))
 

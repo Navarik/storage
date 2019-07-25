@@ -18,6 +18,11 @@ const run = config => {
 
   describe(`Entity creation flow, index type [${config.index.description || config.index}]`, () => {
     before(() => storage.init())
+    after(() => {
+      if (config.index.cleanup) {
+        return config.index.cleanup()
+      }
+    })
 
     it("doesn't have entities before they are created", async () => {
       const response = await storage.find()

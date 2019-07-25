@@ -173,3 +173,15 @@ storage.init()
   `isValid(type: string, body: Object): boolean` - validates given object against the schema of a given type and returnd 'true' if the object is valid and 'false' otherwise.
 
   `observe(handler: (Entity) => void, [filter: Object]): void` - give the system a callback to envoke on each entity change event. Optionally sets the filter allowing to trigger the callback only for matching entities.
+
+## Testing
+
+- `npm test`: run unit tests against NeDB adapter
+- `npm run test:integration`: also test against a MongoDB store
+
+The integration tests assume MongoDB is available at `localhost:27017`.
+If this is not the case, you will need to provide a destination:
+
+```sh
+TEST_MONGO_URL=mongodb://mongo.example.com:27017 npm run test:integration
+```

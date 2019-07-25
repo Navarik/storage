@@ -20,6 +20,11 @@ const run = config => {
 
   describe(`Convenience methods, index type [${config.index.description || config.index}]`, () => {
     before(() => storage.init())
+    after(() => {
+      if (config.index.cleanup) {
+        return config.index.cleanup()
+      }
+    })
 
     it("can name all the schemas", async () => {
       const response = await storage.schemaNames()

@@ -18,6 +18,11 @@ const run = config => {
 
   describe(`Entity format and constraints, index type [${config.index.description || config.index}]`, () => {
     before(() => storage.init())
+    after(() => {
+      if (config.index.cleanup) {
+        return config.index.cleanup()
+      }
+    })
 
     it("can't create entity of unknown type", cannotCreate('wow.doge', {}))
     it("can't create empty entity", cannotCreate('profile.user', {}))

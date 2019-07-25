@@ -45,6 +45,11 @@ const run = config => {
 
   describe(`Sorting of search results, index type [${config.index.description || config.index}]`, () => {
     before(() => storage.init())
+    after(() => {
+      if (config.index.cleanup) {
+        return config.index.cleanup()
+      }
+    })
 
     // Test that helper function can handle a non-array.
     it("can convert single query to array of one pair", async () => {

@@ -25,6 +25,11 @@ const run = config => {
 
   describe(`Search pagination, index type [${config.index.description || config.index}]`, () => {
     before(() => storage.init())
+    after(() => {
+      if (config.index.cleanup) {
+        return config.index.cleanup()
+      }
+    })
 
     it("can limit the search results", async () => {
       let response = await storage.find({ sender: '1', job_order: '13' }, { limit: 2 })

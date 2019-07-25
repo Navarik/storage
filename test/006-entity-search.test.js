@@ -21,6 +21,11 @@ const run = config => {
 
   describe(`Entity search, index type [${config.index.description || config.index}]`, () => {
     before(() => storage.init())
+    after(() => {
+      if (config.index.cleanup) {
+        return config.index.cleanup()
+      }
+    })
 
     it("correctly creates new entities: timelog events", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
     it("correctly creates new entities: job orders", forAll(fixturesJobs, canCreate('document.job_order')))

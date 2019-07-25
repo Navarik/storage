@@ -8,6 +8,11 @@ const run = config => {
 
   describe(`Empty state, index type [${config.index.description || config.index}]`, () => {
     before(() => storage.init())
+    after(() => {
+      if (config.index.cleanup) {
+        return config.index.cleanup()
+      }
+    })
 
     it("should have no types", async () => {
       const response = await storage.findSchema()

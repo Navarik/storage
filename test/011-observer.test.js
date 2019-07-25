@@ -14,20 +14,25 @@ const run = config => {
 
   describe(`Observing changes, index type [${config.index.description || config.index}]`, () => {
     before(() => storage.init())
+    after(() => {
+      if (config.index.cleanup) {
+        return config.index.cleanup()
+      }
+    })
 
     it("can observe entity changes", async () => {
       const results = []
       storage.observe((x) => { results.push(x) })
 
       fixturesJobs.forEach(async (entity) => {
-        const result = await storage.create('document.job_order', entity)
+        await storage.create('document.job_order', entity)
       })
 
       expect(results).to.be.an('array')
       expect(results).to.have.length(fixturesJobs.length)
 
       fixturesEvents.forEach(async (entity) => {
-        const result = await storage.create('timelog.timelog_event', entity)
+        await storage.create('timelog.timelog_event', entity)
       })
 
       expect(results).to.be.an('array')
@@ -41,11 +46,11 @@ const run = config => {
       storage.observe((x) => { events.push(x) }, { type: 'timelog.timelog_event' })
 
       fixturesJobs.forEach(async (entity) => {
-        const result = await storage.create('document.job_order', entity)
+        await storage.create('document.job_order', entity)
       })
 
       fixturesEvents.forEach(async (entity) => {
-        const result = await storage.create('timelog.timelog_event', entity)
+        await storage.create('timelog.timelog_event', entity)
       })
 
       expect(jobs).to.be.an('array')

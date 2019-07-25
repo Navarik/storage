@@ -32,6 +32,11 @@ const run = config => {
 
   describe(`Entity validation, index type [${config.index.description || config.index}]`, () => {
     before(() => storage.init())
+    after(() => {
+      if (config.index.cleanup) {
+        return config.index.cleanup()
+      }
+    })
 
     it("can recognize valid entities", async () => {
       const response = await storage.isValid('profile.user', validData)

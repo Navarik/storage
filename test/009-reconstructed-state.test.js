@@ -24,6 +24,11 @@ const run = config => {
 
   describe(`State reconstruction, index type [${config.index.description || config.index}]`, () => {
     before(() => storage.init())
+    after(() => {
+      if (config.index.cleanup) {
+        return config.index.cleanup()
+      }
+    })
 
     it("should have pre-defined schemas", forAll(fixtureSchemata, schemaSteps.canFind))
     it("should have pre-defined entities", forAll(fixturesEvents, entitySteps.canFind))
