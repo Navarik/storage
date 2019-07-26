@@ -45,10 +45,13 @@ var mongifySort = function mongifySort(src) {
 };
 
 var mongifyOptions = function mongifyOptions(options) {
+  var offset = parseInt(options.offset, 10);
+  var limit = parseInt(options.limit, 10);
+
   var allParams = {
     projection: { id: 1, type: 1, _id: 0 },
-    skip: options.offset || 0,
-    limit: options.limit || 100,
+    skip: Number.isInteger(offset) ? offset : null,
+    limit: Number.isInteger(limit) ? limit : null,
     sort: mongifySort(options.sort)
   };
 

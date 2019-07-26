@@ -40,12 +40,17 @@ var NeDbIndexAdapter = function () {
 
       return new Promise(function (resolve, reject) {
         var query = _this.client.find(searchParameters, { id: 1, type: 1, _id: 0 });
-        if (options.offset) {
-          query.skip(options.offset);
+
+        var offset = parseInt(options.offset, 10);
+        if (Number.isInteger(offset)) {
+          query.skip(offset);
         }
-        if (options.limit) {
-          query.limit(options.limit);
+
+        var limit = parseInt(options.limit, 10);
+        if (Number.isInteger(limit)) {
+          query.limit(limit);
         }
+
         if (options.sort) {
           // Translate the array of sort queries from Express format to NeDB cursor.sort() format. Example:
           //    received this:         [ 'vessels:asc', 'foo.bar.baz:desc', ... ]
