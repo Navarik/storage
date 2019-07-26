@@ -14,6 +14,8 @@ Object.defineProperty(exports, 'MongoIndexAdapter', {
   }
 });
 
+require('babel-polyfill');
+
 var _idGenerator = require('./id-generator');
 
 var _transaction = require('./transaction');
@@ -54,7 +56,6 @@ var _init2 = _interopRequireDefault(_init);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// import 'babel-polyfill'
 var configure = function configure() {
   var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
