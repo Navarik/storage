@@ -15,11 +15,14 @@ const mongifySort = src => {
 }
 
 const mongifyOptions = options => {
+  const offset = parseInt(options.offset, 10)
+  const limit = parseInt(options.limit, 10)
+
   const allParams = {
     projection: { id: 1, type: 1, _id: 0 },
-    skip: parseInt(options.offset) || 0,
-    limit: parseInt(options.limit) || 100,
-    sort: mongifySort(options.sort),
+    skip: Number.isInteger(offset) ? offset : null,
+    limit: Number.isInteger(limit) ? limit : null,
+    sort: mongifySort(options.sort)
   }
 
   return omit(allParams, v => v != null)
@@ -43,13 +46,12 @@ const mongifySearch = (searchParams) => {
 const collectBody = ({ id, version, version_id, type, ___content, ...body }) =>
   ({ id, version, version_id, type, ___content, body })
 
-
 class MongoDbIndexAdapter {
   constructor(config) {
     this.config = {
       url: config.url || 'mongodb://localhost:27017',
       db: config.db || 'storage',
-      collection: config.collection || 'data',
+      collection: config.collection || 'data'
     }
 
     this.supportsRegex = true

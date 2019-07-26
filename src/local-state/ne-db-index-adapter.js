@@ -1,6 +1,6 @@
 import Database from 'nedb'
 import map from 'poly-map'
-import {convertSortQueriesToPairs } from '../utils'
+import { convertSortQueriesToPairs } from '../utils'
 
 const databaseError = (err) => {
   throw new Error(`[NeDB] Database error: ${err}`)
@@ -14,12 +14,17 @@ class NeDbIndexAdapter {
   find(searchParameters, options = {}) {
     return new Promise((resolve, reject) => {
       const query = this.client.find(searchParameters, { id: 1, type: 1, _id: 0 })
-      if (options.offset) {
-        query.skip(parseInt(options.offset))
+
+      const offset = parseInt(options.offset, 10)
+      if (Number.isInteger(offset)) {
+        query.skip(offset)
       }
-      if (options.limit) {
-        query.limit(parseInt(options.limit))
+
+      const limit = parseInt(options.limit, 10)
+      if (Number.isInteger(limit)) {
+        query.limit(limit)
       }
+
       if (options.sort) {
         // Translate the array of sort queries from Express format to NeDB cursor.sort() format. Example:
         //    received this:         [ 'vessels:asc', 'foo.bar.baz:desc', ... ]
