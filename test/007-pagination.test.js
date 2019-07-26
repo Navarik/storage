@@ -66,6 +66,19 @@ const run = config => {
       expect(response).to.have.length(2)
       response.forEach(expectEntity)
     })
+
+    it("can offset and limit with sort", async () => {
+      let response = await storage.find({ sender: '1', job_order: '13'}, { limit: 2, offset: 2, sort: ['timestamp:asc'] })
+      expect(response).to.be.an('array')
+      expect(response).to.have.length(2)
+      response.forEach(expectEntity)
+
+      // test with string limit and offset, which is a common case when these parameters are retrieved from request query params.
+      response = await storage.find({ sender: '1', job_order: '13'}, { limit: '2', offset: '2', sort: ['timestamp:asc'] })
+      expect(response).to.be.an('array')
+      expect(response).to.have.length(2)
+      response.forEach(expectEntity)
+    })
   })
 }
 

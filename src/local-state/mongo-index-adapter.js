@@ -17,8 +17,8 @@ const mongifySort = src => {
 const mongifyOptions = options => {
   const allParams = {
     projection: { id: 1, type: 1, _id: 0 },
-    skip: options.offset || 0,
-    limit: options.limit || 100,
+    skip: parseInt(options.offset) || 0,
+    limit: parseInt(options.limit) || 100,
     sort: mongifySort(options.sort),
   }
 
