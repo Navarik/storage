@@ -4,18 +4,21 @@
   "version": "6.3.0",
   "scripts": {
     "build": "rimraf ./dist && mkdirp ./dist && babel src --out-dir dist",
-    "test": "mocha --require babel-core/register --require babel-polyfill test/**/*.test.js"
+    "test": "mocha test/**/*.test.js",
+    "test:integration": "cross-env TEST_MONGO=1 mocha test/**/*.test.js"
   },
   "main": "dist",
   "author": "Navarik Corp.",
   "dependencies": {
     "array-sort": "^1.0.0",
-    "avsc": "^5.4.1",
+    "avsc": "^5.4.12",
     "babel-polyfill": "^6.26.0",
     "event-emitter": "^0.3.5",
+    "mongodb": "^3.3.0-beta2",
     "nedb": "^1.8.0",
     "object-path": "^0.11.4",
-    "poly-map": "^2.2.1",
+    "object.omit": "^3.0.0",
+    "poly-map": "^2.2.3",
     "uuid": "^3.3.2"
   },
   "engines": {
@@ -25,12 +28,13 @@
   "license": "Proprietary",
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "babel-plugin-transform-object-rest-spread": "^6.23.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-plugin-transform-regenerator": "^6.26.0",
     "babel-preset-env": "^1.7.0",
+    "cross-env": "^5.2.0",
     "expect.js": "^0.3.1",
     "mkdirp": "^0.5.1",
-    "mocha": "^5.2.0",
-    "rimraf": "^2.6.2"
+    "mocha": "^6.2.0",
+    "rimraf": "^2.6.3"
   }
 }

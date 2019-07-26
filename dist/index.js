@@ -3,6 +3,16 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.MongoIndexAdapter = undefined;
+
+var _mongoIndexAdapter = require('./local-state/mongo-index-adapter');
+
+Object.defineProperty(exports, 'MongoIndexAdapter', {
+  enumerable: true,
+  get: function get() {
+    return _interopRequireDefault(_mongoIndexAdapter).default;
+  }
+});
 
 require('babel-polyfill');
 

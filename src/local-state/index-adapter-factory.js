@@ -1,11 +1,11 @@
 import NeDbIndexAdapter from './ne-db-index-adapter'
 
-const createIndexAdapter = (type) => {
-  if (type === 'default') {
+const createIndexAdapter = (adapter) => {
+  if (adapter === 'default') {
     return new NeDbIndexAdapter()
   }
 
-  return type
+  return adapter
 }
 
 export default createIndexAdapter
