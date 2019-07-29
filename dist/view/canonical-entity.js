@@ -9,11 +9,11 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 var _utils = require('../utils');
 
 var canonicalEntityView = function canonicalEntityView(schemaRegistry) {
-  return (0, _utils.liftToArray)(function (data) {
+  return (0, _utils.maybe)((0, _utils.liftToArray)(function (data) {
     return _extends({}, data, {
       schema: data.type ? schemaRegistry.get(data.type).schema() : {}
     });
-  });
+  }));
 };
 
 exports.default = canonicalEntityView;
