@@ -30,6 +30,11 @@ const run = config => {
       expect(response).to.be.empty()
     })
 
+    it("can't get entities before they are created", async () => {
+      const response = await storage.get('nope')
+      expect(response).to.be.undefined
+    })
+
     it("correctly creates new entities", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
     it("can find created entities", forAll(fixturesEvents, canFind))
     it("allows duplicates", forAll(fixturesEvents, canCreate('timelog.timelog_event')))

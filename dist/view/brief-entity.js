@@ -9,12 +9,12 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 var _utils = require('../utils');
 
 var briefEntityView = function briefEntityView(schemaRegistry) {
-  return (0, _utils.liftToArray)(function (data) {
+  return (0, _utils.maybe)((0, _utils.liftToArray)(function (data) {
     return _extends({}, data.body, {
       id: data.id,
       type: data.type
     });
-  });
+  }));
 };
 
 exports.default = briefEntityView;
