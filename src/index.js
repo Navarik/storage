@@ -88,6 +88,7 @@ const configure = (config = {}) => {
   }
 }
 
+export * from './local-state/find-filters'
 export { default as MongoIndexAdapter } from './local-state/mongo-index-adapter'
 
 export default configure

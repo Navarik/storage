@@ -27,7 +27,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var stringifyProperties = (0, _utils.maybe)(function (value) {
-  return (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' ? (0, _polyMap2.default)(stringifyProperties, value) : String(value);
+  return (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' ? value instanceof RegExp ? value : (0, _polyMap2.default)(stringifyProperties, value) : String(value);
 });
 
 var stringifyContent = function stringifyContent(value) {

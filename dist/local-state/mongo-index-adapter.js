@@ -60,6 +60,14 @@ var mongifyOptions = function mongifyOptions(options) {
   });
 };
 
+var customTerms = function customTerms(v) {
+  if (v instanceof RegExp) {
+    return { $regex: v };
+  }
+
+  return v;
+};
+
 var mongifySearch = function mongifySearch(searchParams) {
   var $where = searchParams.$where,
       id = searchParams.id,
@@ -81,7 +89,7 @@ var mongifySearch = function mongifySearch(searchParams) {
         k = _ref4[0],
         v = _ref4[1];
 
-    return _extends({}, acc, _defineProperty({}, 'body.' + k, v));
+    return _extends({}, acc, _defineProperty({}, 'body.' + k, customTerms(v)));
   }, {}));
 
   return (0, _object2.default)(allParams, function (v) {

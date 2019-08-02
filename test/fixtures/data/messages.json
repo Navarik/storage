@@ -54,5 +54,33 @@
     "text": "Good morning, please confirm your immediate acceptance and attendance for the movement nomination.",
     "job_order": 14,
     "timestamp": "2018 Jan 22 21:29"
+  },
+  {
+    "sender": 91,
+    "chat_group": 11,
+    "text": "Search term rhubarb rhubarb rhubarb",
+    "job_order": 77,
+    "timestamp": "2019 Jan 22 21:29"
+  },
+  {
+    "sender": 91,
+    "chat_group": 11,
+    "text": "Rhubarb search term rhubarb rhubarb",
+    "job_order": 77,
+    "timestamp": "2019 Jan 22 21:29"
+  },
+  {
+    "sender": 91,
+    "chat_group": 11,
+    "text": "Rhubarb rhubarb different search.term rhubarb",
+    "job_order": 77,
+    "timestamp": "2019 Jan 22 21:29"
+  },
+  {
+    "sender": 91,
+    "chat_group": 11,
+    "text": "Rhubarb rhubarb rhubarb search term",
+    "job_order": 77,
+    "timestamp": "2019 Jan 22 21:29"
   }
 ]

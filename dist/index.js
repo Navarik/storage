@@ -5,6 +5,18 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.MongoIndexAdapter = undefined;
 
+var _findFilters = require('./local-state/find-filters');
+
+Object.keys(_findFilters).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _findFilters[key];
+    }
+  });
+});
+
 var _mongoIndexAdapter = require('./local-state/mongo-index-adapter');
 
 Object.defineProperty(exports, 'MongoIndexAdapter', {
