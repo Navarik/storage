@@ -14,30 +14,35 @@ var updateCommand = function updateCommand(changeLog, state, schemaRegistry) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              if (state.exists(id)) {
-                _context.next = 2;
+              _context.next = 2;
+              return state.get(id);
+
+            case 2:
+              previous = _context.sent;
+
+              if (previous) {
+                _context.next = 5;
                 break;
               }
 
               throw new Error("[Storage.Commands] Can't update " + id + ": it doesn't exist.");
 
-            case 2:
-              previous = state.get(id);
+            case 5:
               type = previous.type || options.type;
 
               if (type) {
-                _context.next = 6;
+                _context.next = 8;
                 break;
               }
 
               throw new Error("[Storage.Commands] Type is required from previous.type or options.type for id " + id + ".");
 
-            case 6:
+            case 8:
               next = schemaRegistry.format(type, body);
               transaction = changeLog.registerUpdate(type, previous, next);
               return _context.abrupt("return", transaction);
 
-            case 9:
+            case 11:
             case "end":
               return _context.stop();
           }

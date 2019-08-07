@@ -108,7 +108,7 @@ var configure = function configure() {
 
   return {
     getSchema: function getSchema(name, version) {
-      return Promise.resolve(schemaState.get(name, version));
+      return schemaState.get(name, version);
     },
     findSchema: function findSchema(query) {
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};

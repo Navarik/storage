@@ -42,7 +42,8 @@ var searchableFormat = function searchableFormat(idField, document) {
     id: _objectPath2.default.get(document, idField),
     version: String(document.version),
     version_id: document.version_id,
-    type: document.type
+    type: document.type,
+    ___document: document
   });
 };
 

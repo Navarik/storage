@@ -14,9 +14,18 @@ var initCommand = function initCommand(schemaChangeLog, entityChangeLog, schemaS
         while (1) {
           switch (_context3.prev = _context3.next) {
             case 0:
-              schemaRegistry.reset();
-              schemaState.reset();
-              entityState.reset();
+              _context3.next = 2;
+              return schemaRegistry.reset();
+
+            case 2:
+              _context3.next = 4;
+              return schemaState.reset();
+
+            case 4:
+              _context3.next = 6;
+              return entityState.reset();
+
+            case 6:
 
               schemaChangeLog.onChange(function () {
                 var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(schema) {
@@ -70,15 +79,15 @@ var initCommand = function initCommand(schemaChangeLog, entityChangeLog, schemaS
                 };
               }());
 
-              _context3.next = 7;
+              _context3.next = 10;
               return schemaChangeLog.reconstruct(['schema']);
 
-            case 7:
+            case 10:
               types = schemaRegistry.listUserTypes();
-              _context3.next = 10;
+              _context3.next = 13;
               return entityChangeLog.reconstruct(types);
 
-            case 10:
+            case 13:
             case 'end':
               return _context3.stop();
           }

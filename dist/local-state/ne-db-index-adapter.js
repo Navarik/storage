@@ -59,7 +59,7 @@ var NeDbIndexAdapter = function () {
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
       return new Promise(function (resolve, reject) {
-        var query = _this.client.find(prepareSearch(searchParams), { id: 1, type: 1, _id: 0 });
+        var query = _this.client.find(prepareSearch(searchParams));
 
         var offset = parseInt(options.offset, 10);
         if (Number.isInteger(offset)) {
