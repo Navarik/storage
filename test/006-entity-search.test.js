@@ -1,5 +1,5 @@
 import expect from 'expect.js'
-import createStorage from '../src'
+import createStorage, { findSubstring, findPrefix, findSuffix } from '../src'
 import fixtureSchemata from './fixtures/schemata/schemata.json'
 import fixturesEvents from './fixtures/data/events.json'
 import fixturesJobs from './fixtures/data/job-orders.json'
@@ -91,6 +91,34 @@ const run = config => {
       response = await storage.findContent('load')
       expect(response).to.be.an('array')
       expect(response).to.have.length(5)
+      response.forEach(expectEntity)
+    })
+
+    it("can find entities by case-insensitive substring", async () => {
+      const response = await storage.find({ text: findSubstring('search term') })
+      expect(response).to.be.an('array')
+      expect(response).to.have.length(3)
+      response.forEach(expectEntity)
+    })
+
+    it("properly escapes regex chaf in substrings", async () => {
+      const response = await storage.find({ text: findSubstring('search.term') })
+      expect(response).to.be.an('array')
+      expect(response).to.have.length(1)
+      response.forEach(expectEntity)
+    })
+
+    it("can find entities by prefix", async () => {
+      const response = await storage.find({ text: findPrefix('search term') })
+      expect(response).to.be.an('array')
+      expect(response).to.have.length(1)
+      response.forEach(expectEntity)
+    })
+
+    it("can find entities by suffix", async () => {
+      const response = await storage.find({ text: findSuffix('search term') })
+      expect(response).to.be.an('array')
+      expect(response).to.have.length(1)
       response.forEach(expectEntity)
     })
   })

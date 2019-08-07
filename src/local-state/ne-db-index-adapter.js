@@ -1,19 +1,28 @@
 import Database from 'nedb'
-import map from 'poly-map'
 import { convertSortQueriesToPairs } from '../utils'
 
 const databaseError = (err) => {
   throw new Error(`[NeDB] Database error: ${err}`)
 }
 
+const customTerms = v => {
+  if (v instanceof RegExp) {
+    return { $regex: v }
+  }
+
+  return v
+}
+
+const prepareSearch = searchParams => Object.entries(searchParams || {}).reduce((acc, [k, v]) => ({ ...acc, [k]: customTerms(v) }), {})
+
 class NeDbIndexAdapter {
   constructor() {
     this.reset()
   }
 
-  find(searchParameters, options = {}) {
+  find(searchParams, options = {}) {
     return new Promise((resolve, reject) => {
-      const query = this.client.find(searchParameters, { id: 1, type: 1, _id: 0 })
+      const query = this.client.find(prepareSearch(searchParams), { id: 1, type: 1, _id: 0 })
 
       const offset = parseInt(options.offset, 10)
       if (Number.isInteger(offset)) {
@@ -43,9 +52,9 @@ class NeDbIndexAdapter {
     })
   }
 
-  count(searchParameters) {
+  count(searchParams) {
     return new Promise((resolve, reject) => {
-      this.client.count(searchParameters, (err, res) => {
+      this.client.count(prepareSearch(searchParams), (err, res) => {
         if (err) reject(databaseError(err))
         else resolve(res)
       })
