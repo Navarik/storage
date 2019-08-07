@@ -20,8 +20,6 @@ var _indexAdapterFactory2 = _interopRequireDefault(_indexAdapterFactory);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -31,6 +29,7 @@ var LocalState = function () {
     _classCallCheck(this, LocalState);
 
     this.versions = {};
+    // note that idField targets the document and not the searchableFormat in searchIndex
     this.idField = idField;
     this.trackVersions = trackVersions;
     this.searchIndex = new _searchIndex2.default((0, _indexAdapterFactory2.default)(indexAdapter), this.idField);
@@ -77,6 +76,7 @@ var LocalState = function () {
               case 0:
                 key = _objectPath2.default.get(item, this.idField);
 
+                // TOOD: move versions to searchIndex
 
                 if (this.trackVersions) {
                   if (!this.versions[key]) {
@@ -107,7 +107,7 @@ var LocalState = function () {
     key: 'get',
     value: function () {
       var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(key, version) {
-        var idFieldSearchIndex, documents, latest;
+        var documents, latest;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -120,18 +120,15 @@ var LocalState = function () {
                 throw new Error('[Storage] Local State is running without version tracking.');
 
               case 2:
+                _context3.next = 4;
+                return this.find({ id: key });
 
-                // convert to searchIndex idField from document idField
-                idFieldSearchIndex = this.idField.replace('body.', '');
-                _context3.next = 5;
-                return this.find(_defineProperty({}, idFieldSearchIndex, key));
-
-              case 5:
+              case 4:
                 documents = _context3.sent;
                 latest = documents.length ? documents[0] : undefined;
                 return _context3.abrupt('return', version ? this.versions[key][version - 1] : latest);
 
-              case 8:
+              case 7:
               case 'end':
                 return _context3.stop();
             }
@@ -204,7 +201,7 @@ var LocalState = function () {
     key: 'find',
     value: function () {
       var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(query, options) {
-        var found, collection;
+        var searchables;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
@@ -213,13 +210,12 @@ var LocalState = function () {
                 return this.searchIndex.find(query, options);
 
               case 2:
-                found = _context6.sent;
-                collection = found.map(function (x) {
-                  return x.___document;
-                });
-                return _context6.abrupt('return', collection);
+                searchables = _context6.sent;
+                return _context6.abrupt('return', searchables.map(function (searchable) {
+                  return searchable.___document;
+                }));
 
-              case 5:
+              case 4:
               case 'end':
                 return _context6.stop();
             }
@@ -237,7 +233,7 @@ var LocalState = function () {
     key: 'findContent',
     value: function () {
       var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(text, options) {
-        var found, collection;
+        var searchables;
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
@@ -246,13 +242,12 @@ var LocalState = function () {
                 return this.searchIndex.findContent(text, options);
 
               case 2:
-                found = _context7.sent;
-                collection = found.map(function (x) {
-                  return x.___document;
-                });
-                return _context7.abrupt('return', collection);
+                searchables = _context7.sent;
+                return _context7.abrupt('return', searchables.map(function (searchable) {
+                  return searchable.___document;
+                }));
 
-              case 5:
+              case 4:
               case 'end':
                 return _context7.stop();
             }

@@ -5,6 +5,7 @@ import createIndexAdapter from './index-adapter-factory'
 class LocalState {
   constructor(indexAdapter, idField, trackVersions) {
     this.versions = {}
+    // note that idField targets the document and not the searchableFormat in searchIndex
     this.idField = idField
     this.trackVersions = trackVersions
     this.searchIndex = new SearchIndex(createIndexAdapter(indexAdapter), this.idField)
@@ -18,6 +19,7 @@ class LocalState {
   async set(item) {
     const key = objectPath.get(item, this.idField)
 
+    // TOOD: move versions to searchIndex
     if (this.trackVersions) {
       if (!this.versions[key]) {
         this.versions[key] = []
@@ -34,9 +36,7 @@ class LocalState {
       throw new Error('[Storage] Local State is running without version tracking.')
     }
 
-    // convert to searchIndex idField from document idField
-    const idFieldSearchIndex = this.idField.replace('body.', '')
-    const documents = await this.find({ [idFieldSearchIndex]: key })
+    const documents = await this.find({ id: key })
     const latest = documents.length ? documents[0] : undefined
 
     return version
@@ -58,17 +58,13 @@ class LocalState {
   }
 
   async find(query, options) {
-    const found = await this.searchIndex.find(query, options)
-    const collection = found.map(x => x.___document)
-
-    return collection
+    const searchables = await this.searchIndex.find(query, options)
+    return searchables.map(searchable => searchable.___document)
   }
 
   async findContent(text, options) {
-    const found = await this.searchIndex.findContent(text, options)
-    const collection = found.map(x => x.___document)
-
-    return collection
+    const searchables = await this.searchIndex.findContent(text, options)
+    return searchables.map(searchable => searchable.___document)
   }
 
   async count(query) {
