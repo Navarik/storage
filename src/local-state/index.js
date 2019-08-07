@@ -5,7 +5,6 @@ import createIndexAdapter from './index-adapter-factory'
 class LocalState {
   constructor(indexAdapter, idField, trackVersions) {
     this.versions = {}
-    this.latest = {}
     this.idField = idField
     this.trackVersions = trackVersions
     this.searchIndex = new SearchIndex(createIndexAdapter(indexAdapter), this.idField)
@@ -26,8 +25,6 @@ class LocalState {
 
       this.versions[key].push(item)
     }
-
-    this.latest[key] = item
 
     await this.searchIndex.add(item)
   }
@@ -52,7 +49,6 @@ class LocalState {
   }
 
   async reset() {
-    this.latest = {}
     this.versions = {}
     await this.searchIndex.reset()
   }
