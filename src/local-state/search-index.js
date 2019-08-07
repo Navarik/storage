@@ -22,7 +22,8 @@ const searchableFormat = (idField, document) => ({
   id: objectPath.get(document, idField),
   version: String(document.version),
   version_id: document.version_id,
-  type: document.type
+  type: document.type,
+  ___document: document,
 })
 
 class SearchIndex {
