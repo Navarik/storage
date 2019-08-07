@@ -11,8 +11,9 @@ class LocalState {
     this.searchIndex = new SearchIndex(createIndexAdapter(indexAdapter), this.idField)
   }
 
-  exists(key) {
-    return (key in this.latest)
+  async exists(key) {
+    const document = await this.get(key)
+    return !!document
   }
 
   async set(item) {
@@ -38,8 +39,8 @@ class LocalState {
 
     // convert to searchIndex idField from document idField
     const idFieldSearchIndex = this.idField.replace('body.', '')
-    const results = await this.find({ [idFieldSearchIndex]: key })
-    const latest = results.length ? results[0] : undefined
+    const documents = await this.find({ [idFieldSearchIndex]: key })
+    const latest = documents.length ? documents[0] : undefined
 
     return version
       ? this.versions[key][version - 1]
