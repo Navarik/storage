@@ -4,7 +4,9 @@ import { maybe } from '../utils'
 
 const stringifyProperties = maybe(value => (
   typeof value === 'object'
-    ? map(stringifyProperties, value)
+    ? value instanceof RegExp
+      ? value
+      : map(stringifyProperties, value)
     : String(value)
 ))
 

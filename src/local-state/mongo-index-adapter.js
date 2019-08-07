@@ -28,6 +28,14 @@ const mongifyOptions = options => {
   return omit(allParams, v => v != null)
 }
 
+const customTerms = v => {
+  if (v instanceof RegExp) {
+    return { $regex: v }
+  }
+
+  return v
+}
+
 const mongifySearch = (searchParams) => {
   const { $where, id, version, version_id, type, ___content, ...body } = searchParams
   const allParams = {
@@ -37,7 +45,7 @@ const mongifySearch = (searchParams) => {
     version_id,
     type,
     ___content,
-    ...Object.entries(body).reduce((acc, [k, v]) => ({ ...acc, [`body.${k}`]: v }), {})
+    ...Object.entries(body).reduce((acc, [k, v]) => ({ ...acc, [`body.${k}`]: customTerms(v) }), {})
   }
 
   return omit(allParams, v => v != null)
