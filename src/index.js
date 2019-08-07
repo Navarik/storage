@@ -48,7 +48,7 @@ const configure = (config = {}) => {
   const init = initCommand(schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry, observer)
 
   return {
-    getSchema: (name, version) => Promise.resolve(schemaState.get(name, version)),
+    getSchema: (name, version) => schemaState.get(name, version),
     findSchema: (query, options = {}) => schemaState.find(query, options),
     schemaNames: () => schemaRegistry.listUserTypes(),
     createSchema: (body) => createSchema('schema', body),

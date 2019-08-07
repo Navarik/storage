@@ -1,10 +1,11 @@
 const updateCommand = (changeLog, state, schemaRegistry) => {
   const update = async (id, body, options) => {
-    if (!state.exists(id)) {
+    const previous = await state.get(id)
+
+    if (!previous) {
       throw new Error(`[Storage.Commands] Can't update ${id}: it doesn't exist.`)
     }
 
-    const previous = state.get(id)
     var type = previous.type || options.type
     if (!type) {
       throw new Error(`[Storage.Commands] Type is required from previous.type or options.type for id ${id}.`)

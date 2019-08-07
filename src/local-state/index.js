@@ -31,18 +31,23 @@ class LocalState {
     await this.searchIndex.add(item)
   }
 
-  get(key, version) {
+  async get(key, version) {
     if (version && this.trackVersions === false) {
       throw new Error('[Storage] Local State is running without version tracking.')
     }
 
+    // convert to searchIndex idField from document idField
+    const idFieldSearchIndex = this.idField.replace('body.', '')
+    const results = await this.find({ [idFieldSearchIndex]: key })
+    const latest = results.length ? results[0] : undefined
+
     return version
       ? this.versions[key][version - 1]
-      : this.latest[key]
+      : latest
   }
 
-  getAll() {
-    return this.latest
+  async getAll() {
+    return this.find()
   }
 
   async reset() {
