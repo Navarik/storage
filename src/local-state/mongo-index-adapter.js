@@ -19,7 +19,6 @@ const mongifyOptions = options => {
   const limit = parseInt(options.limit, 10)
 
   const allParams = {
-    projection: { id: 1, type: 1, _id: 0 },
     skip: Number.isInteger(offset) ? offset : null,
     limit: Number.isInteger(limit) ? limit : null,
     sort: mongifySort(options.sort)
