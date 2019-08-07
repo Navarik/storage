@@ -25,13 +25,14 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var LocalState = function () {
-  function LocalState(indexAdapter, idField, trackVersions) {
+  function LocalState(indexAdapter, idField, trackVersions, transform) {
     _classCallCheck(this, LocalState);
 
     this.versions = {};
     // note that idField targets the document and not the searchableFormat in searchIndex
     this.idField = idField;
     this.trackVersions = trackVersions;
+    this.transform = transform;
     this.searchIndex = new _searchIndex2.default((0, _indexAdapterFactory2.default)(indexAdapter), this.idField);
   }
 
@@ -69,27 +70,37 @@ var LocalState = function () {
     key: 'set',
     value: function () {
       var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(item) {
-        var key;
+        var key, doc;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
                 key = _objectPath2.default.get(item, this.idField);
+                doc = JSON.parse(JSON.stringify(item));
+
+                if (typeof this.transform === 'function') {
+                  try {
+                    doc = this.transform(doc);
+                  } catch (err) {
+                    // log error and continue without transform
+                    console.log('[Storage] LocalState transform encountered an exception.', err);
+                    doc = item;
+                  }
+                }
 
                 // TOOD: move versions to searchIndex
-
                 if (this.trackVersions) {
                   if (!this.versions[key]) {
                     this.versions[key] = [];
                   }
 
-                  this.versions[key].push(item);
+                  this.versions[key].push(doc);
                 }
 
-                _context2.next = 4;
-                return this.searchIndex.add(item);
+                _context2.next = 6;
+                return this.searchIndex.add(doc);
 
-              case 4:
+              case 6:
               case 'end':
                 return _context2.stop();
             }

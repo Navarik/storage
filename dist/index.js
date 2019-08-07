@@ -91,7 +91,7 @@ var configure = function configure() {
   });
 
   var schemaState = new _localState2.default(index.schema || index, 'body.name', trackVersions);
-  var entityState = new _localState2.default(index.entity || index, 'id', trackVersions);
+  var entityState = new _localState2.default(index.entity || index, 'id', trackVersions, index.entityTransform);
 
   var observer = new _observer2.default();
 

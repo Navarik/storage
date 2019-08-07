@@ -32,7 +32,7 @@ const configure = (config = {}) => {
   })
 
   const schemaState = new LocalState(index.schema || index, 'body.name', trackVersions)
-  const entityState = new LocalState(index.entity || index, 'id', trackVersions)
+  const entityState = new LocalState(index.entity || index, 'id', trackVersions, index.entityTransform)
 
   const observer = new Observer()
 
