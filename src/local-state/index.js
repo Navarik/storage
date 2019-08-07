@@ -57,14 +57,14 @@ class LocalState {
 
   async find(query, options) {
     const found = await this.searchIndex.find(query, options)
-    const collection = found.map(x => this.get(x.id))
+    const collection = found.map(x => x.___document)
 
     return collection
   }
 
   async findContent(text, options) {
     const found = await this.searchIndex.findContent(text, options)
-    const collection = found.map(x => this.get(x.id))
+    const collection = found.map(x => x.___document)
 
     return collection
   }
