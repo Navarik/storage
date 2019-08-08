@@ -3,6 +3,7 @@ import createStorage from '../src'
 import fixtureSchemata from './fixtures/schemata/schemata.json'
 import { expectEntity } from './steps/checks'
 import generateConfig from './config/adapter-list'
+import logger from '../src/logger'
 
 const entityTransform = (entity) => ({
   ...entity,
@@ -83,7 +84,6 @@ const run = config => {
 
   describe(`Entity index transform with invalid transform, index type [${config.index.description || config.index}]`, () => {
     before(() => {
-      // add entityTransform option to index config
       config = {
         ...config,
         index: {
@@ -94,6 +94,8 @@ const run = config => {
 
       storage = createStorage({
         schema: fixtureSchemata,
+        // set level to fatal to ignore expected error logged by invalid transform
+        logger: logger.child({ level: 'fatal' }),
         ...config
       })
 

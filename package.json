@@ -4,8 +4,8 @@
   "version": "6.4.2",
   "scripts": {
     "build": "rimraf ./dist && mkdirp ./dist && babel src --out-dir dist",
-    "test": "cross-env LOG_LEVEL=fatal mocha test/**/*.test.js",
-    "test:integration": "cross-env LOG_LEVEL=fatal TEST_MONGO=1 mocha test/**/*.test.js -t 5000"
+    "test": "mocha test/**/*.test.js",
+    "test:integration": "cross-env TEST_MONGO=1 mocha test/**/*.test.js -t 5000"
   },
   "main": "dist",
   "author": "Navarik Corp.",
