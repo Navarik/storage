@@ -107,6 +107,8 @@ Storage library's default export is factory function that is designed to generat
 - `index: 'default'|SearchIndexAdapter` - global override for the local state's search
 - `index.schema: 'default'|SearchIndexAdapter` - override for the schema search index adapter
 - `index.entity: 'default'|SearchIndexAdapter` - override for the entity search index adapter
+- `index.entityTransform: Function` - apply a entity transformation before the entity is saved.  
+Transformation will be ignored if there are any exception encountered during transformation and the exception is logged directly to console.
 - `trackVersions: true|Boolean` - enable or disable version tracking for local state.
 
 ### SearchIndexAdapter options
