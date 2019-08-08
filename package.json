@@ -13,6 +13,7 @@
     "array-sort": "^1.0.0",
     "avsc": "^5.4.12",
     "babel-polyfill": "^6.26.0",
+    "bunyan": "1.8.12",
     "event-emitter": "^0.3.5",
     "mongodb": "^3.3.0-beta2",
     "nedb": "^1.8.0",

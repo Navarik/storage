@@ -66,6 +66,10 @@ var _init = require('./commands/init');
 
 var _init2 = _interopRequireDefault(_init);
 
+var _logger = require('./logger');
+
+var _logger2 = _interopRequireDefault(_logger);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var configure = function configure() {
@@ -75,6 +79,7 @@ var configure = function configure() {
   var index = config.index || 'default';
   var transactionManager = new _transaction2.default();
   var trackVersions = typeof config.trackVersions === 'boolean' ? config.trackVersions : true;
+  var logger = config.logger || _logger2.default;
 
   var schemaChangeLog = new _changeLog2.default({
     type: log.schema || log,
@@ -90,8 +95,8 @@ var configure = function configure() {
     transactionManager: transactionManager
   });
 
-  var schemaState = new _localState2.default(index.schema || index, 'body.name', trackVersions);
-  var entityState = new _localState2.default(index.entity || index, 'id', trackVersions, index.entityTransform);
+  var schemaState = new _localState2.default(index.schema || index, 'body.name', trackVersions, logger.child({ 'module': 'schemaState' }));
+  var entityState = new _localState2.default(index.entity || index, 'id', trackVersions, index.entityTransform, logger.child({ 'module': 'entityState' }));
 
   var observer = new _observer2.default();
 
