@@ -84,7 +84,7 @@ var LocalState = function () {
                     doc = this.transform(doc);
                   } catch (err) {
                     // log error and continue without transform
-                    this.logger.trace('[Storage] LocalState transform encountered an exception.', err);
+                    this.logger.error('[Storage] LocalState transform encountered an exception.', err);
                     doc = item;
                   }
                 }
