@@ -25,7 +25,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var LocalState = function () {
-  function LocalState(indexAdapter, idField, trackVersions, transform) {
+  function LocalState(indexAdapter, idField, trackVersions, transform, logger) {
     _classCallCheck(this, LocalState);
 
     this.versions = {};
@@ -34,6 +34,7 @@ var LocalState = function () {
     this.trackVersions = trackVersions;
     this.transform = transform;
     this.searchIndex = new _searchIndex2.default((0, _indexAdapterFactory2.default)(indexAdapter), this.idField);
+    this.logger = logger;
   }
 
   _createClass(LocalState, [{
@@ -83,7 +84,7 @@ var LocalState = function () {
                     doc = this.transform(doc);
                   } catch (err) {
                     // log error and continue without transform
-                    console.log('[Storage] LocalState transform encountered an exception.', err);
+                    this.logger.trace('[Storage] LocalState transform encountered an exception.', err);
                     doc = item;
                   }
                 }

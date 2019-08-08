@@ -11,11 +11,14 @@ import createCommand from './commands/create'
 import updateCommand from './commands/update'
 import initCommand from './commands/init'
 
+import defaultLogger from './logger'
+
 const configure = (config = {}) => {
   const log = config.log || 'default'
   const index = config.index || 'default'
   const transactionManager = new TransactionManager()
   const trackVersions = (typeof(config.trackVersions) === 'boolean') ? config.trackVersions : true
+  const logger = config.logger || defaultLogger
 
   const schemaChangeLog = new ChangeLog({
     type: log.schema || log,
@@ -31,8 +34,8 @@ const configure = (config = {}) => {
     transactionManager
   })
 
-  const schemaState = new LocalState(index.schema || index, 'body.name', trackVersions)
-  const entityState = new LocalState(index.entity || index, 'id', trackVersions, index.entityTransform)
+  const schemaState = new LocalState(index.schema || index, 'body.name', trackVersions, logger.child({'module': 'schemaState'}))
+  const entityState = new LocalState(index.entity || index, 'id', trackVersions, index.entityTransform, logger.child({'module': 'entityState'}))
 
   const observer = new Observer()
 

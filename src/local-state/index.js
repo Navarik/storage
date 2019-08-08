@@ -3,13 +3,14 @@ import SearchIndex from './search-index'
 import createIndexAdapter from './index-adapter-factory'
 
 class LocalState {
-  constructor(indexAdapter, idField, trackVersions, transform) {
+  constructor(indexAdapter, idField, trackVersions, transform, logger) {
     this.versions = {}
     // note that idField targets the document and not the searchableFormat in searchIndex
     this.idField = idField
     this.trackVersions = trackVersions
     this.transform = transform
     this.searchIndex = new SearchIndex(createIndexAdapter(indexAdapter), this.idField)
+    this.logger = logger
   }
 
   async exists(key) {
@@ -26,7 +27,7 @@ class LocalState {
         doc = this.transform(doc)
       } catch (err) {
         // log error and continue without transform
-        console.log('[Storage] LocalState transform encountered an exception.', err)
+        this.logger.trace('[Storage] LocalState transform encountered an exception.', err)
         doc = item
       }
     }
