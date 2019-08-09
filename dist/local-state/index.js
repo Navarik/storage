@@ -25,47 +25,35 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var LocalState = function () {
-  function LocalState(indexAdapter, idField, trackVersions) {
+  function LocalState(indexAdapter, idField, trackVersions, transform, logger) {
     _classCallCheck(this, LocalState);
 
     this.versions = {};
-    this.latest = {};
+    // note that idField targets the document and not the searchableFormat in searchIndex
     this.idField = idField;
     this.trackVersions = trackVersions;
+    this.transform = transform;
     this.searchIndex = new _searchIndex2.default((0, _indexAdapterFactory2.default)(indexAdapter), this.idField);
+    this.logger = logger;
   }
 
   _createClass(LocalState, [{
     key: 'exists',
-    value: function exists(key) {
-      return key in this.latest;
-    }
-  }, {
-    key: 'set',
     value: function () {
-      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(item) {
-        var key;
+      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(key) {
+        var document;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                key = _objectPath2.default.get(item, this.idField);
+                _context.next = 2;
+                return this.get(key);
 
+              case 2:
+                document = _context.sent;
+                return _context.abrupt('return', !!document);
 
-                if (this.trackVersions) {
-                  if (!this.versions[key]) {
-                    this.versions[key] = [];
-                  }
-
-                  this.versions[key].push(item);
-                }
-
-                this.latest[key] = item;
-
-                _context.next = 5;
-                return this.searchIndex.add(item);
-
-              case 5:
+              case 4:
               case 'end':
                 return _context.stop();
             }
@@ -73,40 +61,47 @@ var LocalState = function () {
         }, _callee, this);
       }));
 
-      function set(_x) {
+      function exists(_x) {
         return _ref.apply(this, arguments);
       }
 
-      return set;
+      return exists;
     }()
   }, {
-    key: 'get',
-    value: function get(key, version) {
-      if (version && this.trackVersions === false) {
-        throw new Error('[Storage] Local State is running without version tracking.');
-      }
-
-      return version ? this.versions[key][version - 1] : this.latest[key];
-    }
-  }, {
-    key: 'getAll',
-    value: function getAll() {
-      return this.latest;
-    }
-  }, {
-    key: 'reset',
+    key: 'set',
     value: function () {
-      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(item) {
+        var key, doc;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                this.latest = {};
-                this.versions = {};
-                _context2.next = 4;
-                return this.searchIndex.reset();
+                key = _objectPath2.default.get(item, this.idField);
+                doc = JSON.parse(JSON.stringify(item));
 
-              case 4:
+                if (typeof this.transform === 'function') {
+                  try {
+                    doc = this.transform(doc);
+                  } catch (err) {
+                    // log error and continue without transform
+                    this.logger.error('[Storage] LocalState transform encountered an exception.', err);
+                    doc = item;
+                  }
+                }
+
+                // TOOD: move versions to searchIndex
+                if (this.trackVersions) {
+                  if (!this.versions[key]) {
+                    this.versions[key] = [];
+                  }
+
+                  this.versions[key].push(doc);
+                }
+
+                _context2.next = 6;
+                return this.searchIndex.add(doc);
+
+              case 6:
               case 'end':
                 return _context2.stop();
             }
@@ -114,8 +109,97 @@ var LocalState = function () {
         }, _callee2, this);
       }));
 
-      function reset() {
+      function set(_x2) {
         return _ref2.apply(this, arguments);
+      }
+
+      return set;
+    }()
+  }, {
+    key: 'get',
+    value: function () {
+      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(key, version) {
+        var documents, latest;
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                if (!(version && this.trackVersions === false)) {
+                  _context3.next = 2;
+                  break;
+                }
+
+                throw new Error('[Storage] Local State is running without version tracking.');
+
+              case 2:
+                _context3.next = 4;
+                return this.find({ id: key });
+
+              case 4:
+                documents = _context3.sent;
+                latest = documents.length ? documents[0] : undefined;
+                return _context3.abrupt('return', version ? this.versions[key][version - 1] : latest);
+
+              case 7:
+              case 'end':
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function get(_x3, _x4) {
+        return _ref3.apply(this, arguments);
+      }
+
+      return get;
+    }()
+  }, {
+    key: 'getAll',
+    value: function () {
+      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                return _context4.abrupt('return', this.find());
+
+              case 1:
+              case 'end':
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function getAll() {
+        return _ref4.apply(this, arguments);
+      }
+
+      return getAll;
+    }()
+  }, {
+    key: 'reset',
+    value: function () {
+      var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                this.versions = {};
+                _context5.next = 3;
+                return this.searchIndex.reset();
+
+              case 3:
+              case 'end':
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function reset() {
+        return _ref5.apply(this, arguments);
       }
 
       return reset;
@@ -128,34 +212,31 @@ var LocalState = function () {
   }, {
     key: 'find',
     value: function () {
-      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(query, options) {
-        var _this = this;
-
-        var found, collection;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+      var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(query, options) {
+        var searchables;
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
-            switch (_context3.prev = _context3.next) {
+            switch (_context6.prev = _context6.next) {
               case 0:
-                _context3.next = 2;
+                _context6.next = 2;
                 return this.searchIndex.find(query, options);
 
               case 2:
-                found = _context3.sent;
-                collection = found.map(function (x) {
-                  return _this.get(x.id);
-                });
-                return _context3.abrupt('return', collection);
+                searchables = _context6.sent;
+                return _context6.abrupt('return', searchables.map(function (searchable) {
+                  return searchable.___document;
+                }));
 
-              case 5:
+              case 4:
               case 'end':
-                return _context3.stop();
+                return _context6.stop();
             }
           }
-        }, _callee3, this);
+        }, _callee6, this);
       }));
 
-      function find(_x2, _x3) {
-        return _ref3.apply(this, arguments);
+      function find(_x5, _x6) {
+        return _ref6.apply(this, arguments);
       }
 
       return find;
@@ -163,34 +244,31 @@ var LocalState = function () {
   }, {
     key: 'findContent',
     value: function () {
-      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(text, options) {
-        var _this2 = this;
-
-        var found, collection;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+      var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(text, options) {
+        var searchables;
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
-            switch (_context4.prev = _context4.next) {
+            switch (_context7.prev = _context7.next) {
               case 0:
-                _context4.next = 2;
+                _context7.next = 2;
                 return this.searchIndex.findContent(text, options);
 
               case 2:
-                found = _context4.sent;
-                collection = found.map(function (x) {
-                  return _this2.get(x.id);
-                });
-                return _context4.abrupt('return', collection);
+                searchables = _context7.sent;
+                return _context7.abrupt('return', searchables.map(function (searchable) {
+                  return searchable.___document;
+                }));
 
-              case 5:
+              case 4:
               case 'end':
-                return _context4.stop();
+                return _context7.stop();
             }
           }
-        }, _callee4, this);
+        }, _callee7, this);
       }));
 
-      function findContent(_x4, _x5) {
-        return _ref4.apply(this, arguments);
+      function findContent(_x7, _x8) {
+        return _ref7.apply(this, arguments);
       }
 
       return findContent;
@@ -198,23 +276,23 @@ var LocalState = function () {
   }, {
     key: 'count',
     value: function () {
-      var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(query) {
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+      var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(query) {
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context8.prev = _context8.next) {
               case 0:
-                return _context5.abrupt('return', this.searchIndex.count(query));
+                return _context8.abrupt('return', this.searchIndex.count(query));
 
               case 1:
               case 'end':
-                return _context5.stop();
+                return _context8.stop();
             }
           }
-        }, _callee5, this);
+        }, _callee8, this);
       }));
 
-      function count(_x6) {
-        return _ref5.apply(this, arguments);
+      function count(_x9) {
+        return _ref8.apply(this, arguments);
       }
 
       return count;

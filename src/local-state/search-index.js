@@ -18,6 +18,8 @@ const stringifyContent = value => (
 
 const searchableFormat = (idField, document) => ({
   ...map(stringifyProperties, document.body),
+  // save the original document under ___document, storage expect local-state to return ___document
+  ___document: document,
   ___content: stringifyContent(document.body),
   id: objectPath.get(document, idField),
   version: String(document.version),
@@ -52,9 +54,8 @@ class SearchIndex {
 
   async find(params, options) {
     const query = map(stringifyProperties, params)
-    const results = await this.adapter.find(query, options)
-
-    return results
+    const documents = await this.adapter.find(query, options)
+    return documents
   }
 
   async findContent(text, options) {
@@ -63,9 +64,8 @@ class SearchIndex {
     const query = this.adapter.supportsRegex ? { ___content: { $regex: regex } } :
       { $where: function () { return this.___content.match(regex) !== null } }
 
-    const results = await this.adapter.find(query, options)
-
-    return results
+    const documents = await this.adapter.find(query, options)
+    return documents
   }
 
   async count(query) {

@@ -49,7 +49,7 @@ var mongifyOptions = function mongifyOptions(options) {
   var limit = parseInt(options.limit, 10);
 
   var allParams = {
-    projection: { id: 1, type: 1, _id: 0 },
+    projection: { _id: 0 },
     skip: Number.isInteger(offset) ? offset : null,
     limit: Number.isInteger(limit) ? limit : null,
     sort: mongifySort(options.sort)
@@ -75,7 +75,8 @@ var mongifySearch = function mongifySearch(searchParams) {
       version_id = searchParams.version_id,
       type = searchParams.type,
       ___content = searchParams.___content,
-      body = _objectWithoutProperties(searchParams, ['$where', 'id', 'version', 'version_id', 'type', '___content']);
+      ___document = searchParams.___document,
+      body = _objectWithoutProperties(searchParams, ['$where', 'id', 'version', 'version_id', 'type', '___content', '___document']);
 
   var allParams = _extends({
     $where: $where,
@@ -83,7 +84,8 @@ var mongifySearch = function mongifySearch(searchParams) {
     version: version,
     version_id: version_id,
     type: type,
-    ___content: ___content
+    ___content: ___content,
+    ___document: ___document
   }, Object.entries(body).reduce(function (acc, _ref3) {
     var _ref4 = _slicedToArray(_ref3, 2),
         k = _ref4[0],
@@ -103,9 +105,10 @@ var collectBody = function collectBody(_ref5) {
       version_id = _ref5.version_id,
       type = _ref5.type,
       ___content = _ref5.___content,
-      body = _objectWithoutProperties(_ref5, ['id', 'version', 'version_id', 'type', '___content']);
+      ___document = _ref5.___document,
+      body = _objectWithoutProperties(_ref5, ['id', 'version', 'version_id', 'type', '___content', '___document']);
 
-  return { id: id, version: version, version_id: version_id, type: type, ___content: ___content, body: body };
+  return { id: id, version: version, version_id: version_id, type: type, ___content: ___content, ___document: ___document, body: body };
 };
 
 var MongoDbIndexAdapter = function () {

@@ -1,8 +1,8 @@
 const initCommand = (schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry, observer) => {
   const init = async () => {
-    schemaRegistry.reset()
-    schemaState.reset()
-    entityState.reset()
+    await schemaRegistry.reset()
+    await schemaState.reset()
+    await entityState.reset()
 
     schemaChangeLog.onChange(async (schema) => {
       schemaRegistry.register(schema.body)

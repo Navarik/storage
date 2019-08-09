@@ -22,7 +22,7 @@ class NeDbIndexAdapter {
 
   find(searchParams, options = {}) {
     return new Promise((resolve, reject) => {
-      const query = this.client.find(prepareSearch(searchParams), { id: 1, type: 1, _id: 0 })
+      const query = this.client.find(prepareSearch(searchParams), { _id: 0 })
 
       const offset = parseInt(options.offset, 10)
       if (Number.isInteger(offset)) {

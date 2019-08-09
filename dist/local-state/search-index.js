@@ -38,6 +38,8 @@ var stringifyContent = function stringifyContent(value) {
 
 var searchableFormat = function searchableFormat(idField, document) {
   return _extends({}, (0, _polyMap2.default)(stringifyProperties, document.body), {
+    // save the original document under ___document, storage expect local-state to return ___document
+    ___document: document,
     ___content: stringifyContent(document.body),
     id: _objectPath2.default.get(document, idField),
     version: String(document.version),
@@ -138,7 +140,7 @@ var SearchIndex = function () {
     key: 'find',
     value: function () {
       var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(params, options) {
-        var query, results;
+        var query, documents;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -148,8 +150,8 @@ var SearchIndex = function () {
                 return this.adapter.find(query, options);
 
               case 3:
-                results = _context3.sent;
-                return _context3.abrupt('return', results);
+                documents = _context3.sent;
+                return _context3.abrupt('return', documents);
 
               case 5:
               case 'end':
@@ -169,7 +171,7 @@ var SearchIndex = function () {
     key: 'findContent',
     value: function () {
       var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(text, options) {
-        var regex, query, results;
+        var regex, query, documents;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
@@ -182,8 +184,8 @@ var SearchIndex = function () {
                 return this.adapter.find(query, options);
 
               case 4:
-                results = _context4.sent;
-                return _context4.abrupt('return', results);
+                documents = _context4.sent;
+                return _context4.abrupt('return', documents);
 
               case 6:
               case 'end':

@@ -19,7 +19,7 @@ const mongifyOptions = options => {
   const limit = parseInt(options.limit, 10)
 
   const allParams = {
-    projection: { id: 1, type: 1, _id: 0 },
+    projection: { _id: 0 },
     skip: Number.isInteger(offset) ? offset : null,
     limit: Number.isInteger(limit) ? limit : null,
     sort: mongifySort(options.sort)
@@ -37,7 +37,7 @@ const customTerms = v => {
 }
 
 const mongifySearch = (searchParams) => {
-  const { $where, id, version, version_id, type, ___content, ...body } = searchParams
+  const { $where, id, version, version_id, type, ___content, ___document, ...body } = searchParams
   const allParams = {
     $where,
     id,
@@ -45,14 +45,15 @@ const mongifySearch = (searchParams) => {
     version_id,
     type,
     ___content,
+    ___document,
     ...Object.entries(body).reduce((acc, [k, v]) => ({ ...acc, [`body.${k}`]: customTerms(v) }), {})
   }
 
   return omit(allParams, v => v != null)
 }
 
-const collectBody = ({ id, version, version_id, type, ___content, ...body }) =>
-  ({ id, version, version_id, type, ___content, body })
+const collectBody = ({ id, version, version_id, type, ___content, ___document, ...body }) =>
+  ({ id, version, version_id, type, ___content, ___document, body })
 
 class MongoDbIndexAdapter {
   constructor(config) {
