@@ -5,7 +5,7 @@ const createCommand = (changeLog, schemaRegistry) => {
     }
 
     if (type === 'schema' && schemaRegistry.exists(body.name)) {
-      throw new Error(`[Storage.Commands] Attempting to create schema that already exists: ${name}.`)
+      throw new Error(`[Storage.Commands] Attempting to create schema that already exists: ${body.name}.`)
     }
 
     const document = schemaRegistry.format(type, body)
