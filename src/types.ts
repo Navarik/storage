@@ -1,9 +1,5 @@
 import { Dictionary, Document } from '@navarik/types'
 
-export interface ClassOf<T> {
-  new(...args: any[]): T
-}
-
 export type EntityType = string
 export type EntityId = string
 export type EntityBody = Dictionary<string|number|object>
@@ -38,5 +34,9 @@ export interface TransactionManager {
 }
 
 export interface Factory<T> {
-  create(type: string, config?: Dictionary<any>): T
+  create(config?: Dictionary<any>): T
+}
+
+export interface Command {
+  run(): Promise<void>
 }

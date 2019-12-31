@@ -1,47 +1,46 @@
+import { ChangelogAdapter } from './types'
 import { hashField, random } from './id-generator'
 import { LocalTransactionManager } from './transaction'
 import { ChangelogFactory } from './change-log'
-import { SchemaRegistry } from './schema-registry'
+import { AvroSchemaRegistry } from './schema/avro-schema-registry'
 import { LocalState } from './local-state'
 import { Observer } from './observer'
 import { entityView as createEntityView } from './view'
-
 import { createCommand } from './commands/create'
 import { updateCommand } from './commands/update'
-import { initCommand } from './commands/init'
+import { InitCommand } from './commands/init'
 
-const configure = (config = {}) => {
-  const log = config.log || 'default'
-  const index = config.index || 'default'
+type StorageConfig = {
+  changelog?: ChangelogAdapter,
+  index?: object,
+  schema?: any,
+  data?: any
+}
+
+const configure = (config: StorageConfig = {}) => {
   const transactionManager = new LocalTransactionManager()
 
   const changelogFactory = new ChangelogFactory({
-    transactionManager,
-    adapters: config.changelogAdapters || {}
+    transactionManager
   })
 
-  const schemaChangeLog = changelogFactory.create(
-    log.schema || log,
-    {
-      idGenerator: hashField('name'),
-      content: config.schema ? { schema: config.schema } : undefined
-    }
-  )
+  const schemaChangeLog = changelogFactory.create({
+    adapter: 'default',
+    idGenerator: hashField('name'),
+    content: config.schema ? { schema: config.schema } : undefined
+  })
+  const schemaState = new LocalState('default', 'body.name')
 
-  const entityChangeLog = changelogFactory.create(
-    log.entity || log,
-    {
-      content: config.data,
-      idGenerator: random()
-    }
-  )
-
-  const schemaState = new LocalState(index.schema || index, 'body.name')
-  const entityState = new LocalState(index.entity || index, 'id')
+  const entityChangeLog = changelogFactory.create({
+    adapter: config.changelog || 'default',
+    content: config.data,
+    idGenerator: random()
+  })
+  const entityState = new LocalState(config.index || 'default', 'id')
 
   const observer = new Observer()
 
-  const schemaRegistry = new SchemaRegistry()
+  const schemaRegistry = new AvroSchemaRegistry()
   const entityView = createEntityView(schemaRegistry)
 
   const createSchema = createCommand(schemaChangeLog, schemaRegistry)
@@ -50,7 +49,7 @@ const configure = (config = {}) => {
   const updateSchema = updateCommand(schemaChangeLog, schemaState, schemaRegistry)
   const updateEntity = updateCommand(entityChangeLog, entityState, schemaRegistry)
 
-  const init = initCommand(schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry, observer)
+  const init = new InitCommand({ schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry, observer })
 
   return {
     getSchema: (name, version) => schemaState.get(name, version),

@@ -1,27 +1,44 @@
-export const initCommand = (schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry, observer) => {
-  const init = async () => {
-    await schemaRegistry.reset()
-    await schemaState.reset()
-    await entityState.reset()
+import { Command } from "../types"
+import { ChangeLog } from "../change-log/changelog"
 
-    schemaChangeLog.onChange(async (schema) => {
-      schemaRegistry.register(schema.body)
-      await schemaState.set(schema)
+export class InitCommand implements Command {
+  private schemaChangeLog: ChangeLog
+  private entityChangeLog: ChangeLog
+  private schemaState
+  private entityState
+  private schemaRegistry
+  private observer
+
+  constructor({ schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry, observer }) {
+    this.schemaChangeLog = schemaChangeLog
+    this.entityChangeLog = entityChangeLog
+    this.schemaState = schemaState
+    this.entityState = entityState
+    this.schemaRegistry = schemaRegistry
+    this.observer = observer
+  }
+
+  async run() {
+    await this.schemaRegistry.reset()
+    await this.schemaState.reset()
+    await this.entityState.reset()
+
+    this.schemaChangeLog.onChange(async (schema) => {
+      this.schemaRegistry.register(schema.body)
+      await this.schemaState.set(schema)
 
       return schema
     })
 
-    entityChangeLog.onChange(async (entity) => {
-      observer.emit(entity)
-      await entityState.set(entity)
+    this.entityChangeLog.onChange(async (entity) => {
+      this.observer.emit(entity)
+      await this.entityState.set(entity)
 
       return entity
     })
 
-    await schemaChangeLog.reconstruct(['schema'])
-    const types = schemaRegistry.listUserTypes()
-    await entityChangeLog.reconstruct(types)
+    await this.schemaChangeLog.reconstruct(['schema'])
+    const types = this.schemaRegistry.listUserTypes()
+    await this.entityChangeLog.reconstruct(types)
   }
-
-  return init
 }

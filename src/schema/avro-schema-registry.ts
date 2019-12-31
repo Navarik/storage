@@ -1,6 +1,6 @@
 import * as avro from 'avsc'
 
-export class SchemaRegistry {
+export class AvroSchemaRegistry {
   private registry
   private types
 
