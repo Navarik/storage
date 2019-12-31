@@ -1,6 +1,7 @@
-import { Transaction } from './transaction'
+import { PromiseTransaction } from './promise-transaction'
+import { TransactionManager } from '../types'
 
-export class TransactionManager {
+export class LocalTransactionManager implements TransactionManager {
   private transactions
 
   constructor() {
@@ -22,7 +23,7 @@ export class TransactionManager {
   }
 
   start(key) {
-    const transaction = new Transaction()
+    const transaction = new PromiseTransaction()
     this.transactions[key] = transaction
 
     return transaction

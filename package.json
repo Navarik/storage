@@ -11,12 +11,9 @@
   "dependencies": {
     "@navarik/types": "^1.0.0",
     "avsc": "^5.4.12",
-    "babel-polyfill": "^6.26.0",
-    "event-emitter": "^0.3.5",
     "nedb": "^1.8.0",
     "object-path": "^0.11.4",
     "poly-map": "^2.2.3",
-    "ts-mocha": "^6.0.0",
     "uuid": "^3.3.2"
   },
   "engines": {
@@ -33,6 +30,7 @@
     "mkdirp": "^0.5.1",
     "mocha": "^6.2.0",
     "rimraf": "^2.6.3",
+    "ts-mocha": "^6.0.0",
     "ts-node": "^8.5.4",
     "typescript": "^3.7.4"
   }

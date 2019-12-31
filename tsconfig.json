@@ -6,6 +6,10 @@
     "sourceMap": true,
     "module": "commonjs",
     "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "strict": true,
+    "noUnusedLocals": true,
     "lib": ["ES2018"],
     "types": ["node", "mocha"]
   },

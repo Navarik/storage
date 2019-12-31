@@ -1,6 +1,6 @@
 import { hashField, random } from './id-generator'
-import { TransactionManager } from './transaction'
-import { ChangeLog } from './change-log'
+import { LocalTransactionManager } from './transaction'
+import { ChangelogFactory } from './change-log'
 import { SchemaRegistry } from './schema-registry'
 import { LocalState } from './local-state'
 import { Observer } from './observer'
@@ -13,21 +13,28 @@ import { initCommand } from './commands/init'
 const configure = (config = {}) => {
   const log = config.log || 'default'
   const index = config.index || 'default'
-  const transactionManager = new TransactionManager()
+  const transactionManager = new LocalTransactionManager()
 
-  const schemaChangeLog = new ChangeLog({
-    type: log.schema || log,
-    content: config.schema ? { schema: config.schema } : undefined,
-    idGenerator: hashField('name'),
-    transactionManager
+  const changelogFactory = new ChangelogFactory({
+    transactionManager,
+    adapters: config.changelogAdapters || {}
   })
 
-  const entityChangeLog = new ChangeLog({
-    type: log.entity || log,
-    content: config.data,
-    idGenerator: random(),
-    transactionManager
-  })
+  const schemaChangeLog = changelogFactory.create(
+    log.schema || log,
+    {
+      idGenerator: hashField('name'),
+      content: config.schema ? { schema: config.schema } : undefined
+    }
+  )
+
+  const entityChangeLog = changelogFactory.create(
+    log.entity || log,
+    {
+      content: config.data,
+      idGenerator: random()
+    }
+  )
 
   const schemaState = new LocalState(index.schema || index, 'body.name')
   const entityState = new LocalState(index.entity || index, 'id')
