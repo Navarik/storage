@@ -15,16 +15,16 @@ describe('Observing changes', () => {
     const results = []
     storage.observe((x) => { results.push(x) })
 
-    fixturesJobs.forEach(async (entity) => {
+    for (const entity of fixturesJobs) {
       await storage.create('document.job_order', entity)
-    })
+    }
 
     expect(results).to.be.an('array')
     expect(results).to.have.length(fixturesJobs.length)
 
-    fixturesEvents.forEach(async (entity) => {
+    for (const entity of fixturesEvents) {
       await storage.create('timelog.timelog_event', entity)
-    })
+    }
 
     expect(results).to.be.an('array')
     expect(results).to.have.length(fixturesJobs.length + fixturesEvents.length)
@@ -36,13 +36,13 @@ describe('Observing changes', () => {
     storage.observe((x) => { jobs.push(x) }, { type: 'document.job_order' })
     storage.observe((x) => { events.push(x) }, { type: 'timelog.timelog_event' })
 
-    fixturesJobs.forEach(async (entity) => {
+    for (const entity of fixturesJobs) {
       await storage.create('document.job_order', entity)
-    })
+    }
 
-    fixturesEvents.forEach(async (entity) => {
+    for (const entity of fixturesEvents) {
       await storage.create('timelog.timelog_event', entity)
-    })
+    }
 
     expect(jobs).to.be.an('array')
     expect(jobs).to.have.length(fixturesJobs.length)

@@ -23,7 +23,6 @@ export class AvroSchemaRegistry {
   }
 
   get(name) {
-
     if (!name) {
       throw new Error(`[Storage.SchemaRegistry] name is required to get schema.`)
     }

@@ -1,18 +1,34 @@
-export const createCommand = (changeLog, schemaRegistry) => {
-  const create = async (type, body) => {
-    if (body instanceof Array) {
-      return Promise.all(body.map(x => create(type, x)))
-    }
+import { CommandProcessor, EntityBody, CanonicalEntity, SchemaRegistry } from "../types"
+import { ChangeLog } from "../change-log/changelog"
 
-    if (type === 'schema' && schemaRegistry.exists(body.name)) {
-      throw new Error(`[Storage.Commands] Attempting to create schema that already exists: ${body.name}.`)
-    }
+type CreatePayload = {
+  type: string
+  body: EntityBody|Array<EntityBody>
+}
 
-    const document = schemaRegistry.format(type, body)
-    const transaction = changeLog.registerNew(type, document)
+type ProcessorConfig = {
+  changeLog: ChangeLog
+  schema: SchemaRegistry
+}
 
-    return transaction
+export class CreateCommand implements CommandProcessor {
+  private changeLog: ChangeLog
+  private schema: SchemaRegistry
+
+  constructor({ changeLog, schema }: ProcessorConfig) {
+    this.changeLog = changeLog
+    this.schema = schema
   }
 
-  return create
+  async run({ type, body }: CreatePayload): Promise<CanonicalEntity|Array<CanonicalEntity>> {
+    if (body instanceof Array) {
+      const documents = await Promise.all(body.map(x => this.run({ type, body: x })))
+      return documents as Array<CanonicalEntity>
+    }
+
+    const content = await this.schema.format(type, body)
+    const entity = await this.changeLog.registerNew(type, content)
+
+    return entity
+  }
 }

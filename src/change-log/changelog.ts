@@ -1,4 +1,4 @@
-import { ChangelogAdapter, SignatureProvider, TransactionManager } from '../types'
+import { ChangelogAdapter, SignatureProvider, TransactionManager, EntityBody, CanonicalEntity } from '../types'
 
 export class ChangeLog {
   private adapter: ChangelogAdapter
@@ -22,11 +22,11 @@ export class ChangeLog {
     return this.adapter.isConnected()
   }
 
-  reconstruct(topics) {
+  reconstruct(topics: Array<string>) {
     return this.adapter.init(topics)
   }
 
-  async registerNew(type, document) {
+  async registerNew(type: string, document: EntityBody) {
     const record = this.signatureProvider.signNew(type, document)
 
     const transaction = this.transactionManager.start(record.version_id)
@@ -35,7 +35,7 @@ export class ChangeLog {
     return transaction.promise
   }
 
-  async registerUpdate(type, oldVersion, document) {
+  async registerUpdate(type: string, oldVersion: CanonicalEntity, document: EntityBody) {
     const newVersion = this.signatureProvider.signVersion(type, document, oldVersion)
     if (oldVersion.version_id === newVersion.version_id) {
       return oldVersion

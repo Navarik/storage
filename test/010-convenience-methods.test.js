@@ -18,7 +18,7 @@ describe('Convenience methods', () => {
   before(() => storage.init())
 
   it("can name all the schemas", async () => {
-    const response = await storage.schemaNames()
+    const response = await storage.types()
     expect(response).to.be.an('array')
     expect(response).to.have.length(fixtureSchemataNames.length)
     response.forEach(name =>

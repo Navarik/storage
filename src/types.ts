@@ -8,8 +8,8 @@ export type CanonicalEntity = Document
 export type IdGenerator = (body: EntityBody) => EntityId
 
 export interface SignatureProvider {
-  signNew(type: EntityType, body: EntityBody)
-  signVersion(type: EntityType, newBody: EntityBody, oldBody: EntityBody)
+  signNew(type: EntityType, body: EntityBody): CanonicalEntity
+  signVersion(type: EntityType, newBody: EntityBody, oldBody: EntityBody): CanonicalEntity
 }
 
 export type Observer = (changeEvent: CanonicalEntity) => any
@@ -37,6 +37,11 @@ export interface Factory<T> {
   create(config?: Dictionary<any>): T
 }
 
-export interface Command {
-  run(): Promise<void>
+export interface CommandProcessor {
+  run(payload: Dictionary<any>): Promise<any>
+}
+
+export interface SchemaRegistry {
+  exists(type: EntityType): Promise<boolean>
+  format(type: EntityType, body: EntityBody): Promise<EntityBody>
 }

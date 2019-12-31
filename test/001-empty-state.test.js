@@ -7,7 +7,7 @@ describe('Empty state', () => {
   before(() => storage.init())
 
   it("should have no types", async () => {
-    const response = await storage.findSchema()
+    const response = await storage.types()
     expect(response).to.be.an('array')
     expect(response).to.be.empty()
   })

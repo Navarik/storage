@@ -1,7 +1,7 @@
-import { Command } from "../types"
+import { CommandProcessor } from "../types"
 import { ChangeLog } from "../change-log/changelog"
 
-export class InitCommand implements Command {
+export class InitCommand implements CommandProcessor {
   private schemaChangeLog: ChangeLog
   private entityChangeLog: ChangeLog
   private schemaState

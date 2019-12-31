@@ -11,7 +11,7 @@ export class Observer {
     this.listeners.push(createListener(filter, handler))
   }
 
-  emit(event) {
-    this.listeners.forEach(listener => listener(event))
+  async emit(event) {
+    await Promise.all(this.listeners.map(listener => listener(event)))
   }
 }

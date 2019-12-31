@@ -1,21 +1,40 @@
-export const updateCommand = (changeLog, state, schemaRegistry) => {
-  const update = async (id, body, options) => {
-    const previous = await state.get(id)
+import { CommandProcessor, EntityBody, EntityId, SchemaRegistry } from "../types"
+import { ChangeLog } from "../change-log/changelog"
 
-    if (!previous) {
-      throw new Error(`[Storage.Commands] Can't update ${id}: it doesn't exist.`)
-    }
+type CreatePayload = {
+  id: EntityId
+  body: EntityBody|Array<EntityBody>
+  type?: string
+}
 
-    var type = previous.type || options.type
-    if (!type) {
-      throw new Error(`[Storage.Commands] Type is required from previous.type or options.type for id ${id}.`)
-    }
+type ProcessorConfig = {
+  changeLog: ChangeLog
+  schema: SchemaRegistry
+  state: any
+}
 
-    const next = schemaRegistry.format(type, body)
-    const transaction = changeLog.registerUpdate(type, previous, next)
+export class UpdateCommand implements CommandProcessor {
+  private changeLog: ChangeLog
+  private state
+  private schema: SchemaRegistry
 
-    return transaction
+  constructor({ changeLog, state, schema }: ProcessorConfig) {
+    this.changeLog = changeLog
+    this.state = state
+    this.schema = schema
   }
 
-  return update
+  async run({ id, type, body }: CreatePayload) {
+    const previous = await this.state.get(id)
+
+    if (!previous) {
+      throw new Error(`[Storage.UpdateCommand] Can't update ${id}: it doesn't exist.`)
+    }
+
+    const newType = type || previous.type
+    const newContent = await this.schema.format(newType, <EntityBody>body)
+    const entity = await this.changeLog.registerUpdate(newType, previous, newContent)
+
+    return entity
+  }
 }
