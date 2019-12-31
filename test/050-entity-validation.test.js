@@ -1,8 +1,8 @@
 import * as expect from 'expect.js'
-import * as createStorage from '../src'
-import * as fixtureSchemata from './fixtures/schemata/schemata.json'
+import { Storage } from '../src'
+import * as fixtureSchemata from './fixtures/schemata'
 
-const storage = createStorage({
+const storage = new Storage({
   schema: fixtureSchemata
 })
 
@@ -37,9 +37,11 @@ describe('Entity validation, index type', () => {
 
   it("can tell what is wrong with invalid entities", async () => {
     let response = await storage.validate('profile.user', invalidData)
-    expect(response).to.be.equal('[Storage.SchemaRegistry] Invalid value provided for: role, last_name, first_name')
+    expect(response.isValid).to.be(false)
+    expect(response.message).to.be.equal('Invalid value provided for: role, last_name, first_name')
 
     response = await storage.validate('wow.such.doge!', invalidData)
-    expect(response).to.be.equal('[Storage.SchemaRegistry] Unknown type: wow.such.doge!')
+    expect(response.isValid).to.be(false)
+    expect(response.message).to.be.equal('Unknown type: wow.such.doge!')
   })
 })

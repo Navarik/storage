@@ -1,0 +1,102 @@
+[
+  {
+    "type": "profile.user",
+    "description": "User",
+    "fields": {
+      "email": "string",
+      "role": "string",
+      "company": "string",
+      "last_name": "string",
+      "first_name": "string"
+    }
+  },
+  {
+    "type": "document.job_order",
+    "description": "Job Order",
+    "fields": {
+      "status": "string",
+      "code": "string",
+      "activity": "string",
+      "activity_type": "string",
+      "mot_name": "string",
+      "grade": "string",
+      "quantity": "int",
+      "uom": "string",
+      "eta": "string",
+      "location": "string",
+      "terminal": "string"
+    }
+  },
+  {
+    "type": "chat.text_message",
+    "description": "Text Message",
+    "fields": {
+      "sender": "int",
+      "timestamp": "string",
+      "job_order": "int",
+      "chat_group": "int",
+      "text": "string"
+    }
+  },
+  {
+    "type": "chat.chat_group",
+    "description": "Chat Group",
+    "fields": {
+      "name": "string",
+      "job_order": "string",
+      "participants": [{
+        "name": "string"
+      }]
+    }
+  },
+  {
+    "type": "timelog.timelog_event",
+    "description": "Vessel Arrived",
+    "fields": {
+      "event_type": "string",
+      "sender": "int",
+      "timestamp": "long",
+      "job_order": "int"
+    }
+  },
+  {
+    "type": "dataEntry.task",
+    "description": "Data Entry Task",
+    "fields": {
+      "inspection": {
+        "contract": "string",
+        "vesselQuantity": "string",
+        "terminalQuantity": "string",
+        "timeLog": "string",
+        "vefLog": "string"
+      },
+      "summary": {
+        "fileFormat": "string",
+        "fileName": "string",
+        "vefInspReportId": "int",
+        "vefInspReportIdStr": "string",
+        "niWorksheetId": "string",
+        "assignedUserId": "string",
+        "createdAt": "string",
+        "status": "string",
+        "producedBy": "string",
+        "clients": ["string"],
+        "grades": ["string"],
+        "locations": ["string"],
+        "vessels": ["string"],
+        "hasVefLog": "boolean",
+        "hasPortCall": "boolean",
+        "isScan": "boolean",
+        "contract": {
+          "inspectionCompanies": ["string"],
+          "clientCompanies": ["string"],
+          "vessels": ["string"],
+          "cargos": ["string"],
+          "ports": ["string"],
+          "terminals": ["string"]
+        }
+      },
+      "taskIdBeforeMigration": "string"
+    }
+  }
+]

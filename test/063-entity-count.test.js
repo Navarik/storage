@@ -1,10 +1,10 @@
 import * as expect from 'expect.js'
-import * as createStorage from '../src'
+import { Storage } from '../src'
+import * as fixtureSchemata from './fixtures/schemata'
 import * as fixturesEvents from './fixtures/data/events.json'
 import * as fixturesJobs from './fixtures/data/job-orders.json'
-import * as fixtureSchemata from './fixtures/schemata/schemata.json'
 
-const storage = createStorage({
+const storage = new Storage({
   schema: fixtureSchemata,
   data: {
     'timelog.timelog_event': fixturesEvents,
@@ -14,17 +14,8 @@ const storage = createStorage({
 
 const fixtureSchemataNames = fixtureSchemata.map(x => x.name)
 
-describe('Convenience methods', () => {
+describe('Entity counts', () => {
   before(() => storage.init())
-
-  it("can name all the schemas", async () => {
-    const response = await storage.types()
-    expect(response).to.be.an('array')
-    expect(response).to.have.length(fixtureSchemataNames.length)
-    response.forEach(name =>
-      expect(fixtureSchemataNames.includes(name)).to.be(true)
-    )
-  })
 
   it("can count entities", async () => {
     const response = await storage.count()

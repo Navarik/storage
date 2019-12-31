@@ -1,6 +1,6 @@
 import * as expect from 'expect.js'
-import * as createStorage from '../src'
-import * as fixtureSchemata from './fixtures/schemata/schemata.json'
+import { Storage } from '../src'
+import * as fixtureSchemata from './fixtures/schemata'
 import * as fixturesEvents from './fixtures/data/events.json'
 import * as fixturesJobs from './fixtures/data/job-orders.json'
 import * as fixturesUsers from './fixtures/data/users.json'
@@ -9,11 +9,11 @@ import { expectEntity } from './steps/checks'
 import { forAll } from './steps/generic'
 import { createSteps } from './steps/entities'
 
-const storage = createStorage({
+const storage = new Storage({
   schema: fixtureSchemata
 })
 
-const { canCreate, cannotCreate, canFind } = createSteps(storage)
+const { canCreate, canFind } = createSteps(storage)
 
 describe('Entity search', () => {
   before(() => storage.init())
@@ -71,18 +71,6 @@ describe('Entity search', () => {
     response = await storage.find({ sender: 1, job_order: 13, type: 'timelog.timelog_event' })
     expect(response).to.be.an('array')
     expect(response).to.have.length(2)
-  })
-
-  it("can find entities by piece of content of one or many fields", async () => {
-    let response = await storage.findContent('immediate acceptance')
-    expect(response).to.be.an('array')
-    expect(response).to.have.length(2)
-    response.forEach(expectEntity)
-
-    response = await storage.findContent('load')
-    expect(response).to.be.an('array')
-    expect(response).to.have.length(5)
-    response.forEach(expectEntity)
   })
 
   // it("can find entities by case-insensitive substring", async () => {

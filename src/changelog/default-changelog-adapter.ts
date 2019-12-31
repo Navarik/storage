@@ -22,7 +22,7 @@ export class DefaultChangelogAdapter implements ChangelogAdapter {
     }
   }
 
-  async init(types = []) {
+  async init(types: string[]) {
     for (const type of types) {
       for (const data of Object.values(this.log[type] || {})) {
         const record = data.id ? data : this.signatureProvider.signNew(type, data)

@@ -1,21 +1,34 @@
-import { ChangelogAdapter, SignatureProvider, TransactionManager, EntityBody, CanonicalEntity } from '../types'
+import { ChangelogAdapter, SignatureProvider, TransactionManager, EntityBody, CanonicalEntity, PubSub, Observer } from '../types'
+
+type ChangelogConfig = {
+  adapter: ChangelogAdapter
+  signatureProvider: SignatureProvider
+  transactionManager: TransactionManager
+}
 
 export class ChangeLog {
   private adapter: ChangelogAdapter
   private signatureProvider: SignatureProvider
   private transactionManager: TransactionManager
+  private observer: Observer<CanonicalEntity>|null
 
-  constructor({ adapter, signatureProvider, transactionManager }) {
+  constructor({ adapter, signatureProvider, transactionManager }: ChangelogConfig) {
     this.adapter = adapter
     this.signatureProvider = signatureProvider
     this.transactionManager = transactionManager
+    this.observer = null
+
+    this.adapter.observe(async (record) => {
+      if (this.observer) {
+        await this.observer(record)
+      }
+
+      this.transactionManager.commit(record.version_id, record)
+    })
   }
 
-  onChange(func) {
-    this.adapter.observe(async (record) => {
-      const result = await func(record)
-      return this.transactionManager.commit(record.version_id, result)
-    })
+  onChange(observer: Observer<CanonicalEntity>) {
+    this.observer = observer
   }
 
   isConnected() {

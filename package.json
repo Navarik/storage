@@ -13,7 +13,7 @@
     "avsc": "^5.4.12",
     "nedb": "^1.8.0",
     "object-path": "^0.11.4",
-    "poly-map": "^2.2.3",
+    "poly-map": "^2.2.4",
     "uuid": "^3.3.2"
   },
   "engines": {
@@ -26,6 +26,7 @@
     "@types/node": "^12.12.22",
     "@types/uuid": "^3.4.6",
     "cross-env": "^5.2.0",
+    "curry": "^1.2.0",
     "expect.js": "^0.3.1",
     "mkdirp": "^0.5.1",
     "mocha": "^6.2.0",

@@ -1,12 +1,12 @@
 import * as expect from 'expect.js'
-import * as createStorage from '../src'
-import * as fixtureSchemata from './fixtures/schemata/schemata.json'
+import { Storage } from '../src'
+import * as fixtureSchemata from './fixtures/schemata'
 import * as fixtures from './fixtures/data/versions.json'
 import { expectEntity } from './steps/checks'
 import { forAll } from './steps/generic'
 import { createSteps } from './steps/entities'
 
-const storage = createStorage({
+const storage = new Storage({
   schema: fixtureSchemata
 })
 

@@ -1,13 +1,13 @@
 import * as expect from 'expect.js'
-import * as createStorage from '../src'
+import { Storage } from '../src'
 
-const storage = createStorage()
+const storage = new Storage()
 
 describe('Empty state', () => {
   before(() => storage.init())
 
   it("should have no types", async () => {
-    const response = await storage.types()
+    const response = storage.types()
     expect(response).to.be.an('array')
     expect(response).to.be.empty()
   })

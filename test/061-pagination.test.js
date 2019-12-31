@@ -1,13 +1,13 @@
 import * as expect from 'expect.js'
-import * as createStorage from '../src'
-import * as fixtureSchemata from './fixtures/schemata/schemata.json'
+import { Storage } from '../src'
+import * as fixtureSchemata from './fixtures/schemata'
 import * as fixturesEvents from './fixtures/data/events.json'
 import * as fixturesJobs from './fixtures/data/job-orders.json'
 import * as fixturesUsers from './fixtures/data/users.json'
 import * as fixturesMessages from './fixtures/data/messages.json'
 import { expectEntity } from './steps/checks'
 
-const storage = createStorage({
+const storage = new Storage({
   schema: fixtureSchemata,
   data: {
     'timelog.timelog_event': fixturesEvents,

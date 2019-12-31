@@ -1,11 +1,11 @@
-import * as createStorage from '../src'
+import { Storage } from '../src'
+import * as fixtureSchemata from './fixtures/schemata'
 import * as fixturesEvents from './fixtures/data/events.json'
 import * as fixturesJobs from './fixtures/data/job-orders.json'
-import * as fixtureSchemata from './fixtures/schemata/schemata.json'
 import { forAll } from './steps/generic'
 import { createSteps } from './steps/entities'
 
-const storage = createStorage({
+const storage = new Storage({
   schema: fixtureSchemata,
   data: {
     'timelog.timelog_event': fixturesEvents,

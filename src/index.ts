@@ -1,88 +1,129 @@
 import { StringMap } from '@navarik/types'
-import { ChangelogAdapter, EntityId, EntityBody } from './types'
-import { hashField, random } from './id-generator'
+import { ChangelogAdapter, EntityId, EntityBody, EntityType, CanonicalSchema, CanonicalEntity, SchemaRegistryAdapter, PubSub, SchemaEngine, ValidationResponse, Observer } from './types'
+import { random } from './id-generator'
 import { LocalTransactionManager } from './transaction'
-import { ChangelogFactory } from './change-log'
-import { AvroSchemaRegistry } from './schema/avro-schema-registry'
+import { StaticSchemaRegistry, AvroSchemaEngine } from './schema'
 import { LocalState } from './local-state'
-import { Observer } from './observer'
-import { entityView as createEntityView } from './view'
-import { CreateCommand } from './commands/create'
-import { UpdateCommand } from './commands/update'
-import { InitCommand } from './commands/init'
+import { ChangeLog, DefaultChangelogAdapter, UuidSignatureProvider } from './changelog'
+import { EventFanout } from './event-fan-out'
+import { whenMatches } from './utils'
 
 type StorageConfig = {
-  changelog?: ChangelogAdapter,
-  index?: object,
-  schema?: any,
+  schemaRegistry?: SchemaRegistryAdapter
+  changelog?: ChangelogAdapter
+  index?: object
+  schema?: Array<CanonicalSchema>
   data?: any
 }
 
-const configure = (config: StorageConfig = {}) => {
-  const transactionManager = new LocalTransactionManager()
+export class Storage {
+  private schemaRegistry: SchemaRegistryAdapter
+  private state: LocalState
+  private changelog: ChangeLog
+  private pubsub: PubSub<CanonicalEntity>
+  private schemaEngine: SchemaEngine
 
-  const changelogFactory = new ChangelogFactory({
-    transactionManager
-  })
+  constructor(config: StorageConfig = {}) {
+    this.schemaRegistry = config.schemaRegistry
+      || new StaticSchemaRegistry({ schemas: config.schema || [] })
 
-  const schemaChangeLog = changelogFactory.create({
-    adapter: 'default',
-    idGenerator: hashField('name'),
-    content: config.schema ? { schema: config.schema } : undefined
-  })
-  const schemaState = new LocalState('default', 'body.name')
+    const transactionManager = new LocalTransactionManager()
+    const signatureProvider = new UuidSignatureProvider(random())
+    const changelogAdapter = config.changelog
+      || new DefaultChangelogAdapter({ content: config.data || [], signatureProvider })
 
-  const entityChangeLog = changelogFactory.create({
-    adapter: config.changelog || 'default',
-    content: config.data,
-    idGenerator: random()
-  })
-  const entityState = new LocalState(config.index || 'default', 'id')
+      this.changelog = new ChangeLog({
+        adapter: changelogAdapter,
+        signatureProvider,
+        transactionManager
+      })
 
-  const observer = new Observer()
+    this.state = new LocalState(config.index || 'default', 'id')
+    this.pubsub = new EventFanout<CanonicalEntity>()
 
-  const schemaRegistry = new AvroSchemaRegistry()
-  const entityView = createEntityView(schemaRegistry)
+    this.schemaEngine = new AvroSchemaEngine({ registry: this.schemaRegistry })
+  }
 
-  const createEntity = new CreateCommand({ changeLog: entityChangeLog, schema: schemaRegistry })
-  const updateEntity = new UpdateCommand({ changeLog: entityChangeLog, state: entityState, schema: schemaRegistry })
+  async init() {
+    await this.state.reset()
 
-  const init = new InitCommand({ schemaChangeLog, entityChangeLog, schemaState, entityState, schemaRegistry, observer })
+    this.changelog.onChange(async (entity) => {
+      await this.state.set(entity)
+      await this.pubsub.publish(entity)
+    })
 
-  return {
-    types: () => schemaRegistry.listUserTypes(),
-    getSchema: (name: string, version?: number) => schemaState.get(name, version),
+    const types = this.schemaRegistry.list()
+    await this.changelog.reconstruct(types)
+  }
 
-    get: (id: EntityId, version: number, options = { view: 'canonical' }) =>
-      Promise.resolve(entityState.get(id, version)).then(entityView(options.view)),
+  isConnected() {
+    return this.changelog.isConnected() && this.state.isConnected()
+  }
 
-    find: (query = {}, { limit, offset, sort, view } = { limit: null, offset: 0, sort: null, view: 'canonical' }) =>
-      entityState.find(query, { limit, offset, sort }).then(entityView(view)),
+  types() {
+    return this.schemaRegistry.list()
+  }
 
-    findContent: (text = '', { limit, offset, sort, view } = { limit: null, offset: 0, sort: null, view: 'canonical' }) =>
-      entityState.findContent(text, { limit, offset, sort }).then(entityView(view)),
+  getSchema(type: EntityType) {
+    return this.schemaRegistry.get(type)
+  }
 
-    count: (query = {}) => entityState.count(query),
+  private addSchema(entity: CanonicalEntity|Array<CanonicalEntity>): CanonicalEntity|Array<CanonicalEntity>|undefined {
+    if (entity === undefined) {
+      return undefined
+    }
 
-    create: (type: string, body: EntityBody = {}, options = { view: 'canonical' }) =>
-      createEntity.run({ type, body }).then(entityView(options.view)),
+    return entity instanceof Array
+      ? entity.map(x => this.addSchema(x)) as Array<CanonicalEntity>
+      : { ...entity, schema: this.schemaRegistry.get(entity.type) } as CanonicalEntity
+  }
 
-    update: (id: EntityId, body: EntityBody, type = '', options = { view: 'canonical' }) =>
-      updateEntity.run({ id, body, type }).then(entityView(options.view)),
+  async get(id: EntityId, version: number): Promise<CanonicalEntity> {
+    return this.addSchema(await this.state.get(id, version)) as CanonicalEntity
+  }
 
-    validate: (type, body) => schemaRegistry.validate(type, body),
-    isValid: (type, body) => schemaRegistry.isValid(type, body),
+  async find(query: StringMap = {}, { limit, offset, sort } = { limit: null, offset: 0, sort: null }) {
+    return this.addSchema(await this.state.find(query, { limit, offset, sort }))
+  }
 
-    observe: (handler, filter = {}) => observer.listen(filter, handler),
+  async count(query: StringMap = {}): Promise<number> {
+    return this.state.count(query)
+  }
 
-    init: () => init.run(),
+  validate(type: EntityType, body: EntityBody): ValidationResponse {
+    return this.schemaEngine.validate(type, body)
+  }
 
-    isConnected: () =>
-      schemaChangeLog.isConnected() &&
-      schemaState.isConnected() &&
-      entityChangeLog.isConnected() &&
-      entityState.isConnected()
+  isValid(type: EntityType, body: EntityBody): boolean {
+    return this.schemaEngine.validate(type, body).isValid
+  }
+
+  async create(type: EntityType, body: EntityBody = {}): Promise<CanonicalEntity|Array<CanonicalEntity>> {
+    if (body instanceof Array) {
+      return Promise.all(body.map(x => this.create(type, x))) as Promise<Array<CanonicalEntity>>
+    }
+
+    const content = await this.schemaEngine.format(type, body)
+    const entity = await this.changelog.registerNew(type, content)
+
+    return this.addSchema(entity) as CanonicalEntity
+  }
+
+  async update(id: EntityId, body: EntityBody, type: EntityType = '') {
+    const previous = await this.state.get(id)
+
+    if (!previous) {
+      throw new Error(`[Storage] Can't update ${id}: it doesn't exist.`)
+    }
+
+    const newType = type || previous.type
+    const newContent = await this.schemaEngine.format(newType, body)
+    const entity = await this.changelog.registerUpdate(newType, previous, newContent)
+
+    return this.addSchema(entity)
+  }
+
+  observe(handler: Observer<CanonicalEntity>, filter: StringMap = {}) {
+    this.pubsub.subscribe(whenMatches(filter, handler))
   }
 }
-
-module.exports = configure
