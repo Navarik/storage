@@ -3,23 +3,20 @@
   "description": "Document storage with schemas and versions",
   "version": "6.5.1",
   "scripts": {
-    "build": "rimraf ./dist && mkdirp ./dist && babel src --out-dir dist",
-    "test": "mocha test/**/*.test.js",
-    "test:integration": "cross-env TEST_MONGO=1 mocha test/**/*.test.js -t 5000"
+    "build": "rm -rf dist && tsc -d",
+    "test": "ts-mocha test/**/*.test.js"
   },
   "main": "dist",
   "author": "Navarik Corp.",
   "dependencies": {
-    "array-sort": "^1.0.0",
+    "@navarik/types": "^1.0.0",
     "avsc": "^5.4.12",
     "babel-polyfill": "^6.26.0",
-    "bunyan": "1.8.12",
     "event-emitter": "^0.3.5",
-    "mongodb": "^3.3.0-beta2",
     "nedb": "^1.8.0",
     "object-path": "^0.11.4",
-    "object.omit": "^3.0.0",
     "poly-map": "^2.2.3",
+    "ts-mocha": "^6.0.0",
     "uuid": "^3.3.2"
   },
   "engines": {
@@ -28,14 +25,15 @@
   },
   "license": "Proprietary",
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "babel-plugin-transform-regenerator": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.12.22",
+    "@types/uuid": "^3.4.6",
     "cross-env": "^5.2.0",
     "expect.js": "^0.3.1",
     "mkdirp": "^0.5.1",
     "mocha": "^6.2.0",
-    "rimraf": "^2.6.3"
+    "rimraf": "^2.6.3",
+    "ts-node": "^8.5.4",
+    "typescript": "^3.7.4"
   }
 }

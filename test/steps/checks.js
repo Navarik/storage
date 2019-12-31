@@ -1,4 +1,4 @@
-import expect from 'expect.js'
+import * as expect from 'expect.js'
 
 export const expectAvroFormat = (given) => {
   expect(given.fields).to.be.an('array')
@@ -22,3 +22,12 @@ export const expectEntity = (given) => {
   expect(given.type).to.be.a('string')
   expectAvroFormat(given.schema)
 }
+
+// Do a simple comparison of two scalar arrays.
+export const arraysAreSame = (arr1, arr2) => arr1.length === arr2.length && arr1.every((val, i) => val === arr2[i])
+
+// Take (obj, "a.b.c.") and return (obj.a.b.c)
+export const memberFromString = (baseObj, str) => str.split('.').reduce((obj,m)=>obj[m], baseObj)
+
+// Make an array by taking a specified member from each object in an array.
+export const extractMembers = (arrayOfObjects, memberDesc) => arrayOfObjects.map(obj => memberFromString(obj, memberDesc))

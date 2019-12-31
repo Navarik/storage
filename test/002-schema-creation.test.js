@@ -1,8 +1,8 @@
-import expect from 'expect.js'
-import createStorage from '../src'
-import fixtures from './fixtures/schemata/schemata.json'
+import * as expect from 'expect.js'
+import * as createStorage from '../src'
+import * as fixtures from './fixtures/schemata/schemata'
 import { forAll, forNone } from './steps/generic'
-import createSchemaSteps from './steps/schema'
+import { createSteps as createSchemaSteps } from './steps/schema'
 
 const storage = createStorage()
 

@@ -1,24 +1,19 @@
-import 'babel-polyfill'
 import { hashField, random } from './id-generator'
-import TransactionManager from './transaction'
-import ChangeLog from './change-log'
-import SchemaRegistry from './schema-registry'
-import LocalState from './local-state'
-import Observer from './observer'
-import createEntityView from './view'
+import { TransactionManager } from './transaction'
+import { ChangeLog } from './change-log'
+import { SchemaRegistry } from './schema-registry'
+import { LocalState } from './local-state'
+import { Observer } from './observer'
+import { entityView as createEntityView } from './view'
 
-import createCommand from './commands/create'
-import updateCommand from './commands/update'
-import initCommand from './commands/init'
-
-import defaultLogger from './logger'
+import { createCommand } from './commands/create'
+import { updateCommand } from './commands/update'
+import { initCommand } from './commands/init'
 
 const configure = (config = {}) => {
   const log = config.log || 'default'
   const index = config.index || 'default'
   const transactionManager = new TransactionManager()
-  const trackVersions = (typeof(config.trackVersions) === 'boolean') ? config.trackVersions : true
-  const logger = config.logger || defaultLogger
 
   const schemaChangeLog = new ChangeLog({
     type: log.schema || log,
@@ -34,8 +29,8 @@ const configure = (config = {}) => {
     transactionManager
   })
 
-  const schemaState = new LocalState(index.schema || index, 'body.name', trackVersions, logger.child({'module': 'schemaState'}))
-  const entityState = new LocalState(index.entity || index, 'id', trackVersions, index.entityTransform, logger.child({'module': 'entityState'}))
+  const schemaState = new LocalState(index.schema || index, 'body.name')
+  const entityState = new LocalState(index.entity || index, 'id')
 
   const observer = new Observer()
 
@@ -85,13 +80,8 @@ const configure = (config = {}) => {
       schemaChangeLog.isConnected() &&
       schemaState.isConnected() &&
       entityChangeLog.isConnected() &&
-      entityState.isConnected(),
-
-    isTrackingVersions: () => trackVersions
+      entityState.isConnected()
   }
 }
 
-export * from './local-state/find-filters'
-export { default as MongoIndexAdapter } from './local-state/mongo-index-adapter'
-
-export default configure
+module.exports = configure
