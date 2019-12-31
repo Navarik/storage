@@ -1,50 +1,37 @@
-import expect from 'expect.js'
-import createStorage from '../src'
-import fixturesEvents from './fixtures/data/events.json'
-import fixtureSchemata from './fixtures/schemata/schemata.json'
-import { expectEntity } from './steps/checks'
-import { forAll, forNone } from './steps/generic'
-import createSteps from './steps/entities'
-import generateConfig from './config/adapter-list'
+import * as expect from 'expect.js'
+import * as createStorage from '../src'
+import * as fixtureSchemata from './fixtures/schemata/schemata'
+import * as fixturesEvents from './fixtures/data/events'
+import { forAll } from './steps/generic'
+import { createSteps } from './steps/entities'
 
+const storage = createStorage({
+  schema: fixtureSchemata
+})
 
-const run = config => {
-  const storage = createStorage({
-    schema: fixtureSchemata,
-    ...config,
+const { canCreate, canFind } = createSteps(storage)
+
+describe('Entity creation flow', () => {
+  before(() => storage.init())
+
+  it("doesn't have entities before they are created", async () => {
+    const response = await storage.find()
+    expect(response).to.be.an('array')
+    expect(response).to.be.empty()
   })
 
-  const { canCreate, cannotCreate, canFind, canCreateCollection } = createSteps(storage)
-
-  describe(`Entity creation flow, index type [${config.index.description || config.index}]`, () => {
-    before(() => storage.init())
-    after(() => {
-      if (config.index.cleanup) {
-        return config.index.cleanup()
-      }
-    })
-
-    it("doesn't have entities before they are created", async () => {
-      const response = await storage.find()
-      expect(response).to.be.an('array')
-      expect(response).to.be.empty()
-    })
-
-    it("can't get entities before they are created", async () => {
-      const response = await storage.get('nope')
-      expect(response).to.be.undefined
-    })
-
-    it("correctly creates new entities", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
-    it("can find created entities", forAll(fixturesEvents, canFind))
-    it("allows duplicates", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
-
-    it("correct number of entities is created", async () => {
-      const response = await storage.find()
-      expect(response).to.be.an('array')
-      expect(response).to.have.length(10)
-    })
+  it("can't get entities before they are created", async () => {
+    const response = await storage.get('nope')
+    expect(response).to.be.undefined
   })
-}
 
-generateConfig().forEach(c => run(c))
+  it("correctly creates new entities", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
+  it("can find created entities", forAll(fixturesEvents, canFind))
+  it("allows duplicates", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
+
+  it("correct number of entities is created", async () => {
+    const response = await storage.find()
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(10)
+  })
+})

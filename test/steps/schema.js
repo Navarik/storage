@@ -1,8 +1,8 @@
-import expect from 'expect.js'
+import * as expect from 'expect.js'
 
 import { expectSchema } from './checks'
 
-const createSteps = storage => ({
+export const createSteps = storage => ({
   cannotCreate: (given) => done => {
     storage.createSchema(given)
       .then(() => done("Expected error didn't happen"))
@@ -65,5 +65,3 @@ const createSteps = storage => ({
     expect(response.version).to.be(previous.version + 1)
   }
 })
-
-export default createSteps

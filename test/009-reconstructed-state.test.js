@@ -1,39 +1,26 @@
-import expect from 'expect.js'
-import createStorage from '../src'
-import fixturesEvents from './fixtures/data/events.json'
-import fixturesJobs from './fixtures/data/job-orders.json'
-import fixtureSchemata from './fixtures/schemata/schemata.json'
+import * as createStorage from '../src'
+import * as fixturesEvents from './fixtures/data/events.json'
+import * as fixturesJobs from './fixtures/data/job-orders.json'
+import * as fixtureSchemata from './fixtures/schemata/schemata.json'
 import { forAll } from './steps/generic'
-import createSchemaSteps from './steps/schema'
-import createEntitySteps from './steps/entities'
-import generateConfig from './config/adapter-list'
+import { createSteps as createSchemaSteps } from './steps/schema'
+import { createSteps as createEntitySteps } from './steps/entities'
 
+const storage = createStorage({
+  schema: fixtureSchemata,
+  data: {
+    'timelog.timelog_event': fixturesEvents,
+    'document.job_order': fixturesJobs,
+  }
+})
 
-const run = config => {
-  const storage = createStorage({
-    schema: fixtureSchemata,
-    data: {
-      'timelog.timelog_event': fixturesEvents,
-      'document.job_order': fixturesJobs,
-    },
-    ...config,
-  })
+const schemaSteps = createSchemaSteps(storage)
+const entitySteps = createEntitySteps(storage)
 
-  const schemaSteps = createSchemaSteps(storage)
-  const entitySteps = createEntitySteps(storage)
+describe('State reconstruction', () => {
+  before(() => storage.init())
 
-  describe(`State reconstruction, index type [${config.index.description || config.index}]`, () => {
-    before(() => storage.init())
-    after(() => {
-      if (config.index.cleanup) {
-        return config.index.cleanup()
-      }
-    })
-
-    it("should have pre-defined schemas", forAll(fixtureSchemata, schemaSteps.canFind))
-    it("should have pre-defined entities", forAll(fixturesEvents, entitySteps.canFind))
-    it("should have pre-defined entities of a different type", forAll(fixturesJobs, entitySteps.canFind))
-  })
-}
-
-generateConfig().forEach(c => run(c))
+  it("should have pre-defined schemas", forAll(fixtureSchemata, schemaSteps.canFind))
+  it("should have pre-defined entities", forAll(fixturesEvents, entitySteps.canFind))
+  it("should have pre-defined entities of a different type", forAll(fixturesJobs, entitySteps.canFind))
+})
