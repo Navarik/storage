@@ -1,0 +1,10 @@
+steps:
+  - name: gcr.io/${PROJECT_ID}/npm
+    args:
+      - audit
+  - name: gcr.io/${PROJECT_ID}/npm
+    args:
+      - ci
+  - name: gcr.io/${PROJECT_ID}/npm
+    args:
+      - test
