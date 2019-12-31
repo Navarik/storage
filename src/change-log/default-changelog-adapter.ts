@@ -6,9 +6,9 @@ export class DefaultChangelogAdapter implements ChangelogAdapter {
   private log: Dictionary<CanonicalEntity>
   signatureProvider: SignatureProvider
 
-  constructor({ log, signatureProvider }) {
+  constructor({ content, signatureProvider }) {
     this.observer = null
-    this.log = log || {}
+    this.log = content || {}
     this.signatureProvider = signatureProvider
   }
 
@@ -23,9 +23,8 @@ export class DefaultChangelogAdapter implements ChangelogAdapter {
   }
 
   async init(types = []) {
-    console.log(types)
     for (const type of types) {
-      for (const data of Object.values(this.log[type])) {
+      for (const data of Object.values(this.log[type] || {})) {
         const record = data.id ? data : this.signatureProvider.signNew(type, data)
         await this.write(record)
       }
