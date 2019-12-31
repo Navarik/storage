@@ -1,6 +1,7 @@
 import * as objectPath from 'object-path'
 import * as map from 'poly-map'
-import { maybe } from '../utils'
+
+const maybe = f => x => (x === undefined || x === null ? x : f(x))
 
 const stringifyProperties = maybe(value => (
   typeof value === 'object'
