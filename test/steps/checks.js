@@ -1,19 +1,13 @@
 import * as expect from 'expect.js'
 
-export const expectSchema = (given) => {
-  expect(given).to.be.an('object')
-  expect(given).to.have.keys(['type', 'description', 'fields'])
-  expect(given.type).to.be.an('string')
-  expect(given.description).to.be.an('string')
-  expect(given.fields).to.be.an('object')
-}
-
 export const expectEntity = (given) => {
   expect(given).to.be.an('object')
-  expect(given).to.have.keys(['body', 'id', 'version', 'version_id', 'created_at', 'modified_at'])
+  expect(given).to.have.keys(['body', 'type', 'id', 'version_id', 'created_at', 'modified_at'])
   expect(given.body).to.be.an('object')
   expect(given.type).to.be.a('string')
-  expectSchema(given.schema)
+  expect(given.schema).to.be.a('string')
+  expect(given.id).to.be.a('string')
+  expect(given.version_id).to.be.a('string')
 }
 
 // Do a simple comparison of two scalar arrays.

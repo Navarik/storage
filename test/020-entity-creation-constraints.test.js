@@ -12,7 +12,6 @@ describe('Entity format and constraints', () => {
   before(() => storage.init())
 
   it("can't create entity of unknown type", cannotCreate('wow.doge', {}))
-  it("can't create empty entity", cannotCreate('profile.user', {}))
   it("can't create malformed entity", cannotCreate('profile.user', {
     role: 100500,
     last_name: ["Lisa"],

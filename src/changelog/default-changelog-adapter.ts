@@ -1,31 +1,43 @@
 import { Dictionary } from '@navarik/types'
-import { ChangelogAdapter, Observer, CanonicalEntity, SignatureProvider } from '../types'
+import { ChangelogAdapter, Observer, SignatureProvider, Entity } from '../types'
 
-export class DefaultChangelogAdapter implements ChangelogAdapter {
-  private observer: Observer
-  private log: Dictionary<CanonicalEntity>
+type AdapterConfig = {
+  content?: Dictionary<Entity>
   signatureProvider: SignatureProvider
+}
 
-  constructor({ content, signatureProvider }) {
-    this.observer = null
+export class DefaultChangelogAdapter implements ChangelogAdapter<Entity> {
+  private observer?: Observer<Entity>
+  private log: Dictionary<Entity>
+  private signatureProvider: SignatureProvider
+
+  constructor({ content, signatureProvider }: AdapterConfig) {
+    this.observer = undefined
     this.log = content || {}
     this.signatureProvider = signatureProvider
   }
 
-  observe(handler) {
+  observe(handler: Observer<Entity>) {
     this.observer = handler
   }
 
-  async write(message) {
+  async write(message: Entity) {
     if (this.observer) {
       await this.observer(message)
     }
   }
 
   async init(types: string[]) {
+    // This is a hack for allowing unit-testing and rare static data use-cases
     for (const type of types) {
       for (const data of Object.values(this.log[type] || {})) {
-        const record = data.id ? data : this.signatureProvider.signNew(type, data)
+        const record = data.id ? data : this.signatureProvider.signNew({
+          created_at: (new Date()).toISOString(),
+          modified_at: (new Date()).toISOString(),
+          body: data,
+          type,
+          schema: ''
+        })
         await this.write(record)
       }
     }

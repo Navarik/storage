@@ -1,5 +1,5 @@
 import * as uuidv5 from 'uuid/v5'
-import { SignatureProvider, IdGenerator } from '../types'
+import { SignatureProvider, IdGenerator, Entity, SignedEntity } from '../types'
 
 export class UuidSignatureProvider implements SignatureProvider {
   private generateId: IdGenerator
@@ -8,39 +8,27 @@ export class UuidSignatureProvider implements SignatureProvider {
     this.generateId = generator
   }
 
-  signNew(type, body) {
-    const id = this.generateId(body)
-    const version_id = uuidv5(JSON.stringify(body), id)
-    const now = new Date()
+  signNew(entity: Entity): SignedEntity {
+    const id = this.generateId(entity.body)
+    const version_id = uuidv5(JSON.stringify(entity.body), id)
 
-    const document = {
+    const Entity = {
+      ...entity,
       id,
-      version_id,
-      version: 1,
-      created_at: now.toISOString(),
-      modified_at: now.toISOString(),
-      type,
-      body
+      version_id
     }
 
-    return document
+    return Entity
   }
 
-  signVersion(type, body, previous) {
-    const id = previous.id
-    const version_id = uuidv5(JSON.stringify(body), id)
-    const now = new Date()
+  signVersion(entity: SignedEntity): SignedEntity {
+    const version_id = uuidv5(JSON.stringify(entity.body), entity.id)
 
-    const document = {
-      id,
-      version_id,
-      version: previous.version + 1,
-      created_at: previous.created_at,
-      modified_at: now.toISOString(),
-      type,
-      body
+    const Entity = {
+      ...entity,
+      version_id
     }
 
-    return document
+    return Entity
   }
 }

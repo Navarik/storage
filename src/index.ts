@@ -1,31 +1,31 @@
 import { StringMap } from '@navarik/types'
-import { ChangelogAdapter, EntityId, EntityBody, EntityType, CanonicalSchema, CanonicalEntity, SchemaRegistryAdapter, PubSub, SchemaEngine, ValidationResponse, Observer } from './types'
+import { CoreDdl } from '@navarik/core-ddl'
+import * as uuidv5 from 'uuid/v5'
+import { ChangelogAdapter, UUID, Entity, EntityBody, EntityType, CanonicalEntity, PubSub, ValidationResponse, Observer, SchemaRegistryAdapter, CanonicalSchema } from './types'
 import { random } from './id-generator'
 import { LocalTransactionManager } from './transaction'
-import { StaticSchemaRegistry, AvroSchemaEngine } from './schema'
 import { LocalState } from './local-state'
 import { ChangeLog, DefaultChangelogAdapter, UuidSignatureProvider } from './changelog'
 import { EventFanout } from './event-fan-out'
 import { whenMatches } from './utils'
 
+const SCHEMA_ID_NAMESPACE = '00000000-0000-0000-0000-000000000000'
+
 type StorageConfig = {
-  schemaRegistry?: SchemaRegistryAdapter
-  changelog?: ChangelogAdapter
+  changelog?: ChangelogAdapter<Entity>
   index?: object
-  schema?: Array<CanonicalSchema>
+  schema: SchemaRegistryAdapter|Array<CanonicalSchema>
   data?: any
 }
 
 export class Storage {
-  private schemaRegistry: SchemaRegistryAdapter
+  private ddl: CoreDdl
   private state: LocalState
   private changelog: ChangeLog
-  private pubsub: PubSub<CanonicalEntity>
-  private schemaEngine: SchemaEngine
+  private pubsub: PubSub<Entity>
 
-  constructor(config: StorageConfig = {}) {
-    this.schemaRegistry = config.schemaRegistry
-      || new StaticSchemaRegistry({ schemas: config.schema || [] })
+  constructor(config: StorageConfig) {
+    this.ddl = new CoreDdl({ schema: config.schema })
 
     const transactionManager = new LocalTransactionManager()
     const signatureProvider = new UuidSignatureProvider(random())
@@ -39,9 +39,7 @@ export class Storage {
       })
 
     this.state = new LocalState(config.index || 'default', 'id')
-    this.pubsub = new EventFanout<CanonicalEntity>()
-
-    this.schemaEngine = new AvroSchemaEngine({ registry: this.schemaRegistry })
+    this.pubsub = new EventFanout<Entity>()
   }
 
   async init() {
@@ -52,7 +50,7 @@ export class Storage {
       await this.pubsub.publish(entity)
     })
 
-    const types = this.schemaRegistry.list()
+    const types = this.ddl.types()
     await this.changelog.reconstruct(types)
   }
 
@@ -61,29 +59,19 @@ export class Storage {
   }
 
   types() {
-    return this.schemaRegistry.list()
+    return this.ddl.types()
   }
 
   getSchema(type: EntityType) {
-    return this.schemaRegistry.get(type)
+    return this.ddl.getSchema(type)
   }
 
-  private addSchema(entity: CanonicalEntity|Array<CanonicalEntity>): CanonicalEntity|Array<CanonicalEntity>|undefined {
-    if (entity === undefined) {
-      return undefined
-    }
-
-    return entity instanceof Array
-      ? entity.map(x => this.addSchema(x)) as Array<CanonicalEntity>
-      : { ...entity, schema: this.schemaRegistry.get(entity.type) } as CanonicalEntity
-  }
-
-  async get(id: EntityId, version: number): Promise<CanonicalEntity> {
-    return this.addSchema(await this.state.get(id, version)) as CanonicalEntity
+  async get(id: UUID): Promise<CanonicalEntity> {
+    return await this.state.get(id)
   }
 
   async find(query: StringMap = {}, { limit, offset, sort } = { limit: null, offset: 0, sort: null }) {
-    return this.addSchema(await this.state.find(query, { limit, offset, sort }))
+    return await this.state.find(query, { limit, offset, sort })
   }
 
   async count(query: StringMap = {}): Promise<number> {
@@ -91,11 +79,11 @@ export class Storage {
   }
 
   validate(type: EntityType, body: EntityBody): ValidationResponse {
-    return this.schemaEngine.validate(type, body)
+    return this.ddl.validate(type, body)
   }
 
   isValid(type: EntityType, body: EntityBody): boolean {
-    return this.schemaEngine.validate(type, body).isValid
+    return this.ddl.validate(type, body).isValid
   }
 
   async create(type: EntityType, body: EntityBody = {}): Promise<CanonicalEntity|Array<CanonicalEntity>> {
@@ -103,24 +91,32 @@ export class Storage {
       return Promise.all(body.map(x => this.create(type, x))) as Promise<Array<CanonicalEntity>>
     }
 
-    const content = await this.schemaEngine.format(type, body)
-    const entity = await this.changelog.registerNew(type, content)
+    const content = await this.ddl.format(type, body)
+    const entity = await this.changelog.registerNew({
+      type,
+      body: content.body,
+      schema: uuidv5(JSON.stringify(content.schema), uuidv5(type, SCHEMA_ID_NAMESPACE))
+    })
 
-    return this.addSchema(entity) as CanonicalEntity
+    return entity
   }
 
-  async update(id: EntityId, body: EntityBody, type: EntityType = '') {
+  async update(id: UUID, body: EntityBody) {
     const previous = await this.state.get(id)
 
     if (!previous) {
       throw new Error(`[Storage] Can't update ${id}: it doesn't exist.`)
     }
 
-    const newType = type || previous.type
-    const newContent = await this.schemaEngine.format(newType, body)
-    const entity = await this.changelog.registerUpdate(newType, previous, newContent)
+    // Note: every time you update the entity it will update its schema as well
+    const content = await this.ddl.format(previous.type, { ...previous.body, ...body })
+    const entity = await this.changelog.registerUpdate({
+      ...previous,
+      body: content.body,
+      schema: uuidv5(JSON.stringify(content.schema), uuidv5(previous.type, SCHEMA_ID_NAMESPACE))
+    })
 
-    return this.addSchema(entity)
+    return entity
   }
 
   observe(handler: Observer<CanonicalEntity>, filter: StringMap = {}) {

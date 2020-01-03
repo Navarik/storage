@@ -59,7 +59,9 @@ export class SearchIndex {
   async find(params, options) {
     const query = map(stringifyProperties, params)
     const documents = await this.adapter.find(query, options)
-    return documents
+    const results = documents.map(x => x.___document)
+
+    return results
   }
 
   async findContent(text, options) {

@@ -1,16 +1,16 @@
-import { ChangelogAdapter, SignatureProvider, TransactionManager, EntityBody, CanonicalEntity, PubSub, Observer } from '../types'
+import { ChangelogAdapter, SignatureProvider, TransactionManager, Observer, Entity, SignedEntity } from '../types'
 
 type ChangelogConfig = {
-  adapter: ChangelogAdapter
+  adapter: ChangelogAdapter<Entity>
   signatureProvider: SignatureProvider
   transactionManager: TransactionManager
 }
 
 export class ChangeLog {
-  private adapter: ChangelogAdapter
+  private adapter: ChangelogAdapter<Entity>
   private signatureProvider: SignatureProvider
   private transactionManager: TransactionManager
-  private observer: Observer<CanonicalEntity>|null
+  private observer: Observer<Entity>|null
 
   constructor({ adapter, signatureProvider, transactionManager }: ChangelogConfig) {
     this.adapter = adapter
@@ -27,7 +27,7 @@ export class ChangeLog {
     })
   }
 
-  onChange(observer: Observer<CanonicalEntity>) {
+  onChange(observer: Observer<Entity>) {
     this.observer = observer
   }
 
@@ -39,19 +39,29 @@ export class ChangeLog {
     return this.adapter.init(topics)
   }
 
-  async registerNew(type: string, document: EntityBody) {
-    const record = this.signatureProvider.signNew(type, document)
+  async registerNew(entity: Entity) {
+    const now = new Date()
+    const firstVersion = this.signatureProvider.signNew({
+      ...entity,
+      created_at: now.toISOString(),
+      modified_at: now.toISOString()
+    })
 
-    const transaction = this.transactionManager.start(record.version_id)
-    await this.adapter.write(record)
+    const transaction = this.transactionManager.start(firstVersion.version_id)
+    await this.adapter.write(firstVersion)
 
     return transaction.promise
   }
 
-  async registerUpdate(type: string, oldVersion: CanonicalEntity, document: EntityBody) {
-    const newVersion = this.signatureProvider.signVersion(type, document, oldVersion)
-    if (oldVersion.version_id === newVersion.version_id) {
-      return oldVersion
+  async registerUpdate(entity: SignedEntity) {
+    const now = new Date()
+    const newVersion = this.signatureProvider.signVersion({
+      ...entity,
+      modified_at: now.toISOString()
+    })
+
+    if (entity.version_id === newVersion.version_id) {
+      return entity
     }
 
     const transaction = this.transactionManager.start(newVersion.version_id)
