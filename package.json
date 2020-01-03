@@ -25,6 +25,7 @@
   "devDependencies": {
     "@types/mocha": "^5.2.7",
     "@types/node": "^12.12.22",
+    "@types/object-path": "^0.11.0",
     "@types/uuid": "^3.4.6",
     "cross-env": "^5.2.0",
     "curry": "^1.2.0",

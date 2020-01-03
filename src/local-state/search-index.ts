@@ -1,4 +1,3 @@
-import * as objectPath from 'object-path'
 import * as map from 'poly-map'
 
 const maybe = f => x => (x === undefined || x === null ? x : f(x))
@@ -22,7 +21,7 @@ const searchableFormat = (idField, document) => ({
   // save the original document under ___document, storage expect local-state to return ___document
   ___document: document,
   ___content: stringifyContent(document.body),
-  id: objectPath.get(document, idField),
+  id: document[idField],
   version: String(document.version),
   version_id: document.version_id,
   type: document.type

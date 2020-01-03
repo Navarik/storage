@@ -1,16 +1,16 @@
 import { ChangelogAdapter, SignatureProvider, TransactionManager, Observer, Entity, CanonicalEntity } from '../types'
 
 type ChangelogConfig = {
-  adapter: ChangelogAdapter<Entity>
+  adapter: ChangelogAdapter<CanonicalEntity>
   signatureProvider: SignatureProvider
   transactionManager: TransactionManager
 }
 
 export class ChangeLog {
-  private adapter: ChangelogAdapter<Entity>
+  private adapter: ChangelogAdapter<CanonicalEntity>
   private signatureProvider: SignatureProvider
   private transactionManager: TransactionManager
-  private observer: Observer<Entity>|null
+  private observer: Observer<CanonicalEntity>|null
 
   constructor({ adapter, signatureProvider, transactionManager }: ChangelogConfig) {
     this.adapter = adapter
@@ -27,7 +27,7 @@ export class ChangeLog {
     })
   }
 
-  onChange(observer: Observer<Entity>) {
+  onChange(observer: Observer<CanonicalEntity>) {
     this.observer = observer
   }
 

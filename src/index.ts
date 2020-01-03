@@ -1,10 +1,10 @@
 import { StringMap } from '@navarik/types'
 import { CoreDdl } from '@navarik/core-ddl'
 import * as uuidv5 from 'uuid/v5'
-import { ChangelogAdapter, UUID, Entity, EntityBody, EntityType, CanonicalEntity, PubSub, ValidationResponse, Observer, SchemaRegistryAdapter, CanonicalSchema } from './types'
+import { ChangelogAdapter, UUID, Entity, EntityBody, EntityType, CanonicalEntity, PubSub, ValidationResponse, Observer, SchemaRegistryAdapter, CanonicalSchema, SearchOptions, SearchQuery } from './types'
 import { random } from './id-generator'
 import { LocalTransactionManager } from './transaction'
-import { LocalState } from './local-state'
+import { LocalState, NeDbIndexAdapter } from './local-state'
 import { ChangeLog, DefaultChangelogAdapter, UuidSignatureProvider } from './changelog'
 import { EventFanout } from './event-fan-out'
 import { whenMatches } from './utils'
@@ -12,7 +12,7 @@ import { whenMatches } from './utils'
 const SCHEMA_ID_NAMESPACE = '00000000-0000-0000-0000-000000000000'
 
 type StorageConfig = {
-  changelog?: ChangelogAdapter<Entity>
+  changelog?: ChangelogAdapter<CanonicalEntity>
   index?: object
   schema: SchemaRegistryAdapter|Array<CanonicalSchema>
   data?: any
@@ -32,13 +32,16 @@ export class Storage {
     const changelogAdapter = config.changelog
       || new DefaultChangelogAdapter({ content: config.data || [], signatureProvider })
 
-      this.changelog = new ChangeLog({
-        adapter: changelogAdapter,
-        signatureProvider,
-        transactionManager
-      })
+    this.changelog = new ChangeLog({
+      adapter: changelogAdapter,
+      signatureProvider,
+      transactionManager
+    })
 
-    this.state = new LocalState(config.index || 'default', 'id')
+    const searchIndex = config.index
+      || new NeDbIndexAdapter()
+
+    this.state = new LocalState({ searchIndex })
     this.pubsub = new EventFanout<Entity>()
   }
 
@@ -70,11 +73,11 @@ export class Storage {
     return await this.state.get(id)
   }
 
-  async find(query: StringMap = {}, { limit, offset, sort } = { limit: null, offset: 0, sort: null }) {
-    return await this.state.find(query, { limit, offset, sort })
+  async find(query: SearchQuery = {}, options: SearchOptions = {}) {
+    return await this.state.find(query, options)
   }
 
-  async count(query: StringMap = {}): Promise<number> {
+  async count(query: SearchQuery = {}): Promise<number> {
     return this.state.count(query)
   }
 

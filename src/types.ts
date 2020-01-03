@@ -1,4 +1,4 @@
-import { Dictionary } from '@navarik/types'
+import { Dictionary, StringMap } from '@navarik/types'
 import { SchemaRegistryAdapter, CanonicalSchema, ValidationResponse, EntityBody } from '@navarik/core-ddl/src/types'
 
 export type Timestamp = string
@@ -20,8 +20,8 @@ export interface CanonicalEntity extends Entity {
 export type IdGenerator = (body: EntityBody) => UUID
 
 export interface SignatureProvider {
-  signNew(entity: Entity): SignedEntity
-  signVersion(entity: SignedEntity): SignedEntity
+  signNew(entity: Entity): CanonicalEntity
+  signVersion(entity: CanonicalEntity): CanonicalEntity
 }
 
 export type Observer<T> = (event: T) => any
@@ -52,6 +52,21 @@ export interface TransactionManager {
 
 export interface Factory<T> {
   create(config?: Dictionary<any>): T
+}
+
+export type SearchQuery = StringMap
+export type SearchOptions = {
+  limit?: number
+  offset?: number
+  sort?: string
+}
+
+export interface SearchIndexAdapter<T> {
+  index(document: T): Promise<void>
+  find(query: SearchQuery, options: SearchOptions): Promise<Array<T>>
+  count(query: SearchQuery): Promise<number>
+  reset(): Promise<void>
+  isConnected(): boolean
 }
 
 export { SchemaRegistryAdapter, CanonicalSchema, ValidationResponse, EntityBody }
