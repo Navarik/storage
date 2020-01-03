@@ -1,16 +1,16 @@
-import { ChangelogAdapter, SignatureProvider, TransactionManager, Observer, Entity, SignedEntity } from '../types'
+import { ChangelogAdapter, SignatureProvider, TransactionManager, Observer, Entity, CanonicalEntity } from '../types'
 
 type ChangelogConfig = {
-  adapter: ChangelogAdapter<Entity>
+  adapter: ChangelogAdapter<CanonicalEntity>
   signatureProvider: SignatureProvider
   transactionManager: TransactionManager
 }
 
 export class ChangeLog {
-  private adapter: ChangelogAdapter<Entity>
+  private adapter: ChangelogAdapter<CanonicalEntity>
   private signatureProvider: SignatureProvider
   private transactionManager: TransactionManager
-  private observer: Observer<Entity>|null
+  private observer: Observer<CanonicalEntity>|null
 
   constructor({ adapter, signatureProvider, transactionManager }: ChangelogConfig) {
     this.adapter = adapter
@@ -27,7 +27,7 @@ export class ChangeLog {
     })
   }
 
-  onChange(observer: Observer<Entity>) {
+  onChange(observer: Observer<CanonicalEntity>) {
     this.observer = observer
   }
 
@@ -40,26 +40,15 @@ export class ChangeLog {
   }
 
   async registerNew(entity: Entity) {
-    const now = new Date()
-    const firstVersion = this.signatureProvider.signNew({
-      ...entity,
-      created_at: now.toISOString(),
-      modified_at: now.toISOString()
-    })
-
+    const firstVersion = this.signatureProvider.signNew(entity)
     const transaction = this.transactionManager.start(firstVersion.version_id)
     await this.adapter.write(firstVersion)
 
     return transaction.promise
   }
 
-  async registerUpdate(entity: SignedEntity) {
-    const now = new Date()
-    const newVersion = this.signatureProvider.signVersion({
-      ...entity,
-      modified_at: now.toISOString()
-    })
-
+  async registerUpdate(entity: CanonicalEntity) {
+    const newVersion = this.signatureProvider.signVersion(entity)
     if (entity.version_id === newVersion.version_id) {
       return entity
     }

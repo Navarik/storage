@@ -1,29 +1,32 @@
 import { PromiseTransaction } from './promise-transaction'
-import { TransactionManager } from '../types'
+import { TransactionManager, Transaction, CanonicalEntity } from '../types'
+import { Dictionary } from '@navarik/types'
 
 export class LocalTransactionManager implements TransactionManager {
-  private transactions
+  private transactions: Dictionary<Transaction<CanonicalEntity>>
 
   constructor() {
     this.transactions = {}
   }
 
-  commit(key, message) {
-    if (this.transactions[key]) {
-      this.transactions[key].resolve(message)
+  commit(key: string, message: CanonicalEntity) {
+    const transaction = this.transactions[key]
+    if (transaction) {
+      transaction.resolve(message)
       delete this.transactions[key]
     }
   }
 
-  reject(key, message) {
-    if (this.transactions[key]) {
-      this.transactions[key].reject(message)
+  reject(key: string, message: Error) {
+    const transaction = this.transactions[key]
+    if (transaction) {
+      transaction.reject(message)
       delete this.transactions[key]
     }
   }
 
-  start(key) {
-    const transaction = new PromiseTransaction()
+  start(key: string) {
+    const transaction = new PromiseTransaction<CanonicalEntity>()
     this.transactions[key] = transaction
 
     return transaction

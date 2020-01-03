@@ -1,14 +1,14 @@
 import { Dictionary } from '@navarik/types'
-import { ChangelogAdapter, Observer, SignatureProvider, Entity } from '../types'
+import { ChangelogAdapter, Observer, SignatureProvider, CanonicalEntity } from '../types'
 
 type AdapterConfig = {
-  content?: Dictionary<Entity>
+  content?: Dictionary<CanonicalEntity>
   signatureProvider: SignatureProvider
 }
 
-export class DefaultChangelogAdapter implements ChangelogAdapter<Entity> {
-  private observer?: Observer<Entity>
-  private log: Dictionary<Entity>
+export class DefaultChangelogAdapter implements ChangelogAdapter<CanonicalEntity> {
+  private observer?: Observer<CanonicalEntity>
+  private log: Dictionary<CanonicalEntity>
   private signatureProvider: SignatureProvider
 
   constructor({ content, signatureProvider }: AdapterConfig) {
@@ -17,11 +17,11 @@ export class DefaultChangelogAdapter implements ChangelogAdapter<Entity> {
     this.signatureProvider = signatureProvider
   }
 
-  observe(handler: Observer<Entity>) {
+  observe(handler: Observer<CanonicalEntity>) {
     this.observer = handler
   }
 
-  async write(message: Entity) {
+  async write(message: CanonicalEntity) {
     if (this.observer) {
       await this.observer(message)
     }
@@ -32,8 +32,6 @@ export class DefaultChangelogAdapter implements ChangelogAdapter<Entity> {
     for (const type of types) {
       for (const data of Object.values(this.log[type] || {})) {
         const record = data.id ? data : this.signatureProvider.signNew({
-          created_at: (new Date()).toISOString(),
-          modified_at: (new Date()).toISOString(),
           body: data,
           type,
           schema: ''
