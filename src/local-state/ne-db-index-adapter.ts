@@ -1,12 +1,33 @@
+import { Dictionary } from '@navarik/types'
 import * as Database from 'nedb'
-import { SearchIndexAdapter, SearchQuery, SearchOptions } from '../types'
-import { parseSortQuery, prepareSearch } from './query-language'
+import { SearchIndexAdapter, SearchQuery, SearchOptions, CanonicalEntity, UUID, EntityType } from '../types'
 
-const databaseError = (err) => {
-  throw new Error(`[NeDB] Database error: ${err}`)
+type Stringified = { [key: string]: string|Stringified }
+
+interface Searchable extends Stringified {
+  ___document: CanonicalEntity
+  _id?: any
+  id: UUID
+  type: EntityType
 }
 
-export class NeDbIndexAdapter implements SearchIndexAdapter {
+const stringifyProperties = (data: any): string|Stringified => {
+  if (!data) return ''
+  if (typeof data !== 'object') return `${data}`
+
+  const stringified: Dictionary<any> = {}
+  for (const field in data) {
+    stringified[field] = stringifyProperties(data[field])
+  }
+
+  return stringified
+}
+
+const databaseError = (err: Error) => {
+  throw new Error(`[NeDB] Database error: ${err.message}`)
+}
+
+export class NeDbIndexAdapter implements SearchIndexAdapter<CanonicalEntity> {
   private client: Database
 
   constructor() {
@@ -14,58 +35,80 @@ export class NeDbIndexAdapter implements SearchIndexAdapter {
     this.client.ensureIndex({ fieldName: 'id', unique: true })
   }
 
-  find(searchParams: SearchQuery, { offset, limit, sort }: SearchOptions = {}) {
-    const query = this.client.find(prepareSearch(searchParams), { _id: 0 })
+  private convertToSearchable(document: CanonicalEntity): Searchable {
+    const searchable = {
+      // save the original document under ___document, storage expect local-state to return ___document
+      ___document: document,
+      id: document.id,
+      type: document.type,
+      ...(stringifyProperties(document.body) as Stringified)
+    }
+
+    return searchable
+  }
+
+  /**
+    * Translate the array of sort queries from CoreQL format to NeDB cursor.sort() format. Example:
+    *    received this:         [ 'vessels:asc', 'foo.bar.baz:desc', ... ]
+    *    NeDB wants this:       { vessels: 1 , 'foo.bar.baz': -1, ... }
+   * @param {string|string[]} sortQueries - A single sort query string or an array of sort query strings in descending priority.
+   * @returns {Array<Array>} - An array of one or more [string, number] pairs where string is the field to be sorted by and number is either 1 for ascending sorting or -1 for descending sorting.
+   */
+  private parseSortQuery(sortQueries: Array<string>): Dictionary<number> {
+    const result: Dictionary<number> = {}
+    for (const item of sortQueries) {
+      const [field, order] = item.split(':')
+      result[field] = (order || '').trim().toLowerCase() === 'desc' ? -1 : 1
+    }
+
+    return result
+  }
+
+  async find(searchParams: SearchQuery, options: SearchOptions = {}): Promise<Array<CanonicalEntity>> {
+    const query = this.client.find(stringifyProperties(searchParams), { _id: 0 })
+    const { offset, limit, sort } = options
 
     if (offset) {
-      query.skip(offset)
+      query.skip(parseInt(`${offset}`))
     }
     if (limit) {
-      query.limit(limit)
+      query.limit(parseInt(`${limit}`))
     }
     if (sort) {
-      // Translate the array of sort queries from CoreQL format to NeDB cursor.sort() format. Example:
-      //    received this:         [ 'vessels:asc', 'foo.bar.baz:desc', ... ]
-      //    helper function makes: [ ['vessels', 1], ['foo.bar.baz', -1], ...]
-      //    NeDB wants this:       { vessels: 1 , 'foo.bar.baz': -1, ... }
-      const nedbSortingObject = parseSortQuery(sort)
-        .reduce((acc, { field, direction }) => ({ ...acc, [field]: direction }), {})
-
+      const nedbSortingObject = this.parseSortQuery(sort instanceof Array ? sort : [sort])
       query.sort(nedbSortingObject)
     }
 
-    return new Promise((resolve, reject) => {
+    const collection: Array<Searchable> = await new Promise((resolve, reject) => {
       query.exec((err, res) => {
         if (err) reject(databaseError(err))
-        else resolve(res || [])
+        else resolve((res || []) as Array<Searchable>)
       })
     })
+
+    return collection.map(x => x.___document)
   }
 
-  count(searchParams: SearchQuery) {
+  count(searchParams: SearchQuery): Promise<number> {
     return new Promise((resolve, reject) => {
-      this.client.count(prepareSearch(searchParams), (err, res) => {
+      this.client.count(stringifyProperties(searchParams), (err, res) => {
         if (err) reject(databaseError(err))
         else resolve(res)
       })
     })
   }
 
-  index(documents) {
+  index(document: CanonicalEntity): Promise<void> {
     return new Promise((resolve, reject) =>
-      this.client.insert(documents, (err, res) => {
-        if (err) reject(databaseError(err))
-        else resolve(res)
-      })
-    )
-  }
-
-  update(searchParams, document) {
-    return new Promise((resolve, reject) =>
-      this.client.update(searchParams, document, { upsert: true, multi: true }, (err, res) => {
-        if (err) reject(databaseError(err))
-        else resolve(res)
-      })
+      this.client.update(
+        { id: document.id },
+        this.convertToSearchable(document),
+        { upsert: true, multi: true },
+        (err) => {
+          if (err) reject(databaseError(err))
+          else resolve()
+        }
+      )
     )
   }
 

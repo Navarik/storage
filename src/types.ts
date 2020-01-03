@@ -41,7 +41,7 @@ export interface ChangelogAdapter<T> {
 export interface Transaction<T> {
   promise: Promise<T>
   resolve: (message: T) => any
-  reject: (message: T) => any
+  reject: (error: Error) => any
 }
 
 export interface TransactionManager {
@@ -58,7 +58,7 @@ export type SearchQuery = StringMap
 export type SearchOptions = {
   limit?: number
   offset?: number
-  sort?: string
+  sort?: string|Array<string>
 }
 
 export interface SearchIndexAdapter<T> {

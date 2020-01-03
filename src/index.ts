@@ -1,19 +1,17 @@
 import { StringMap } from '@navarik/types'
 import { CoreDdl } from '@navarik/core-ddl'
 import * as uuidv5 from 'uuid/v5'
-import { ChangelogAdapter, UUID, Entity, EntityBody, EntityType, CanonicalEntity, PubSub, ValidationResponse, Observer, SchemaRegistryAdapter, CanonicalSchema, SearchOptions, SearchQuery } from './types'
-import { random } from './id-generator'
+import { ChangelogAdapter, SearchIndexAdapter, UUID, Entity, EntityBody, EntityType, CanonicalEntity, PubSub, ValidationResponse, Observer, SchemaRegistryAdapter, CanonicalSchema, SearchOptions, SearchQuery } from './types'
+import { random, hashString } from './id-generator'
 import { LocalTransactionManager } from './transaction'
 import { LocalState, NeDbIndexAdapter } from './local-state'
 import { ChangeLog, DefaultChangelogAdapter, UuidSignatureProvider } from './changelog'
 import { EventFanout } from './event-fan-out'
 import { whenMatches } from './utils'
 
-const SCHEMA_ID_NAMESPACE = '00000000-0000-0000-0000-000000000000'
-
 type StorageConfig = {
   changelog?: ChangelogAdapter<CanonicalEntity>
-  index?: object
+  index?: SearchIndexAdapter<CanonicalEntity>
   schema: SchemaRegistryAdapter|Array<CanonicalSchema>
   data?: any
 }
@@ -28,7 +26,7 @@ export class Storage {
     this.ddl = new CoreDdl({ schema: config.schema })
 
     const transactionManager = new LocalTransactionManager()
-    const signatureProvider = new UuidSignatureProvider(random())
+    const signatureProvider = new UuidSignatureProvider(random)
     const changelogAdapter = config.changelog
       || new DefaultChangelogAdapter({ content: config.data || [], signatureProvider })
 
@@ -98,7 +96,7 @@ export class Storage {
     const entity = await this.changelog.registerNew({
       type,
       body: content.body,
-      schema: uuidv5(JSON.stringify(content.schema), uuidv5(type, SCHEMA_ID_NAMESPACE))
+      schema: uuidv5(JSON.stringify(content.schema), hashString(type))
     })
 
     return entity
@@ -116,7 +114,7 @@ export class Storage {
     const entity = await this.changelog.registerUpdate({
       ...previous,
       body: content.body,
-      schema: uuidv5(JSON.stringify(content.schema), uuidv5(previous.type, SCHEMA_ID_NAMESPACE))
+      schema: uuidv5(JSON.stringify(content.schema), hashString(previous.type))
     })
 
     return entity
