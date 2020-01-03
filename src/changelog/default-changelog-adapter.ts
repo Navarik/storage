@@ -32,8 +32,6 @@ export class DefaultChangelogAdapter implements ChangelogAdapter<Entity> {
     for (const type of types) {
       for (const data of Object.values(this.log[type] || {})) {
         const record = data.id ? data : this.signatureProvider.signNew({
-          created_at: (new Date()).toISOString(),
-          modified_at: (new Date()).toISOString(),
           body: data,
           type,
           schema: ''

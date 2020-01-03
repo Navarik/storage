@@ -4,18 +4,18 @@ import { SchemaRegistryAdapter, CanonicalSchema, ValidationResponse, EntityBody 
 export type Timestamp = string
 export type EntityType = string
 export type UUID = string
-export type CanonicalEntity = {
-  id: UUID,
+
+export interface Entity extends Dictionary<any> {
+  type: EntityType
+  body: EntityBody
+  schema: UUID|CanonicalSchema
+}
+export interface CanonicalEntity extends Entity {
+  id: UUID
   version_id: UUID
   created_at: Timestamp
   modified_at: Timestamp
-  type: EntityType
-  body: EntityBody,
-  schema: UUID|CanonicalSchema
 }
-
-export interface Entity extends Dictionary<any> { body: EntityBody }
-export interface SignedEntity extends Entity { id: UUID, version_id: UUID }
 
 export type IdGenerator = (body: EntityBody) => UUID
 
