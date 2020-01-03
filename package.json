@@ -10,8 +10,6 @@
   "author": "Navarik Corp.",
   "dependencies": {
     "@navarik/core-ddl": "^1.0.4",
-    "@navarik/types": "^1.0.0",
-    "avsc": "^5.4.12",
     "nedb": "^1.8.0",
     "object-path": "^0.11.4",
     "uuid": "^3.3.2"
@@ -22,6 +20,7 @@
   },
   "license": "Proprietary",
   "devDependencies": {
+    "@navarik/types": "^1.0.0",
     "@types/mocha": "^5.2.7",
     "@types/nedb": "^1.8.9",
     "@types/node": "^12.12.22",
