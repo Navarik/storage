@@ -9,6 +9,7 @@
   "main": "dist",
   "author": "Navarik Corp.",
   "dependencies": {
+    "@navarik/core-ddl": "^1.0.4",
     "@navarik/types": "^1.0.0",
     "avsc": "^5.4.12",
     "nedb": "^1.8.0",

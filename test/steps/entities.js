@@ -17,7 +17,6 @@ export const createSteps = storage => ({
     response = await storage.create(type, body)
     expectEntity(response)
     expect(response.type).to.eql(type)
-    expect(response.version).to.eql(1)
     expect(response.body).to.eql(body)
 
     // Try to read it back by ID
@@ -25,7 +24,6 @@ export const createSteps = storage => ({
     response = await storage.get(id)
     expectEntity(response)
     expect(response.type).to.eql(type)
-    expect(response.version).to.eql(1)
     expect(response.body).to.eql(body)
   }),
 
@@ -39,7 +37,6 @@ export const createSteps = storage => ({
     response.forEach(async (entity, index) => {
       expectEntity(entity)
       expect(entity.type).to.eql(type)
-      expect(entity.version).to.eql(1)
       expect(entity.body).to.eql(body[index])
     })
 
@@ -50,7 +47,6 @@ export const createSteps = storage => ({
     response.forEach(async (entity, index) => {
       expectEntity(entity)
       expect(entity.type).to.eql(type)
-      expect(entity.version).to.eql(1)
       expect(entity.body).to.eql(body[index])
     })
   }),
@@ -79,6 +75,5 @@ export const createSteps = storage => ({
     const response = await storage.update(id, body)
     expectEntity(response)
     expect(response.body).to.eql(body)
-    expect(response.version).to.be(previous.version + 1)
   }
 })

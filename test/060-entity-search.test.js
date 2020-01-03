@@ -34,7 +34,6 @@ describe('Entity search', () => {
     expect(response).to.have.length(5)
     response.forEach(entity => {
       expectEntity(entity)
-      expect(entity.version).to.equal(1)
       expect(entity.type).to.equal('timelog.timelog_event')
     })
   })
@@ -64,7 +63,6 @@ describe('Entity search', () => {
     expect(response).to.have.length(2)
     response.forEach(entity => {
       expectEntity(entity)
-      expect(entity.version).to.equal(1)
       expect(entity.type).to.equal('timelog.timelog_event')
     })
 

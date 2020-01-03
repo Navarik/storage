@@ -55,13 +55,11 @@ export class LocalState {
   }
 
   async find(query = {}, options = {}) {
-    const searchables = await this.searchIndex.find(query, options)
-    return searchables.map(searchable => searchable.___document)
+    return await this.searchIndex.find(query, options)
   }
 
   async findContent(text, options = {}) {
-    const searchables = await this.searchIndex.findContent(text, options)
-    return searchables.map(searchable => searchable.___document)
+    return await this.searchIndex.findContent(text, options)
   }
 
   async count(query) {
