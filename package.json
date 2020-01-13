@@ -1,7 +1,7 @@
 {
   "name": "@navarik/storage",
   "description": "Document storage with schemas and versions",
-  "version": "6.5.1",
+  "version": "7.0.0",
   "scripts": {
     "build": "rm -rf dist && tsc -d",
     "test": "ts-mocha test/**/*.test.js"
