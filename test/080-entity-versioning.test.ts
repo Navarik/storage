@@ -1,10 +1,10 @@
-import * as expect from 'expect.js'
+import expect from 'expect.js'
 import { Storage } from '../src'
-import * as fixtureSchemata from './fixtures/schemata'
-import * as fixtures from './fixtures/data/versions.json'
 import { expectEntity } from './steps/checks'
-import { forAll } from './steps/generic'
 import { createSteps } from './steps/entities'
+
+const fixtureSchemata = require('./fixtures/schemata')
+const fixtures = require('./fixtures/data/versions.json')
 
 const storage = new Storage({
   schema: fixtureSchemata
@@ -21,7 +21,7 @@ describe('Entity versioning, index type', () => {
     id = entity.id
   })
 
-  it('can\'t update nonexistent entity', cannotUpdate('wow-such-much-doge', { a: 100, b: 500 }))
+  it("can't update nonexistent entity", cannotUpdate('wow-such-much-doge', { a: 100, b: 500 }))
 
   fixtures.slice(1).forEach((fixture, version) =>
     it(`correctly updates entity to version ${version + 2}`, () => canUpdate(id, fixture)())

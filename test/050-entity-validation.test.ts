@@ -1,6 +1,7 @@
-import * as expect from 'expect.js'
+import expect from 'expect.js'
 import { Storage } from '../src'
-import * as fixtureSchemata from './fixtures/schemata'
+
+const fixtureSchemata = require('./fixtures/schemata')
 
 const storage = new Storage({
   schema: fixtureSchemata
@@ -42,6 +43,6 @@ describe('Entity validation, index type', () => {
 
     response = await storage.validate('wow.such.doge!', invalidData)
     expect(response.isValid).to.be(false)
-    expect(response.message).to.be.equal('Unknown type: wow.such.doge!')
+    expect(response.message).to.be.equal('Unknown schema: wow.such.doge!')
   })
 })

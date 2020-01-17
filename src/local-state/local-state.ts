@@ -1,11 +1,11 @@
 import { SearchQuery, SearchOptions, SearchIndexAdapter, CanonicalEntity, UUID } from '../types'
 
 type LocalStateConfig = {
-  searchIndex: SearchIndexAdapter<CanonicalEntity>
+  searchIndex: SearchIndexAdapter
 }
 
 export class LocalState {
-  private searchIndex: SearchIndexAdapter<CanonicalEntity>
+  private searchIndex: SearchIndexAdapter
 
   constructor({ searchIndex }: LocalStateConfig) {
     this.searchIndex = searchIndex
@@ -29,8 +29,12 @@ export class LocalState {
     return this.searchIndex.count(query)
   }
 
-  async reset() {
-    await this.searchIndex.reset()
+  async init() {
+    await this.searchIndex.init()
+  }
+
+  async isCleant() {
+    return this.searchIndex.isClean()
   }
 
   isConnected() {

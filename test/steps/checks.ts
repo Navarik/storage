@@ -1,4 +1,4 @@
-import * as expect from 'expect.js'
+import expect from 'expect.js'
 
 export const expectEntity = (given) => {
   expect(given).to.be.an('object')

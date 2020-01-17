@@ -1,7 +1,7 @@
-import * as expect from 'expect.js'
+import expect from 'expect.js'
 import { Storage } from '../src'
 
-const storage = new Storage({ schema: [] })
+const storage = new Storage()
 
 describe('Empty state', () => {
   before(() => storage.init())

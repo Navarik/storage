@@ -1,6 +1,7 @@
 import { Storage } from '../src'
-import * as fixtureSchemata from './fixtures/schemata'
 import { createSteps } from './steps/entities'
+
+const fixtureSchemata = require('./fixtures/schemata')
 
 const storage = new Storage({
   schema: fixtureSchemata

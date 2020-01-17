@@ -1,12 +1,13 @@
-import * as expect from 'expect.js'
+import expect from 'expect.js'
 import { Storage } from '../src'
-import * as fixtureSchemata from './fixtures/schemata'
-import * as fixturesEvents from './fixtures/data/events.json'
-import * as fixturesTasks from './fixtures/data/data-entry-tasks.json'
-import * as fixturesJobs from './fixtures/data/job-orders.json'
-import * as fixturesUsers from './fixtures/data/users.json'
-import * as fixturesMessages from './fixtures/data/messages.json'
 import { expectEntity, extractMembers, arraysAreSame } from './steps/checks'
+
+const fixtureSchemata = require('./fixtures/schemata')
+const fixturesEvents = require('./fixtures/data/events.json')
+const fixturesTasks = require('./fixtures/data/data-entry-tasks.json')
+const fixturesJobs = require('./fixtures/data/job-orders.json')
+const fixturesUsers = require('./fixtures/data/users.json')
+const fixturesMessages = require('./fixtures/data/messages.json')
 
 const storage = new Storage({
   schema: fixtureSchemata,
@@ -22,28 +23,26 @@ const storage = new Storage({
 describe('Sorting of search results', () => {
   before(() => storage.init())
 
-  // Test that the simplest form of sorting works.
   it("can perform ascending sorting on top-level field", async () => {
     const testSort = 'first_name'
-    const searchLimitations = {type: 'profile.user'}
+    const searchLimitations = { type: 'profile.user' }
     const inspectProperty = 'body.first_name'
     const correctPropertyOrder = [ 'Fraser', 'King', 'Manning' ]
 
-    const response = await storage.find(searchLimitations, { sort: testSort})
+    const response = await storage.find(searchLimitations, { sort: testSort })
     const propertyOrder = extractMembers(response, inspectProperty)
 
     expect(arraysAreSame(propertyOrder, correctPropertyOrder)).to.be.ok()
     response.forEach(expectEntity)
   })
 
-  // Test that sorting in reverse works.
   it("can perform descending sorting on top-level field", async () => {
     const testSort = 'first_name:desc'
     const searchLimitations = {type: 'profile.user'}
     const inspectProperty = 'body.first_name'
     const correctPropertyOrder = [ 'Manning', 'King', 'Fraser' ]
 
-    const response = await storage.find(searchLimitations, { sort: testSort})
+    const response = await storage.find(searchLimitations, { sort: testSort })
     const propertyOrder = extractMembers(response, inspectProperty)
 
     expect(response).to.be.an('array')
@@ -51,14 +50,13 @@ describe('Sorting of search results', () => {
     response.forEach(expectEntity)
   })
 
-  // Test that sorting for subfields works.
   it("can sort when target is a subfield", async () => {
     const testSort = 'summary.fileName:desc'
     const searchLimitations = {type: 'dataEntry.task'}
     const inspectProperty = 'body.summary.vefInspReportId'
-    const correctPropertyOrder = [ 6, 3, 2, 1, 5, 4 ]
+    const correctPropertyOrder = [ 6, 1, 5, 4 ]
 
-    const response = await storage.find(searchLimitations, { sort: testSort})
+    const response = await storage.find(searchLimitations, { sort: testSort })
     const propertyOrder = extractMembers(response, inspectProperty)
 
     expect(response).to.be.an('array')
@@ -66,12 +64,11 @@ describe('Sorting of search results', () => {
     response.forEach(expectEntity)
   })
 
-  // Test that sorting works when some fields are missing from test data.
   it("can sort when some fields are missing", async () => {
     const testSort = 'summary.vessels:desc'
     const searchLimitations = {type: 'dataEntry.task'}
     const inspectProperty = 'body.summary.vefInspReportId'
-    const correctPropertySubOrder = [ 5, 6, 3]
+    const correctPropertySubOrder = [ 5, 6 ]
 
     const response = await storage.find(searchLimitations, { sort: testSort})
     const propertyOrder = extractMembers(response, inspectProperty)
@@ -82,7 +79,6 @@ describe('Sorting of search results', () => {
     response.forEach(expectEntity)
   })
 
-  // Test that sorting works when trying to read a subfield of a null field.
   it("can sort by subfield when higher field is missing", async () => {
     const testSort = 'summary.contract.cargos:desc'  // Some data have no contract.
     const searchLimitations = {type: 'dataEntry.task'}
@@ -117,19 +113,18 @@ describe('Sorting of search results', () => {
     response.forEach(expectEntity)
   })
 
-  // Test that sorting and subsorting by two fields works
   it("can sort and subsort", async () => {
     const testSort = ['summary.fileFormat', 'summary.fileName']
     const searchLimitations = {type: 'dataEntry.task'}
     const inspectProperty = 'body.summary.fileName'
-    const correctPropertyOrder = [ 'message_330564.html',
-    '599934_CBC_23_3525030_DISCHARGE_WARREN_EHC_45_06-05-18.pdf',
-    '600109_LIN126025BPAM06-58Summary18-18-06-03182.pdf',
-    'CCIC_Singapore_Pte_Ltd.pdf',
-    'Inspectorate.pdf',
-    'LAN6497CHEV04-79OperationalReports18-27-18-0727.pdf' ]
+    const correctPropertyOrder = [
+      'message_330564.html',
+      '599934_CBC_23_3525030_DISCHARGE_WARREN_EHC_45_06-05-18.pdf',
+      '600109_LIN126025BPAM06-58Summary18-18-06-03182.pdf',
+      'CCIC_Singapore_Pte_Ltd.pdf'
+    ]
 
-    const response = await storage.find(searchLimitations, { sort: testSort})
+    const response = await storage.find(searchLimitations, { sort: testSort })
     const propertyOrder = extractMembers(response, inspectProperty)
 
     expect(response).to.be.an('array')
@@ -145,7 +140,7 @@ describe('Sorting of search results', () => {
     const testSort = ['summary.producedBy:desc', 'summary.assignedUserId:asc']
     const searchLimitations = {type: 'dataEntry.task'}
     const inspectProperty = 'body.summary.vefInspReportId'
-    const correctPropertyOrder = [ 1, 2, 3, 6, 5, 4 ]
+    const correctPropertyOrder = [ 1, 6, 5, 4 ]
 
     const response = await storage.find(searchLimitations, { sort: testSort})
     const propertyOrder = extractMembers(response, inspectProperty)

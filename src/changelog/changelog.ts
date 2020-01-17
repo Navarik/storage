@@ -1,33 +1,30 @@
-import { ChangelogAdapter, SignatureProvider, TransactionManager, Observer, Entity, CanonicalEntity } from '../types'
+import { ChangelogAdapter, TransactionManager, Observer, CanonicalEntity } from '../types'
 
 type ChangelogConfig = {
-  adapter: ChangelogAdapter<CanonicalEntity>
-  signatureProvider: SignatureProvider
+  adapter: ChangelogAdapter
   transactionManager: TransactionManager
 }
 
 export class ChangeLog {
-  private adapter: ChangelogAdapter<CanonicalEntity>
-  private signatureProvider: SignatureProvider
+  private adapter: ChangelogAdapter
   private transactionManager: TransactionManager
-  private observer: Observer<CanonicalEntity>|null
+  private observer: Observer|null
 
-  constructor({ adapter, signatureProvider, transactionManager }: ChangelogConfig) {
+  constructor({ adapter, transactionManager }: ChangelogConfig) {
     this.adapter = adapter
-    this.signatureProvider = signatureProvider
     this.transactionManager = transactionManager
     this.observer = null
 
-    this.adapter.observe(async (record) => {
+    this.adapter.observe(async (changeEvent) => {
       if (this.observer) {
-        await this.observer(record)
+        await this.observer(changeEvent)
       }
 
-      this.transactionManager.commit(record.version_id, record)
+      this.transactionManager.commit(changeEvent.entity.version_id)
     })
   }
 
-  onChange(observer: Observer<CanonicalEntity>) {
+  onChange(observer: Observer) {
     this.observer = observer
   }
 
@@ -35,27 +32,41 @@ export class ChangeLog {
     return this.adapter.isConnected()
   }
 
-  reconstruct(topics: Array<string>) {
-    return this.adapter.init(topics)
+  init() {
+    return this.adapter.init()
   }
 
-  async registerNew(entity: Entity) {
-    const firstVersion = this.signatureProvider.signNew(entity)
-    const transaction = this.transactionManager.start(firstVersion.version_id)
-    await this.adapter.write(firstVersion)
-
-    return transaction.promise
+  reconstruct() {
+    return this.adapter.reset()
   }
 
-  async registerUpdate(entity: CanonicalEntity) {
-    const newVersion = this.signatureProvider.signVersion(entity)
-    if (entity.version_id === newVersion.version_id) {
+  async registerNew(entity: CanonicalEntity) {
+    const transaction = this.transactionManager.start(entity.version_id, entity)
+    const changeEvent = {
+      action: 'create',
+      entity,
+      parent: null,
+      timestamp: entity.modified_at
+    }
+    await this.adapter.write(changeEvent)
+
+    return transaction
+  }
+
+  async registerUpdate(entity: CanonicalEntity, previous: CanonicalEntity) {
+    if (entity.version_id === previous.version_id) {
       return entity
     }
 
-    const transaction = this.transactionManager.start(newVersion.version_id)
-    await this.adapter.write(newVersion)
+    const transaction = this.transactionManager.start(entity.version_id, entity)
+    const changeEvent = {
+      action: 'update',
+      entity,
+      parent: previous.version_id,
+      timestamp: entity.modified_at
+    }
+    await this.adapter.write(changeEvent)
 
-    return transaction.promise
+    return transaction
   }
 }

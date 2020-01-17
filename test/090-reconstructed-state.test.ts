@@ -1,9 +1,10 @@
 import { Storage } from '../src'
-import * as fixtureSchemata from './fixtures/schemata'
-import * as fixturesEvents from './fixtures/data/events.json'
-import * as fixturesJobs from './fixtures/data/job-orders.json'
 import { forAll } from './steps/generic'
 import { createSteps } from './steps/entities'
+
+const fixtureSchemata = require('./fixtures/schemata')
+const fixturesEvents = require('./fixtures/data/events.json')
+const fixturesJobs = require('./fixtures/data/job-orders.json')
 
 const storage = new Storage({
   schema: fixtureSchemata,

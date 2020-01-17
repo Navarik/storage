@@ -1,9 +1,10 @@
-import * as expect from 'expect.js'
+import expect from 'expect.js'
 import { Storage } from '../src'
-import * as fixturesEvents from './fixtures/data/events'
-import * as fixtureSchemata from './fixtures/schemata'
 import { forAll } from './steps/generic'
 import { createSteps } from './steps/entities'
+
+const fixturesEvents = require('./fixtures/data/events')
+const fixtureSchemata = require('./fixtures/schemata')
 
 const storage = new Storage({
   schema: fixtureSchemata

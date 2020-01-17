@@ -9,6 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "strict": true,
+    "esModuleInterop": true,
     "noUnusedLocals": true,
     "lib": ["ES2018"],
     "types": ["node", "mocha"]

@@ -1,13 +1,14 @@
-import * as expect from 'expect.js'
+import expect from 'expect.js'
 import { Storage } from '../src'
-import * as fixtureSchemata from './fixtures/schemata'
-import * as fixturesEvents from './fixtures/data/events.json'
-import * as fixturesJobs from './fixtures/data/job-orders.json'
-import * as fixturesUsers from './fixtures/data/users.json'
-import * as fixturesMessages from './fixtures/data/messages.json'
 import { expectEntity } from './steps/checks'
 import { forAll } from './steps/generic'
 import { createSteps } from './steps/entities'
+
+const fixtureSchemata = require('./fixtures/schemata')
+const fixturesEvents = require('./fixtures/data/events.json')
+const fixturesJobs = require('./fixtures/data/job-orders.json')
+const fixturesUsers = require('./fixtures/data/users.json')
+const fixturesMessages = require('./fixtures/data/messages.json')
 
 const storage = new Storage({
   schema: fixtureSchemata
@@ -50,11 +51,6 @@ describe('Entity search', () => {
     expect(response).to.be.an('array')
     expect(response).to.have.length(5)
     response.forEach(expectEntity)
-
-    response = await storage.find({ sender: 1, job_order: 13 })
-    expect(response).to.be.an('array')
-    expect(response).to.have.length(5)
-    response.forEach(expectEntity)
   })
 
   it("can find entities by type and combination of fields", async () => {
@@ -65,10 +61,6 @@ describe('Entity search', () => {
       expectEntity(entity)
       expect(entity.type).to.equal('timelog.timelog_event')
     })
-
-    response = await storage.find({ sender: 1, job_order: 13, type: 'timelog.timelog_event' })
-    expect(response).to.be.an('array')
-    expect(response).to.have.length(2)
   })
 
   // it("can find entities by case-insensitive substring", async () => {

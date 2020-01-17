@@ -1,58 +1,75 @@
-import { StringMap } from '@navarik/types'
-import { CoreDdl } from '@navarik/core-ddl'
-import * as uuidv5 from 'uuid/v5'
-import { ChangelogAdapter, SearchIndexAdapter, UUID, Entity, EntityBody, EntityType, CanonicalEntity, PubSub, ValidationResponse, Observer, SchemaRegistryAdapter, CanonicalSchema, SearchOptions, SearchQuery } from './types'
-import { random, hashString } from './id-generator'
+import { Document, Dictionary } from '@navarik/types'
+import { CoreDdl, SchemaRegistryAdapter, CanonicalSchema, ValidationResponse } from '@navarik/core-ddl'
+import { ChangelogAdapter, SearchIndexAdapter, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, EntityFactory } from './types'
+import uuidv4 from 'uuid/v4'
 import { LocalTransactionManager } from './transaction'
 import { LocalState, NeDbIndexAdapter } from './local-state'
-import { ChangeLog, DefaultChangelogAdapter, UuidSignatureProvider } from './changelog'
-import { EventFanout } from './event-fan-out'
-import { whenMatches } from './utils'
+import { ChangeLog, DefaultChangelogAdapter } from './changelog'
+import { CanonicalEntityFactory } from './canonical-entity-factory'
+
+export * from './types'
 
 type StorageConfig = {
-  changelog?: ChangelogAdapter<CanonicalEntity>
-  index?: SearchIndexAdapter<CanonicalEntity>
-  schema: SchemaRegistryAdapter|Array<CanonicalSchema>
-  data?: any
+  changelog?: ChangelogAdapter
+  index?: SearchIndexAdapter
+  schemaRegistry?: SchemaRegistryAdapter
+  schema?: Array<CanonicalSchema>
+  data?: Dictionary<Array<Document>>
 }
 
 export class Storage {
   private ddl: CoreDdl
   private state: LocalState
   private changelog: ChangeLog
-  private pubsub: PubSub<Entity>
+  private observers: Array<Observer>
+  private factory: EntityFactory
 
-  constructor(config: StorageConfig) {
-    this.ddl = new CoreDdl({ schema: config.schema })
+  constructor({ changelog, index, schemaRegistry, schema = [], data = {} }: StorageConfig = {}) {
+    this.observers = []
+    this.ddl = new CoreDdl({ schema, registry: schemaRegistry })
+    this.factory = new CanonicalEntityFactory(() => uuidv4())
 
-    const transactionManager = new LocalTransactionManager()
-    const signatureProvider = new UuidSignatureProvider(random)
-    const changelogAdapter = config.changelog
-      || new DefaultChangelogAdapter({ content: config.data || [], signatureProvider })
+    // Static data is used primarily for automated tests
+    const staticChangelog = []
+    for (const type in data) {
+      const collection = data[type] || []
+      for (const document of collection) {
+        const entity = this.factory.create(this.ddl.format(type, document))
+        staticChangelog.push({
+          action: 'create',
+          entity,
+          parent: null,
+          timestamp: entity.created_at
+        })
+      }
+    }
 
     this.changelog = new ChangeLog({
-      adapter: changelogAdapter,
-      signatureProvider,
-      transactionManager
+      adapter: changelog || new DefaultChangelogAdapter(staticChangelog),
+      transactionManager: new LocalTransactionManager()
     })
 
-    const searchIndex = config.index
-      || new NeDbIndexAdapter()
+    this.state = new LocalState({
+      searchIndex: index || new NeDbIndexAdapter()
+    })
 
-    this.state = new LocalState({ searchIndex })
-    this.pubsub = new EventFanout<Entity>()
+    this.changelog.onChange(async (changeEvent) => {
+      await this.state.set(changeEvent.entity)
+      await this.publishChange(changeEvent)
+    })
+  }
+
+  private async publishChange(event: ChangeEvent) {
+    await Promise.all(this.observers.map(f => f(event)))
   }
 
   async init() {
-    await this.state.reset()
+    await this.state.init()
+    await this.changelog.init()
 
-    this.changelog.onChange(async (entity) => {
-      await this.state.set(entity)
-      await this.pubsub.publish(entity)
-    })
-
-    const types = this.ddl.types()
-    await this.changelog.reconstruct(types)
+    if (!(await this.state.isCleant())) {
+      await this.changelog.reconstruct()
+    }
   }
 
   isConnected() {
@@ -63,8 +80,12 @@ export class Storage {
     return this.ddl.types()
   }
 
-  getSchema(type: EntityType) {
-    return this.ddl.getSchema(type)
+  describe(type: string) {
+    return this.ddl.describe(type)
+  }
+
+  define(schema: CanonicalSchema) {
+    return this.ddl.define(schema)
   }
 
   async get(id: UUID): Promise<CanonicalEntity> {
@@ -79,48 +100,50 @@ export class Storage {
     return this.state.count(query)
   }
 
-  validate(type: EntityType, body: EntityBody): ValidationResponse {
+  validate(type: string, body: Document): ValidationResponse {
     return this.ddl.validate(type, body)
   }
 
-  isValid(type: EntityType, body: EntityBody): boolean {
+  isValid(type: string, body: Document): boolean {
     return this.ddl.validate(type, body).isValid
   }
 
-  async create(type: EntityType, body: EntityBody = {}): Promise<CanonicalEntity|Array<CanonicalEntity>> {
-    if (body instanceof Array) {
-      return Promise.all(body.map(x => this.create(type, x))) as Promise<Array<CanonicalEntity>>
-    }
-
+  async create(type: string, body: Document): Promise<CanonicalEntity> {
     const content = await this.ddl.format(type, body)
-    const entity = await this.changelog.registerNew({
-      type,
-      body: content.body,
-      schema: uuidv5(JSON.stringify(content.schema), hashString(type))
-    })
+    const entity = this.factory.create(content)
 
-    return entity
+    return this.changelog.registerNew(entity)
   }
 
-  async update(id: UUID, body: EntityBody) {
-    const previous = await this.state.get(id)
+  async createBulk(type: string, collection: Array<Document>): Promise<Array<CanonicalEntity>> {
+    return Promise.all(collection.map(x => this.create(type, x)))
+  }
 
+  async update(id: UUID, body: Document) {
+    const previous = await this.state.get(id)
     if (!previous) {
-      throw new Error(`[Storage] Can't update ${id}: it doesn't exist.`)
+      throw new Error(`[Storage] Can't update entity that doesn't exist: ${id}`)
     }
 
-    // Note: every time you update the entity it will update its schema as well
     const content = await this.ddl.format(previous.type, { ...previous.body, ...body })
-    const entity = await this.changelog.registerUpdate({
-      ...previous,
-      body: content.body,
-      schema: uuidv5(JSON.stringify(content.schema), hashString(previous.type))
-    })
+    const entity = this.factory.createVersion(content, previous)
 
-    return entity
+    return this.changelog.registerUpdate(entity, previous)
   }
 
-  observe(handler: Observer<CanonicalEntity>, filter: StringMap = {}) {
-    this.pubsub.subscribe(whenMatches(filter, handler))
+  async cast(id: UUID, type: string) {
+    const previous = await this.state.get(id)
+    if (!previous) {
+      throw new Error(`[Storage] Can't cast entity that doesn't exist: ${id}`)
+    }
+
+    const content = await this.ddl.format(type, previous.body)
+    const entity = this.factory.createVersion(content, previous)
+
+    return this.changelog.registerUpdate(entity, previous)
+  }
+
+  observe(handler: Observer) {
+    this.observers.push(handler)
   }
 }
