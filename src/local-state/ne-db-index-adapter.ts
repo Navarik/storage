@@ -1,4 +1,4 @@
-import { Dictionary, DataField } from '@navarik/types'
+import { Dictionary } from '@navarik/types'
 import Database from 'nedb'
 import { SearchIndexAdapter, SearchQuery, SearchOptions, CanonicalEntity, UUID } from '../types'
 
