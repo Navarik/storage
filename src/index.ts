@@ -67,17 +67,20 @@ export class Storage {
 
   async up() {
     await this.searchIndex.up()
-    await this.changelog.init()
+    await this.changelog.up()
 
     if (!(await this.searchIndex.isClean())) {
       await this.changelog.reset()
     }
   }
 
-  async down() {}
+  async down() {
+    await this.changelog.down()
+    await this.searchIndex.down()
+  }
 
   isHealthy() {
-    return this.changelog.isConnected() && this.searchIndex.isHealthy()
+    return this.changelog.isHealthy() && this.searchIndex.isHealthy()
   }
 
   types() {

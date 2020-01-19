@@ -36,8 +36,9 @@ export interface Changelog {
   observe(handler: Observer): void
   write(message: ChangeEvent): Promise<void>
   reset(): Promise<void>
-  init(): Promise<void>
-  isConnected(): boolean
+  up(): Promise<void>
+  down(): Promise<void>
+  isHealthy(): boolean
 }
 
 export type SearchQuery = Dictionary<string>
