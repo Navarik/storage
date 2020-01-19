@@ -17,7 +17,8 @@ const storage = new Storage({
 const { canCreate, canFind } = createSteps(storage)
 
 describe('Entity search', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("correctly creates new entities: timelog events", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
   it("correctly creates new entities: job orders", forAll(fixturesJobs, canCreate('document.job_order')))

@@ -17,7 +17,8 @@ const storage = new Storage({
 const entitySteps = createSteps(storage)
 
 describe('State reconstruction', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("should have pre-defined entities", forAll(fixturesEvents, entitySteps.canFind))
   it("should have pre-defined entities of a different type", forAll(fixturesJobs, entitySteps.canFind))

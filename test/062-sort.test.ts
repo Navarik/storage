@@ -21,7 +21,8 @@ const storage = new Storage({
 })
 
 describe('Sorting of search results', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("can perform ascending sorting on top-level field", async () => {
     const testSort = 'first_name'

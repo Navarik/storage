@@ -13,7 +13,8 @@ const storage = new Storage({
 const { canFind, canCreateCollection } = createSteps(storage)
 
 describe('Bulk entity creation', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("correctly creates collection of new entities",
     canCreateCollection('timelog.timelog_event', fixturesEvents)

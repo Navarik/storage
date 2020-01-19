@@ -16,10 +16,11 @@ let id
 
 describe('Entity versioning, index type', () => {
   before(async () => {
-    await storage.init()
+    await storage.up()
     const entity = await storage.create('profile.user', fixtures[0])
     id = entity.id
   })
+  after(() => storage.down())
 
   it("can't update nonexistent entity", cannotUpdate('wow-such-much-doge', { a: 100, b: 500 }))
 

@@ -8,7 +8,8 @@ const storage = new Storage({
 })
 
 describe('Static schema, no data', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("should have defined types", async () => {
     const response = storage.types()

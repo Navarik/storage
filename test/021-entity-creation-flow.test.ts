@@ -13,7 +13,8 @@ const storage = new Storage({
 const { canCreate, canFind } = createSteps(storage)
 
 describe('Entity creation flow', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("doesn't have entities before they are created", async () => {
     const response = await storage.find()

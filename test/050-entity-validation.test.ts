@@ -24,7 +24,8 @@ const validData = {
 }
 
 describe('Entity validation, index type', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("can recognize valid entities", async () => {
     const response = await storage.isValid('profile.user', validData)

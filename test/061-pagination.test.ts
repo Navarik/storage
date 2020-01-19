@@ -19,7 +19,8 @@ const storage = new Storage({
 })
 
 describe('Search pagination', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("can limit the search results", async () => {
     let response = await storage.find({ sender: '1', job_order: '13' }, { limit: 2 })

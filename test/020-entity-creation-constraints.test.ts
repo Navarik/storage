@@ -10,7 +10,8 @@ const storage = new Storage({
 const { canCreate, cannotCreate } = createSteps(storage)
 
 describe('Entity format and constraints', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("can't create entity of unknown type", cannotCreate('wow.doge', {}))
   it("can't create malformed entity", cannotCreate('profile.user', {

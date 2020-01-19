@@ -16,7 +16,8 @@ const storage = new Storage({
 const fixtureSchemataNames = fixtureSchemata.map(x => x.name)
 
 describe('Entity counts', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("can count entities", async () => {
     const response = await storage.count()

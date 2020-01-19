@@ -10,7 +10,8 @@ const storage = new Storage({
 })
 
 describe('Observing changes', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("can observe entity changes", async () => {
     const results = []

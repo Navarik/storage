@@ -7,6 +7,7 @@ export type UUID = string
 export interface CanonicalEntity {
   id: UUID
   version_id: UUID
+  parent_id: UUID|null
   created_at: Timestamp
   modified_at: Timestamp
   type: string
@@ -15,11 +16,6 @@ export interface CanonicalEntity {
 }
 
 export type IdGenerator = (body: Document) => UUID
-
-export interface EntityFactory {
-  create(entity: FormattedEntity): CanonicalEntity
-  createVersion(current: FormattedEntity, previous: CanonicalEntity): CanonicalEntity
-}
 
 export interface TransactionManager {
   commit(key: string): void
@@ -36,7 +32,7 @@ export interface ChangeEvent {
 
 export type Observer = (event: ChangeEvent) => void|Promise<void>
 
-export interface ChangelogAdapter {
+export interface Changelog {
   observe(handler: Observer): void
   write(message: ChangeEvent): Promise<void>
   reset(): Promise<void>
@@ -51,12 +47,15 @@ export type SearchOptions = {
   sort?: string|Array<string>
 }
 
-export interface SearchIndexAdapter {
+export interface SearchIndex {
   index(document: CanonicalEntity): Promise<void>
+  update(document: CanonicalEntity): Promise<void>
+  delete(document: CanonicalEntity): Promise<void>
   find(query: SearchQuery, options: SearchOptions): Promise<Array<CanonicalEntity>>
   count(query: SearchQuery): Promise<number>
-  init(): Promise<void>
-  isConnected(): boolean
+  up(): Promise<void>
+  down(): Promise<void>
+  isHealthy(): boolean
   isClean(): Promise<boolean>
 }
 
