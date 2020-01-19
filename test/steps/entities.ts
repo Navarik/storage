@@ -1,5 +1,5 @@
-import * as expect from 'expect.js'
-import * as curry from 'curry'
+import expect from 'expect.js'
+import curry from 'curry'
 
 import { expectEntity } from './checks'
 
@@ -31,7 +31,7 @@ export const createSteps = storage => ({
     let response
 
     // Create entity
-    response = await storage.create(type, body)
+    response = await storage.createBulk(type, body)
     expect(response).to.be.an('array')
     expect(response).to.have.length(body.length)
     response.forEach(async (entity, index) => {

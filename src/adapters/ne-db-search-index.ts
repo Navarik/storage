@@ -1,33 +1,39 @@
 import { Dictionary } from '@navarik/types'
-import * as Database from 'nedb'
-import { SearchIndexAdapter, SearchQuery, SearchOptions, CanonicalEntity, UUID, EntityType } from '../types'
+import Database from 'nedb'
+import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, UUID } from '../types'
 
-type Stringified = { [key: string]: string|Stringified }
-
-interface Searchable extends Stringified {
+interface Searchable {
   ___document: CanonicalEntity
   _id?: any
   id: UUID
-  type: EntityType
+  type: string
 }
 
-const stringifyProperties = (data: any): string|Stringified => {
+const stringifyProperties = (data: any): any => {
   if (!data) return ''
-  if (typeof data !== 'object') return `${data}`
 
-  const stringified: Dictionary<any> = {}
-  for (const field in data) {
-    stringified[field] = stringifyProperties(data[field])
+  if (data instanceof Array) {
+    return data.map(stringifyProperties)
   }
 
-  return stringified
+  if (typeof data ==='object') {
+    const stringified: Dictionary<any> = {}
+    for (const field in data) {
+      if (typeof data[field] !== 'function') {
+        stringified[field] = stringifyProperties(data[field])
+      }
+    }
+    return stringified
+  }
+
+  return `${data}`
 }
 
 const databaseError = (err: Error) => {
   throw new Error(`[NeDB] Database error: ${err.message}`)
 }
 
-export class NeDbIndexAdapter implements SearchIndexAdapter<CanonicalEntity> {
+export class NeDbSearchIndex implements SearchIndex {
   private client: Database
 
   constructor() {
@@ -41,7 +47,7 @@ export class NeDbIndexAdapter implements SearchIndexAdapter<CanonicalEntity> {
       ___document: document,
       id: document.id,
       type: document.type,
-      ...(stringifyProperties(document.body) as Stringified)
+      ...stringifyProperties(document.body)
     }
 
     return searchable
@@ -112,16 +118,35 @@ export class NeDbIndexAdapter implements SearchIndexAdapter<CanonicalEntity> {
     )
   }
 
-  async reset() {
+  update(document: CanonicalEntity): Promise<void> {
+    return this.index(document)
+  }
+
+  delete(document: CanonicalEntity): Promise<void> {
+    return new Promise((resolve, reject) =>
+      this.client.remove(
+        { id: document.id },
+        {},
+        (err) => {
+          if (err) reject(databaseError(err))
+          else resolve()
+        }
+      )
+    )
+  }
+
+  async up() {
     this.client = new Database()
     this.client.ensureIndex({ fieldName: 'id', unique: true })
   }
 
-  connect() {
-    return Promise.resolve(true)
+  async down() {}
+
+  isHealthy() {
+    return true
   }
 
-  isConnected() {
-    return true
+  async isClean() {
+    return false
   }
 }

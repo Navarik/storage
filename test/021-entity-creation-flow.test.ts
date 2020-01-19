@@ -1,9 +1,10 @@
-import * as expect from 'expect.js'
+import expect from 'expect.js'
 import { Storage } from '../src'
-import * as fixtureSchemata from './fixtures/schemata'
-import * as fixturesEvents from './fixtures/data/events'
 import { forAll } from './steps/generic'
 import { createSteps } from './steps/entities'
+
+const fixtureSchemata = require('./fixtures/schemata')
+const fixturesEvents = require('./fixtures/data/events')
 
 const storage = new Storage({
   schema: fixtureSchemata
@@ -12,7 +13,8 @@ const storage = new Storage({
 const { canCreate, canFind } = createSteps(storage)
 
 describe('Entity creation flow', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("doesn't have entities before they are created", async () => {
     const response = await storage.find()
@@ -22,7 +24,7 @@ describe('Entity creation flow', () => {
 
   it("can't get entities before they are created", async () => {
     const response = await storage.get('nope')
-    expect(response).to.be.undefined
+    expect(response).to.be(undefined)
   })
 
   it("correctly creates new entities", forAll(fixturesEvents, canCreate('timelog.timelog_event')))

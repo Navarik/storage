@@ -1,6 +1,7 @@
 import { Storage } from '../src'
-import * as fixtureSchemata from './fixtures/schemata'
 import { createSteps } from './steps/entities'
+
+const fixtureSchemata = require('./fixtures/schemata')
 
 const storage = new Storage({
   schema: fixtureSchemata
@@ -9,7 +10,8 @@ const storage = new Storage({
 const { canCreate, cannotCreate } = createSteps(storage)
 
 describe('Entity format and constraints', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("can't create entity of unknown type", cannotCreate('wow.doge', {}))
   it("can't create malformed entity", cannotCreate('profile.user', {

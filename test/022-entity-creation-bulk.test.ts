@@ -1,9 +1,10 @@
-import * as expect from 'expect.js'
+import expect from 'expect.js'
 import { Storage } from '../src'
-import * as fixturesEvents from './fixtures/data/events'
-import * as fixtureSchemata from './fixtures/schemata'
 import { forAll } from './steps/generic'
 import { createSteps } from './steps/entities'
+
+const fixturesEvents = require('./fixtures/data/events')
+const fixtureSchemata = require('./fixtures/schemata')
 
 const storage = new Storage({
   schema: fixtureSchemata
@@ -12,7 +13,8 @@ const storage = new Storage({
 const { canFind, canCreateCollection } = createSteps(storage)
 
 describe('Bulk entity creation', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("correctly creates collection of new entities",
     canCreateCollection('timelog.timelog_event', fixturesEvents)

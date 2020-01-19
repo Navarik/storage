@@ -1,9 +1,10 @@
 import { Storage } from '../src'
-import * as fixtureSchemata from './fixtures/schemata'
-import * as fixturesEvents from './fixtures/data/events.json'
-import * as fixturesJobs from './fixtures/data/job-orders.json'
 import { forAll } from './steps/generic'
 import { createSteps } from './steps/entities'
+
+const fixtureSchemata = require('./fixtures/schemata')
+const fixturesEvents = require('./fixtures/data/events.json')
+const fixturesJobs = require('./fixtures/data/job-orders.json')
 
 const storage = new Storage({
   schema: fixtureSchemata,
@@ -16,7 +17,8 @@ const storage = new Storage({
 const entitySteps = createSteps(storage)
 
 describe('State reconstruction', () => {
-  before(() => storage.init())
+  before(() => storage.up())
+  after(() => storage.down())
 
   it("should have pre-defined entities", forAll(fixturesEvents, entitySteps.canFind))
   it("should have pre-defined entities of a different type", forAll(fixturesJobs, entitySteps.canFind))

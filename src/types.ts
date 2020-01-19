@@ -1,72 +1,63 @@
-import { Dictionary, StringMap } from '@navarik/types'
-import { SchemaRegistryAdapter, CanonicalSchema, ValidationResponse, EntityBody } from '@navarik/core-ddl/src/types'
+import { Dictionary, Document } from '@navarik/types'
+import { SchemaRegistryAdapter, CanonicalSchema, ValidationResponse, FormattedEntity } from '@navarik/core-ddl'
 
 export type Timestamp = string
-export type EntityType = string
 export type UUID = string
 
-export interface Entity extends Dictionary<any> {
-  type: EntityType
-  body: EntityBody
-  schema: UUID|CanonicalSchema
-}
-export interface CanonicalEntity extends Entity {
+export interface CanonicalEntity {
   id: UUID
   version_id: UUID
+  parent_id: UUID|null
   created_at: Timestamp
   modified_at: Timestamp
+  type: string
+  body: Document
+  schema: UUID
 }
 
-export type IdGenerator = (body: EntityBody) => UUID
-
-export interface SignatureProvider {
-  signNew(entity: Entity): CanonicalEntity
-  signVersion(entity: CanonicalEntity): CanonicalEntity
-}
-
-export type Observer<T> = (event: T) => any
-
-export interface PubSub<T> {
-  publish(event: T): Promise<void>
-  subscribe(observer: Observer<T>): void
-}
-
-export interface ChangelogAdapter<T> {
-  observe(handler: Observer<T>): void
-  init(types: Array<EntityType>): Promise<void>
-  write(message: T): Promise<void>
-  isConnected(): boolean
-}
-
-export interface Transaction<T> {
-  promise: Promise<T>
-  resolve: (message: T) => any
-  reject: (error: Error) => any
-}
+export type IdGenerator = (body: Document) => UUID
 
 export interface TransactionManager {
-  commit(key: string, message: any): void
+  commit(key: string): void
   reject(key: string, message: any): void
-  start(key: string): Transaction<any>
+  start(key: string, body: CanonicalEntity): Promise<CanonicalEntity>
 }
 
-export interface Factory<T> {
-  create(config?: Dictionary<any>): T
+export interface ChangeEvent {
+  action: string
+  timestamp: Timestamp
+  entity: CanonicalEntity
+  parent: UUID|null
 }
 
-export type SearchQuery = StringMap
+export type Observer = (event: ChangeEvent) => void|Promise<void>
+
+export interface Changelog {
+  observe(handler: Observer): void
+  write(message: ChangeEvent): Promise<void>
+  reset(): Promise<void>
+  up(): Promise<void>
+  down(): Promise<void>
+  isHealthy(): boolean
+}
+
+export type SearchQuery = Dictionary<string>
 export type SearchOptions = {
   limit?: number
   offset?: number
   sort?: string|Array<string>
 }
 
-export interface SearchIndexAdapter<T> {
-  index(document: T): Promise<void>
-  find(query: SearchQuery, options: SearchOptions): Promise<Array<T>>
+export interface SearchIndex {
+  index(document: CanonicalEntity): Promise<void>
+  update(document: CanonicalEntity): Promise<void>
+  delete(document: CanonicalEntity): Promise<void>
+  find(query: SearchQuery, options: SearchOptions): Promise<Array<CanonicalEntity>>
   count(query: SearchQuery): Promise<number>
-  reset(): Promise<void>
-  isConnected(): boolean
+  up(): Promise<void>
+  down(): Promise<void>
+  isHealthy(): boolean
+  isClean(): Promise<boolean>
 }
 
-export { SchemaRegistryAdapter, CanonicalSchema, ValidationResponse, EntityBody }
+export { Document, SchemaRegistryAdapter, CanonicalSchema, ValidationResponse, FormattedEntity }
