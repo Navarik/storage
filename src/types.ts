@@ -23,11 +23,13 @@ export interface TransactionManager {
   start(key: string, body: CanonicalEntity): Promise<CanonicalEntity>
 }
 
+export type ActionType = 'create'|'update'|'delete'|'cast'
+
 export interface ChangeEvent {
-  action: string
+  action: ActionType
   timestamp: Timestamp
   entity: CanonicalEntity
-  parent: UUID|null
+  parent: CanonicalEntity|undefined
 }
 
 export type Observer = (event: ChangeEvent) => void|Promise<void>

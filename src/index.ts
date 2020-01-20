@@ -140,7 +140,7 @@ export class Storage {
     const content = await this.ddl.format(previous.type, { ...previous.body, ...body })
     const entity = this.entityFactory.createVersion(content, previous)
     const transaction = this.transactionManager.start(entity.version_id, entity)
-    const changeEvent = this.changeEventFactory.createEvent('update', entity)
+    const changeEvent = this.changeEventFactory.createEvent('update', entity, previous)
     await this.changelog.write(changeEvent)
 
     return transaction
@@ -155,7 +155,7 @@ export class Storage {
     const content = await this.ddl.format(type, previous.body)
     const entity = this.entityFactory.createVersion(content, previous)
     const transaction = this.transactionManager.start(entity.version_id, entity)
-    const changeEvent = this.changeEventFactory.createEvent('cast', entity)
+    const changeEvent = this.changeEventFactory.createEvent('cast', entity, previous)
     await this.changelog.write(changeEvent)
 
     return transaction

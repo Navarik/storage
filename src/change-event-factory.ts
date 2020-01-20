@@ -1,13 +1,11 @@
-import { CanonicalEntity, ChangeEvent } from './types'
-
-type ActionType = 'create'|'update'|'delete'|'cast'
+import { CanonicalEntity, ChangeEvent, ActionType } from './types'
 
 export class ChangeEventFactory {
-  createEvent(action: ActionType, entity: CanonicalEntity): ChangeEvent {
+  createEvent(action: ActionType, entity: CanonicalEntity, parent?: CanonicalEntity): ChangeEvent {
     const changeEvent = {
       action,
       entity,
-      parent: entity.parent_id,
+      parent,
       timestamp: entity.modified_at
     }
 
