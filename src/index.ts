@@ -79,8 +79,13 @@ export class Storage {
     await this.searchIndex.down()
   }
 
-  isHealthy() {
-    return this.changelog.isHealthy() && this.searchIndex.isHealthy()
+  async isHealthy() {
+    const [changelogHealth, indexHealth] = await Promise.all([
+      this.changelog.isHealthy(),
+      this.searchIndex.isHealthy()
+    ])
+
+    return changelogHealth && indexHealth
   }
 
   types() {

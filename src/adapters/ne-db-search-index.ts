@@ -142,7 +142,7 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
 
   async down() {}
 
-  isHealthy() {
+  async isHealthy() {
     return true
   }
 

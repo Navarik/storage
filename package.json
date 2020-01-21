@@ -18,7 +18,7 @@
     "node": ">=4.0",
     "npm": ">=2.0"
   },
-  "license": "Proprietary",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@navarik/types": "^3.0.2",
     "@types/expect.js": "^0.3.29",

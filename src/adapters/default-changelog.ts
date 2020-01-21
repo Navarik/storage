@@ -29,7 +29,7 @@ export class DefaultChangelog implements Changelog {
 
   async down() {}
 
-  isHealthy() {
+  async isHealthy() {
     return true
   }
 }

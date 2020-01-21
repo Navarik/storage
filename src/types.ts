@@ -40,7 +40,7 @@ export interface Changelog {
   reset(): Promise<void>
   up(): Promise<void>
   down(): Promise<void>
-  isHealthy(): boolean
+  isHealthy(): Promise<boolean>
 }
 
 export type SearchQuery = Dictionary<string>
@@ -58,7 +58,7 @@ export interface SearchIndex<T extends CanonicalEntity> {
   count(query: SearchQuery): Promise<number>
   up(): Promise<void>
   down(): Promise<void>
-  isHealthy(): boolean
+  isHealthy(): Promise<boolean>
   isClean(): Promise<boolean>
 }
 
