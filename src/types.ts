@@ -50,11 +50,11 @@ export type SearchOptions = {
   sort?: string|Array<string>
 }
 
-export interface SearchIndex {
-  index(document: CanonicalEntity): Promise<void>
-  update(document: CanonicalEntity): Promise<void>
-  delete(document: CanonicalEntity): Promise<void>
-  find(query: SearchQuery, options: SearchOptions): Promise<Array<CanonicalEntity>>
+export interface SearchIndex<T extends CanonicalEntity> {
+  index(document: T): Promise<void>
+  update(document: T): Promise<void>
+  delete(document: T): Promise<void>
+  find(query: SearchQuery, options: SearchOptions): Promise<Array<T>>
   count(query: SearchQuery): Promise<number>
   up(): Promise<void>
   down(): Promise<void>

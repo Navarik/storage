@@ -33,7 +33,7 @@ const databaseError = (err: Error) => {
   throw new Error(`[NeDB] Database error: ${err.message}`)
 }
 
-export class NeDbSearchIndex implements SearchIndex {
+export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
   private client: Database
 
   constructor() {

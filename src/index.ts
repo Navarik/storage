@@ -12,7 +12,7 @@ export * from './types'
 
 type StorageConfig = {
   changelog?: Changelog
-  index?: SearchIndex
+  index?: SearchIndex<CanonicalEntity>
   schemaRegistry?: SchemaRegistryAdapter
   transactionManager?: TransactionManager
   schema?: Array<CanonicalSchema>
@@ -21,7 +21,7 @@ type StorageConfig = {
 
 export class Storage {
   private ddl: CoreDdl
-  private searchIndex: SearchIndex
+  private searchIndex: SearchIndex<CanonicalEntity>
   private changelog: Changelog
   private observers: Array<Observer>
   private entityFactory: EntityFactory
