@@ -39,8 +39,9 @@ export class Storage {
     for (const type in data) {
       const collection = data[type] || []
       for (const document of collection) {
-        const entity = this.entityFactory.create(this.ddl.format(type, document))
-        const changeEvent = this.changeEventFactory.createEvent('create', entity)
+        const content = this.ddl.format(type, document)
+        const entity = this.entityFactory.create(content)
+        const changeEvent = this.changeEventFactory.createEvent('create', entity, content.schema)
         staticChangelog.push(changeEvent)
       }
     }
@@ -54,11 +55,11 @@ export class Storage {
 
   private async onChange(event: ChangeEvent) {
     if (event.action === 'create') {
-      await this.searchIndex.index(event.entity)
+      await this.searchIndex.index(event.entity, event.schema)
     } else if (event.action === 'delete') {
       await this.searchIndex.delete(event.entity)
     } else {
-      await this.searchIndex.update(event.entity)
+      await this.searchIndex.update(event.entity, event.schema)
     }
 
     this.transactionManager.commit(event.entity.version_id)
@@ -126,7 +127,7 @@ export class Storage {
     const content = await this.ddl.format(type, body)
     const entity = this.entityFactory.create(content)
     const transaction = this.transactionManager.start(entity.version_id, entity)
-    const changeEvent = this.changeEventFactory.createEvent('create', entity)
+    const changeEvent = this.changeEventFactory.createEvent('create', entity, content.schema)
     await this.changelog.write(changeEvent)
 
     return transaction
@@ -145,7 +146,7 @@ export class Storage {
     const content = await this.ddl.format(previous.type, { ...previous.body, ...body })
     const entity = this.entityFactory.createVersion(content, previous)
     const transaction = this.transactionManager.start(entity.version_id, entity)
-    const changeEvent = this.changeEventFactory.createEvent('update', entity, previous)
+    const changeEvent = this.changeEventFactory.createEvent('update', entity, content.schema, previous)
     await this.changelog.write(changeEvent)
 
     return transaction
@@ -160,7 +161,7 @@ export class Storage {
     const content = await this.ddl.format(type, previous.body)
     const entity = this.entityFactory.createVersion(content, previous)
     const transaction = this.transactionManager.start(entity.version_id, entity)
-    const changeEvent = this.changeEventFactory.createEvent('cast', entity, previous)
+    const changeEvent = this.changeEventFactory.createEvent('cast', entity, content.schema, previous)
     await this.changelog.write(changeEvent)
 
     return transaction
