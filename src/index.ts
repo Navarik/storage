@@ -57,7 +57,7 @@ export class Storage {
     if (event.action === 'create') {
       await this.searchIndex.index(event.entity, event.schema)
     } else if (event.action === 'delete') {
-      await this.searchIndex.delete(event.entity)
+      await this.searchIndex.delete(event.entity, event.schema)
     } else {
       await this.searchIndex.update(event.entity, event.schema)
     }
@@ -102,7 +102,7 @@ export class Storage {
   }
 
   async get(id: UUID): Promise<CanonicalEntity> {
-    const [entity] = await this.searchIndex.find({ id }, {})
+    const entity = await this.searchIndex.get(id)
 
     return entity
   }

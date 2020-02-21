@@ -70,6 +70,10 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
     return result
   }
 
+  async get(id: UUID) {
+    return (await this.find({ id }, {}))[0]
+  }
+
   async find(searchParams: SearchQuery, options: SearchOptions = {}): Promise<Array<CanonicalEntity>> {
     const query = this.client.find(stringifyProperties(searchParams), { _id: 0 })
     const { offset, limit, sort } = options
