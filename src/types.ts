@@ -55,7 +55,6 @@ export interface SearchIndex<T extends CanonicalEntity> {
   index(document: T, schema?: CanonicalSchema): Promise<void>
   update(document: T, schema?: CanonicalSchema): Promise<void>
   delete(document: T, schema?: CanonicalSchema): Promise<void>
-  get(id: UUID): Promise<T>
   find(query: SearchQuery, options: SearchOptions): Promise<Array<T>>
   count(query: SearchQuery): Promise<number>
   up(): Promise<void>

@@ -102,7 +102,7 @@ export class Storage {
   }
 
   async get(id: UUID): Promise<CanonicalEntity> {
-    const entity = await this.searchIndex.get(id)
+    const [entity] = await this.searchIndex.find({ id }, {})
 
     return entity
   }
