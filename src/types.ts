@@ -29,6 +29,7 @@ export interface ChangeEvent {
   action: ActionType
   timestamp: Timestamp
   entity: CanonicalEntity
+  schema: CanonicalSchema|undefined
   parent: CanonicalEntity|undefined
 }
 
@@ -51,9 +52,9 @@ export type SearchOptions = {
 }
 
 export interface SearchIndex<T extends CanonicalEntity> {
-  index(document: T): Promise<void>
-  update(document: T): Promise<void>
-  delete(document: T): Promise<void>
+  index(document: T, schema?: CanonicalSchema): Promise<void>
+  update(document: T, schema?: CanonicalSchema): Promise<void>
+  delete(document: T, schema?: CanonicalSchema): Promise<void>
   find(query: SearchQuery, options: SearchOptions): Promise<Array<T>>
   count(query: SearchQuery): Promise<number>
   up(): Promise<void>
