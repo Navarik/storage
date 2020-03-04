@@ -20,6 +20,7 @@ type StorageConfig = {
 }
 
 export class Storage {
+  private isInitializing: boolean
   private ddl: CoreDdl
   private searchIndex: SearchIndex<CanonicalEntity>
   private changelog: Changelog
@@ -29,6 +30,8 @@ export class Storage {
   private transactionManager: TransactionManager
 
   constructor({ changelog, index, schemaRegistry, transactionManager, schema = [], data = {} }: StorageConfig = {}) {
+    this.isInitializing = true
+
     this.observers = []
     this.ddl = new CoreDdl({ schema, registry: schemaRegistry })
     this.entityFactory = new EntityFactory(() => uuidv4())
@@ -63,7 +66,10 @@ export class Storage {
     }
 
     this.transactionManager.commit(event.entity.version_id)
-    await Promise.all(this.observers.map(f => f(event)))
+
+    if (!this.isInitializing) {
+      await Promise.all(this.observers.map(f => f(event)))
+    }
   }
 
   async up() {
@@ -73,6 +79,8 @@ export class Storage {
     if (!(await this.searchIndex.isClean())) {
       await this.changelog.reset()
     }
+
+    this.isInitializing = false
   }
 
   async down() {
