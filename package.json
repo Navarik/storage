@@ -10,7 +10,7 @@
   "types": "dist/index.d.ts",
   "author": "Navarik Corp.",
   "dependencies": {
-    "@navarik/core-ddl": "^2.1.0",
+    "@navarik/core-ddl": "^2.2.0",
     "nedb": "^1.8.0",
     "uuid": "^3.3.2"
   },
