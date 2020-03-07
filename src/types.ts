@@ -15,6 +15,16 @@ export interface CanonicalEntity {
   schema: UUID
 }
 
+export type TypedEntity = Partial<CanonicalEntity> & {
+  type: string
+  body: Document
+}
+
+export type IdentifiedEntity = Partial<CanonicalEntity> & {
+  id: UUID
+  body: Document
+}
+
 export type IdGenerator = (body: Document) => UUID
 
 export interface TransactionManager {

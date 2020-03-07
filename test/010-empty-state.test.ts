@@ -7,13 +7,13 @@ describe('Empty state', () => {
   before(() => storage.up())
   after(() => storage.down())
 
-  it("should have no types", async () => {
+  it("has no types", async () => {
     const response = storage.types()
     expect(response).to.be.an('array')
     expect(response).to.be.empty()
   })
 
-  it("should have no entities", async () => {
+  it("has no entities", async () => {
     const response = await storage.find()
     expect(response).to.be.an('array')
     expect(response).to.be.empty()

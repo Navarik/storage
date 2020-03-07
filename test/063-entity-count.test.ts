@@ -7,13 +7,8 @@ const fixturesJobs = require('./fixtures/data/job-orders.json')
 
 const storage = new Storage({
   schema: fixtureSchemata,
-  data: {
-    'timelog.timelog_event': fixturesEvents,
-    'document.job_order': fixturesJobs
-  }
+  data: [ ...fixturesEvents, ...fixturesJobs ]
 })
-
-const fixtureSchemataNames = fixtureSchemata.map(x => x.name)
 
 describe('Entity counts', () => {
   before(() => storage.up())

@@ -8,14 +8,16 @@ const fixturesJobs = require('./fixtures/data/job-orders.json')
 const fixturesUsers = require('./fixtures/data/users.json')
 const fixturesMessages = require('./fixtures/data/messages.json')
 
+const fixtureData = [
+  ...fixturesEvents,
+  ...fixturesJobs,
+  ...fixturesUsers,
+  ...fixturesMessages
+]
+
 const storage = new Storage({
   schema: fixtureSchemata,
-  data: {
-    'timelog.timelog_event': fixturesEvents,
-    'document.job_order': fixturesJobs,
-    'profile.user': fixturesUsers,
-    'chat.text_message': fixturesMessages
-  }
+  data: fixtureData
 })
 
 describe('Search pagination', () => {

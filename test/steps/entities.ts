@@ -1,79 +1,81 @@
 import expect from 'expect.js'
-import curry from 'curry'
+import { TypedEntity } from '../../src/types'
+import { expectSameEntity } from './checks'
 
-import { expectEntity } from './checks'
+export class EntitySteps {
+  private storage: Storage
 
-export const createSteps = storage => ({
-  cannotCreate: curry((type, body) => (done) => {
-    storage.create(type, body)
-      .then(() => done("Expected error didn't happen"))
-      .catch(() => done())
-  }),
+  constructor(storage) {
+    this.storage = storage
+  }
 
-  canCreate: curry((type, body) => async () => {
+  async cannotCreate(entity) {
+    try {
+      await this.storage.create(entity)
+      expect().fail("Expected error didn't happen")
+    } catch (err) {
+      expect(true).to.equal(true)
+    }
+  }
+
+  async canCreate(entity) {
     let response
 
     // Create entity
-    response = await storage.create(type, body)
-    expectEntity(response)
-    expect(response.type).to.eql(type)
-    expect(response.body).to.eql(body)
+    response = await this.storage.create(entity)
+    expectSameEntity(response, entity)
 
     // Try to read it back by ID
     const id = response.id
-    response = await storage.get(id)
-    expectEntity(response)
-    expect(response.type).to.eql(type)
-    expect(response.body).to.eql(body)
-  }),
+    response = await this.storage.get(id)
+    expectSameEntity(response, entity)
 
-  canCreateCollection: curry((type, body) => async () => {
+    return response
+  }
+
+  async canCreateCollection(collection: Array<TypedEntity>) {
     let response
 
     // Create entity
-    response = await storage.createBulk(type, body)
+    response = await this.storage.createBulk(collection)
     expect(response).to.be.an('array')
-    expect(response).to.have.length(body.length)
-    response.forEach(async (entity, index) => {
-      expectEntity(entity)
-      expect(entity.type).to.eql(type)
-      expect(entity.body).to.eql(body[index])
+    expect(response).to.have.length(collection.length)
+    
+    response.forEach((entity, index) => {
+      expectSameEntity(entity, collection[index])
     })
 
     // Try to read it back by ID
-    response = await Promise.all(response.map(x => storage.get(x.id)))
+    response = await Promise.all(response.map(x => this.storage.get(x.id)))
     expect(response).to.be.an('array')
-    expect(response).to.have.length(body.length)
-    response.forEach(async (entity, index) => {
-      expectEntity(entity)
-      expect(entity.type).to.eql(type)
-      expect(entity.body).to.eql(body[index])
-    })
-  }),
+    expect(response).to.have.length(collection.length)
 
-  canFind: entity => async () => {
+    response.forEach((entity, index) => {
+      expectSameEntity(entity, collection[index])
+    })
+  }
+
+  async canFind(entity) {
     let response
 
     // Find using fields in a query
-    response = await storage.find(entity)
+    response = await this.storage.find(entity.body)
     expect(response).to.be.an('array')
     expect(response).to.have.length(1)
-    expectEntity(response[0])
-    expect(response[0].body).to.eql(entity)
-  },
-
-  cannotUpdate: (id, body) => done => {
-    storage.update(id, body)
-      .then(() => done("Expected error didn't happen"))
-      .catch(() => done())
-  },
-
-  canUpdate: (id, body) => async () => {
-    const previous = await storage.get(id)
-    expectEntity(previous)
-
-    const response = await storage.update(id, body)
-    expectEntity(response)
-    expect(response.body).to.eql(body)
+    expectSameEntity(response[0], entity)
   }
-})
+
+  async cannotUpdate(entity) {
+    try {
+      await this.storage.update(entity)
+      expect().fail("Expected error didn't happen")
+    } catch (err) {
+      expect(true).to.equal(true)
+    }
+  }
+
+  async canUpdate(entity) {
+    const response = await this.storage.update(entity)
+    expectSameEntity(response, entity)
+  }
+}
