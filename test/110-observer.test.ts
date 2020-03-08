@@ -18,14 +18,14 @@ describe('Observing changes', () => {
     storage.observe((x) => { results.push(x) })
 
     for (const entity of fixturesJobs) {
-      await storage.create('document.job_order', entity)
+      await storage.create(entity)
     }
 
     expect(results).to.be.an('array')
     expect(results).to.have.length(fixturesJobs.length)
 
     for (const entity of fixturesEvents) {
-      await storage.create('timelog.timelog_event', entity)
+      await storage.create(entity)
     }
 
     expect(results).to.be.an('array')

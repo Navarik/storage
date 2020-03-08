@@ -1,7 +1,6 @@
 import expect from 'expect.js'
 import { Storage } from '../src'
-import { forAll } from './steps/generic'
-import { createSteps } from './steps/entities'
+import { EntitySteps } from './steps/entities'
 
 const fixtureSchemata = require('./fixtures/schemata')
 const fixturesEvents = require('./fixtures/data/events')
@@ -10,7 +9,7 @@ const storage = new Storage({
   schema: fixtureSchemata
 })
 
-const { canCreate, canFind } = createSteps(storage)
+const steps = new EntitySteps(storage)
 
 describe('Entity creation flow', () => {
   before(() => storage.up())
@@ -22,18 +21,21 @@ describe('Entity creation flow', () => {
     expect(response).to.be.empty()
   })
 
-  it("can't get entities before they are created", async () => {
-    const response = await storage.get('nope')
-    expect(response).to.be(undefined)
+  it("correctly creates new entities", async () => {
+    await Promise.all(fixturesEvents.map(x => steps.canCreate(x)))
   })
 
-  it("correctly creates new entities", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
-  it("can find created entities", forAll(fixturesEvents, canFind))
-  it("allows duplicates", forAll(fixturesEvents, canCreate('timelog.timelog_event')))
+  it("can find created entities", async () => {
+    await Promise.all(fixturesEvents.map(x => steps.canFind(x)))
+  })
+
+  it("allows duplicates", async () => {
+    await Promise.all(fixturesEvents.map(x => steps.canCreate(x)))
+  })
 
   it("correct number of entities is created", async () => {
     const response = await storage.find()
     expect(response).to.be.an('array')
-    expect(response).to.have.length(10)
+    expect(response).to.have.length(fixturesEvents.length * 2)
   })
 })

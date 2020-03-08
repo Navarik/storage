@@ -1,6 +1,5 @@
-import { Document, Dictionary } from '@navarik/types'
 import { CoreDdl, SchemaRegistryAdapter, CanonicalSchema, ValidationResponse } from '@navarik/core-ddl'
-import { Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, TransactionManager } from './types'
+import { Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, TransactionManager, TypedEntity, IdentifiedEntity } from './types'
 import uuidv4 from 'uuid/v4'
 import { LocalTransactionManager } from './transaction'
 import { NeDbSearchIndex } from './adapters/ne-db-search-index'
@@ -16,7 +15,7 @@ type StorageConfig = {
   schemaRegistry?: SchemaRegistryAdapter
   transactionManager?: TransactionManager
   schema?: Array<CanonicalSchema>
-  data?: Dictionary<Array<Document>>
+  data?: Array<TypedEntity>
 }
 
 export class Storage {
@@ -29,7 +28,7 @@ export class Storage {
   private changeEventFactory: ChangeEventFactory
   private transactionManager: TransactionManager
 
-  constructor({ changelog, index, schemaRegistry, transactionManager, schema = [], data = {} }: StorageConfig = {}) {
+  constructor({ changelog, index, schemaRegistry, transactionManager, schema = [], data = [] }: StorageConfig = {}) {
     this.isInitializing = true
 
     this.observers = []
@@ -39,14 +38,11 @@ export class Storage {
 
     // Static data is used primarily for automated tests
     const staticChangelog = []
-    for (const type in data) {
-      const collection = data[type] || []
-      for (const document of collection) {
-        const content = this.ddl.format(type, document)
-        const entity = this.entityFactory.create(content)
-        const changeEvent = this.changeEventFactory.createEvent('create', entity, content.schema)
-        staticChangelog.push(changeEvent)
-      }
+    for (const document of data) {
+      const formatted = this.ddl.format(document.type, document.body)
+      const canonical = this.entityFactory.create(formatted)
+      const changeEvent = this.changeEventFactory.createEvent('create', canonical, formatted.schema)
+      staticChangelog.push(changeEvent)
     }
 
     this.changelog = changelog || new DefaultChangelog(staticChangelog)
@@ -123,53 +119,43 @@ export class Storage {
     return this.searchIndex.count(query)
   }
 
-  validate(type: string, body: Document): ValidationResponse {
-    return this.ddl.validate(type, body)
+  validate(entity: TypedEntity): ValidationResponse {
+    return this.ddl.validate(entity.type, entity.body)
   }
 
-  isValid(type: string, body: Document): boolean {
-    return this.ddl.validate(type, body).isValid
+  isValid(entity: TypedEntity): boolean {
+    return this.ddl.validate(entity.type, entity.body).isValid
   }
 
-  async create(type: string, body: Document): Promise<CanonicalEntity> {
-    const content = await this.ddl.format(type, body)
-    const entity = this.entityFactory.create(content)
-    const transaction = this.transactionManager.start(entity.version_id, entity)
-    const changeEvent = this.changeEventFactory.createEvent('create', entity, content.schema)
+  async create(entity: TypedEntity): Promise<CanonicalEntity> {
+    const formatted = await this.ddl.format(entity.type, entity.body)
+
+    const canonical = this.entityFactory.create(formatted)
+
+    const transaction = this.transactionManager.start(canonical.version_id, canonical)
+    const changeEvent = this.changeEventFactory.createEvent('create', canonical, formatted.schema)
     await this.changelog.write(changeEvent)
 
     return transaction
   }
 
-  async createBulk(type: string, collection: Array<Document>): Promise<Array<CanonicalEntity>> {
-    return Promise.all(collection.map(x => this.create(type, x)))
+  async createBulk(collection: Array<TypedEntity>): Promise<Array<CanonicalEntity>> {
+    return Promise.all(collection.map(entity => this.create(entity)))
   }
 
-  async update(id: UUID, body: Document): Promise<CanonicalEntity> {
-    const previous = await this.get(id)
+  async update(entity: IdentifiedEntity): Promise<CanonicalEntity> {
+    const previous = await this.get(entity.id)
     if (!previous) {
-      throw new Error(`[Storage] Can't update entity that doesn't exist: ${id}`)
+      throw new Error(`[Storage] Can't update entity that doesn't exist: ${entity.id}`)
     }
 
-    const content = await this.ddl.format(previous.type, { ...previous.body, ...body })
-    const entity = this.entityFactory.createVersion(content, previous)
-    const transaction = this.transactionManager.start(entity.version_id, entity)
-    const changeEvent = this.changeEventFactory.createEvent('update', entity, content.schema, previous)
-    await this.changelog.write(changeEvent)
+    const type = entity.type || previous.type
+    const formatted = await this.ddl.format(type, { ...previous.body, ...entity.body })
 
-    return transaction
-  }
+    const canonical = this.entityFactory.createVersion(formatted, previous)
 
-  async cast(id: UUID, type: string): Promise<CanonicalEntity> {
-    const previous = await this.get(id)
-    if (!previous) {
-      throw new Error(`[Storage] Can't cast entity that doesn't exist: ${id}`)
-    }
-
-    const content = await this.ddl.format(type, previous.body)
-    const entity = this.entityFactory.createVersion(content, previous)
-    const transaction = this.transactionManager.start(entity.version_id, entity)
-    const changeEvent = this.changeEventFactory.createEvent('cast', entity, content.schema, previous)
+    const transaction = this.transactionManager.start(canonical.version_id, canonical)
+    const changeEvent = this.changeEventFactory.createEvent('update', canonical, formatted.schema, previous)
     await this.changelog.write(changeEvent)
 
     return transaction
