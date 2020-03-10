@@ -12,17 +12,20 @@ export interface CanonicalEntity {
   modified_at: Timestamp
   type: string
   body: Document
+  meta: Document
   schema: UUID
 }
 
 export type TypedEntity = Partial<CanonicalEntity> & {
   type: string
   body: Document
+  meta?: Document
 }
 
 export type IdentifiedEntity = Partial<CanonicalEntity> & {
   id: UUID
   body: Document
+  meta?: Document
 }
 
 export type IdGenerator = (body: Document) => UUID

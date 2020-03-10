@@ -1,26 +1,30 @@
 import uuidv5 from 'uuid/v5'
-import { IdGenerator, IdentifiedEntity, CanonicalEntity, TypedEntity, ChangeEvent } from './types'
 import { CoreDdl } from '@navarik/core-ddl'
+import { IdGenerator, IdentifiedEntity, CanonicalEntity, TypedEntity, ChangeEvent } from './types'
 
 type FactoryConfig = {
   generator: IdGenerator
   ddl: CoreDdl
   metaDdl: CoreDdl
+  metaType: string
 }
 
 export class ChangeEventFactory {
   private generateId: IdGenerator
   private ddl: CoreDdl
   private metaDdl: CoreDdl
+  private metaType: string
 
-  constructor({ generator, ddl, metaDdl }: FactoryConfig) {
+  constructor({ generator, ddl, metaDdl, metaType }: FactoryConfig) {
     this.generateId = generator
     this.ddl = ddl
     this.metaDdl = metaDdl
+    this.metaType = metaType
   }
 
   create(entity: TypedEntity): ChangeEvent {
     const formatted = this.ddl.format(entity.type, entity.body)
+    const formattedMeta = this.metaDdl.format(this.metaType, entity.meta || {})
 
     const id = this.generateId(formatted.body)
     const version_id = uuidv5(JSON.stringify(formatted.body), id)
@@ -35,6 +39,7 @@ export class ChangeEventFactory {
       modified_at: now.toISOString(),
       type: formatted.schema.type,
       body: formatted.body,
+      meta: formattedMeta.body,
       schema: formatted.schemaId
     }
 
@@ -50,7 +55,9 @@ export class ChangeEventFactory {
   createVersion(current: IdentifiedEntity, previous: CanonicalEntity): ChangeEvent {
     const type = current.type || previous.type
     const body = { ...previous.body, ...current.body }
+    const meta = { ...previous.meta, ...(current.meta || {}) }
     const formatted = this.ddl.format(type, body)
+    const formattedMeta = this.metaDdl.format(this.metaType, meta)
 
     const version_id = uuidv5(JSON.stringify(formatted.body), previous.id)
 
@@ -64,6 +71,7 @@ export class ChangeEventFactory {
       modified_at: now.toISOString(),
       type: formatted.schema.type,
       body: formatted.body,
+      meta: formattedMeta.body,
       schema: formatted.schemaId
     }
 

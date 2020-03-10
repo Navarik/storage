@@ -45,7 +45,8 @@ export class Storage {
     this.changeEventFactory = new ChangeEventFactory({
       generator: () => uuidv4(),
       ddl: this.ddl,
-      metaDdl: this.metaDdl
+      metaDdl: this.metaDdl,
+      metaType: 'metadata'
     })
 
     // Static data is used primarily for automated tests
