@@ -12,17 +12,20 @@ export interface CanonicalEntity {
   modified_at: Timestamp
   type: string
   body: Document
+  meta: Document
   schema: UUID
 }
 
 export type TypedEntity = Partial<CanonicalEntity> & {
   type: string
   body: Document
+  meta?: Document
 }
 
 export type IdentifiedEntity = Partial<CanonicalEntity> & {
   id: UUID
   body: Document
+  meta?: Document
 }
 
 export type IdGenerator = (body: Document) => UUID
@@ -62,9 +65,9 @@ export type SearchOptions = {
 }
 
 export interface SearchIndex<T extends CanonicalEntity> {
-  index(document: T, schema?: CanonicalSchema): Promise<void>
-  update(document: T, schema?: CanonicalSchema): Promise<void>
-  delete(document: T, schema?: CanonicalSchema): Promise<void>
+  index(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
+  update(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
+  delete(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
   find(query: SearchQuery, options: SearchOptions): Promise<Array<T>>
   count(query: SearchQuery): Promise<number>
   up(): Promise<void>
