@@ -40,7 +40,7 @@ export class EntitySteps {
     response = await this.storage.createBulk(collection)
     expect(response).to.be.an('array')
     expect(response).to.have.length(collection.length)
-    
+
     response.forEach((entity, index) => {
       expectSameEntity(entity, collection[index])
     })
@@ -59,7 +59,7 @@ export class EntitySteps {
     let response
 
     // Find using fields in a query
-    response = await this.storage.find(entity.body)
+    response = await this.storage.find(entity)
     expect(response).to.be.an('array')
     expect(response).to.have.length(1)
     expectSameEntity(response[0], entity)

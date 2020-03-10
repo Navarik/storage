@@ -5,8 +5,6 @@ import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, UUID } from '
 interface Searchable {
   ___document: CanonicalEntity
   _id?: any
-  id: UUID
-  type: string
 }
 
 const stringifyProperties = (data: any): any => {
@@ -45,9 +43,7 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
     const searchable = {
       // save the original document under ___document, storage expect local-state to return ___document
       ___document: document,
-      id: document.id,
-      type: document.type,
-      ...stringifyProperties(document.body)
+      ...stringifyProperties(document)
     }
 
     return searchable

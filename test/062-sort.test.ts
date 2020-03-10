@@ -27,21 +27,21 @@ describe('Sorting of search results', () => {
   after(() => storage.down())
 
   it("can perform ascending sorting on top-level field", async () => {
-    const response = await storage.find({ type: 'profile.user' }, { sort: 'first_name' })
+    const response = await storage.find({ type: 'profile.user' }, { sort: 'body.first_name' })
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
     expect(response.map(x => x.body.first_name)).to.eql([ 'Fraser', 'King', 'Manning' ])
   })
 
   it("can perform descending sorting on top-level field", async () => {
-    const response = await storage.find({ type: 'profile.user' }, { sort: 'first_name:desc' })
+    const response = await storage.find({ type: 'profile.user' }, { sort: 'body.first_name:desc' })
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
     expect(response.map(x => x.body.first_name)).to.eql([ 'Manning', 'King', 'Fraser' ])
   })
 
   it("can sort when target is a subfield", async () => {
-    const response = await storage.find({ type: 'dataEntry.task' }, { sort: 'summary.fileName:desc' })
+    const response = await storage.find({ type: 'dataEntry.task' }, { sort: 'body.summary.fileName:desc' })
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
 
@@ -49,7 +49,7 @@ describe('Sorting of search results', () => {
   })
 
   it("can sort when some fields are missing", async () => {
-    const response = await storage.find({ type: 'dataEntry.task' }, { sort: 'summary.vessels:desc' })
+    const response = await storage.find({ type: 'dataEntry.task' }, { sort: 'body.summary.vessels:desc' })
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
 
@@ -59,7 +59,7 @@ describe('Sorting of search results', () => {
 
   it("can sort by subfield when higher field is missing", async () => {
     // Some data have no contract.
-    const response = await storage.find({ type: 'dataEntry.task' }, { sort: 'summary.contract.cargos:desc' })
+    const response = await storage.find({ type: 'dataEntry.task' }, { sort: 'body.summary.contract.cargos:desc' })
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
 
@@ -68,7 +68,7 @@ describe('Sorting of search results', () => {
   })
 
   it("will correctly sort when there are fields and subfields with identical identifiers and the subfield is the intended target", async () => {
-    const response = await storage.find({ type: 'dataEntry.task' }, { sort: 'summary.contract.vessels:desc' })
+    const response = await storage.find({ type: 'dataEntry.task' }, { sort: 'body.summary.contract.vessels:desc' })
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
 
@@ -80,7 +80,7 @@ describe('Sorting of search results', () => {
   })
 
   it("can sort and subsort", async () => {
-    const response = await storage.find({ type: 'dataEntry.task' }, { sort: ['summary.fileFormat', 'summary.fileName'] })
+    const response = await storage.find({ type: 'dataEntry.task' }, { sort: ['body.summary.fileFormat', 'body.summary.fileName'] })
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
 
@@ -98,8 +98,8 @@ describe('Sorting of search results', () => {
   //    Some fields for sorting are not present in all test data.
   it("can sort and subsort when some fields are missing", async () => {
     const response = await storage.find(
-      { type: 'dataEntry.task' }, 
-      { sort: ['summary.producedBy:desc', 'summary.assignedUserId:asc'] }
+      { type: 'dataEntry.task' },
+      { sort: ['body.summary.producedBy:desc', 'body.summary.assignedUserId:asc'] }
     )
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
