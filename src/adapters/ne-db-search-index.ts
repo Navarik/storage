@@ -1,6 +1,6 @@
 import { Dictionary } from '@navarik/types'
 import Database from 'nedb'
-import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, UUID } from '../types'
+import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity } from '../types'
 
 interface Searchable {
   ___document: CanonicalEntity

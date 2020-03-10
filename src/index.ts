@@ -64,11 +64,11 @@ export class Storage {
 
   private async onChange(event: ChangeEvent) {
     if (event.action === 'create') {
-      await this.searchIndex.index(event.entity, event.schema)
+      await this.searchIndex.index(event.entity, event.schema, this.metaDdl.describe('metadata'))
     } else if (event.action === 'delete') {
-      await this.searchIndex.delete(event.entity, event.schema)
+      await this.searchIndex.delete(event.entity, event.schema, this.metaDdl.describe('metadata'))
     } else {
-      await this.searchIndex.update(event.entity, event.schema)
+      await this.searchIndex.update(event.entity, event.schema, this.metaDdl.describe('metadata'))
     }
 
     this.transactionManager.commit(event.entity.version_id)
