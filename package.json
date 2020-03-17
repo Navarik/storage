@@ -9,6 +9,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Navarik Corp.",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:TICitHub/storage.git"
+  },
   "dependencies": {
     "@navarik/core-ddl": "^2.3.0",
     "nedb": "^1.8.0",
@@ -28,7 +32,7 @@
     "@types/uuid": "^3.4.8",
     "expect.js": "^0.3.1",
     "mocha": "^7.1.0",
-    "ts-mocha": "^6.0.0",
+    "ts-mocha": "^7.0.0",
     "ts-node": "^8.6.2",
     "typescript": "^3.8.3"
   }
