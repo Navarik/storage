@@ -48,13 +48,22 @@ export interface ChangeEvent {
 
 export type Observer = (event: ChangeEvent) => void|Promise<void>
 
-export interface Changelog {
-  observe(handler: Observer): void
-  write(message: ChangeEvent): Promise<void>
-  reset(): Promise<void>
+interface Service {
   up(): Promise<void>
   down(): Promise<void>
   isHealthy(): Promise<boolean>
+}
+
+export interface Changelog extends Service {
+  observe(handler: Observer): void
+  write(message: ChangeEvent): Promise<void>
+  reset(): Promise<void>
+}
+
+export interface State<T extends CanonicalEntity> extends Service {
+  put(document: T): Promise<void>
+  get(id: string): Promise<T>
+  delete(id: string): Promise<void>
 }
 
 export type SearchQuery = Dictionary<string>
@@ -64,15 +73,12 @@ export type SearchOptions = {
   sort?: string|Array<string>
 }
 
-export interface SearchIndex<T extends CanonicalEntity> {
+export interface SearchIndex<T extends CanonicalEntity> extends Service {
   index(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
   update(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
   delete(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
   find(query: SearchQuery, options: SearchOptions): Promise<Array<T>>
   count(query: SearchQuery): Promise<number>
-  up(): Promise<void>
-  down(): Promise<void>
-  isHealthy(): Promise<boolean>
   isClean(): Promise<boolean>
 }
 
