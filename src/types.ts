@@ -30,12 +30,6 @@ export type IdentifiedEntity = Partial<CanonicalEntity> & {
 
 export type IdGenerator = (body: Document) => UUID
 
-export interface TransactionManager {
-  commit(key: string): void
-  reject(key: string, message: any): void
-  start(key: string, body: CanonicalEntity): Promise<CanonicalEntity>
-}
-
 export type ActionType = 'create'|'update'|'delete'|'cast'
 
 export interface ChangeEvent {
