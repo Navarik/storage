@@ -1,15 +1,15 @@
 import expect from 'expect.js'
-import { TypedEntity } from '../../src/types'
+import { TypedEntity, Storage, SearchQuery, IdentifiedEntity, CanonicalEntity } from '../../src'
 import { expectSameEntity } from './checks'
 
 export class EntitySteps {
   private storage: Storage
 
-  constructor(storage) {
+  constructor(storage: Storage) {
     this.storage = storage
   }
 
-  async cannotCreate(entity) {
+  async cannotCreate(entity: TypedEntity) {
     try {
       await this.storage.create(entity)
       expect().fail("Expected error didn't happen")
@@ -18,7 +18,7 @@ export class EntitySteps {
     }
   }
 
-  async canCreate(entity) {
+  async canCreate(entity: TypedEntity) {
     let response
 
     // Create entity
@@ -55,17 +55,31 @@ export class EntitySteps {
     })
   }
 
-  async canFind(entity) {
+  async canFind(entity: CanonicalEntity) {
     let response
 
     // Find using fields in a query
-    response = await this.storage.find(entity)
+    const query: SearchQuery = {}
+    if (entity.id) query.id = entity.id
+    if (entity.type) query.type = entity.type
+    if (entity.body) {
+      for (const field in entity.body) {
+        query[`body.${field}`] = String(entity.body[field])
+      }
+    }
+    if (entity.meta) {
+      for (const field in entity.meta) {
+        query[`meta.${field}`] = String(entity.meta[field])
+      }
+    }
+
+    response = await this.storage.find(query)
     expect(response).to.be.an('array')
     expect(response).to.have.length(1)
     expectSameEntity(response[0], entity)
   }
 
-  async cannotUpdate(entity) {
+  async cannotUpdate(entity: IdentifiedEntity) {
     try {
       await this.storage.update(entity)
       expect().fail("Expected error didn't happen")
@@ -74,7 +88,7 @@ export class EntitySteps {
     }
   }
 
-  async canUpdate(entity) {
+  async canUpdate(entity: IdentifiedEntity) {
     const response = await this.storage.update(entity)
     expectSameEntity(response, entity)
   }

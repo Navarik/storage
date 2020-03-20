@@ -1,7 +1,7 @@
-import { Storage } from '../src'
+import { Storage, CanonicalSchema } from '../src'
 import { EntitySteps } from './steps/entities'
 
-const fixtureSchemata = require('./fixtures/schemata')
+const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
 
 const storage = new Storage({
   schema: fixtureSchemata

@@ -1,9 +1,9 @@
 import expect from 'expect.js'
-import { Storage } from '../src'
+import { Storage, CanonicalSchema, CanonicalEntity, ChangeEvent } from '../src'
 
-const fixtureSchemata = require('./fixtures/schemata')
-const fixturesEvents = require('./fixtures/data/events.json')
-const fixturesJobs = require('./fixtures/data/job-orders.json')
+const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
+const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events.json')
+const fixturesJobs: Array<CanonicalEntity> = require('./fixtures/data/job-orders.json')
 
 const storage = new Storage({
   schema: fixtureSchemata
@@ -14,7 +14,7 @@ describe('Observing changes', () => {
   after(() => storage.down())
 
   it("can observe entity changes", async () => {
-    const results = []
+    const results: Array<ChangeEvent> = []
     storage.observe((x) => { results.push(x) })
 
     for (const entity of fixturesJobs) {

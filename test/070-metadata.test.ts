@@ -1,10 +1,10 @@
 import expect from 'expect.js'
-import { Storage } from '../src'
+import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
 import { EntitySteps } from './steps/entities'
 import { expectEntity } from './steps/checks'
 
-const fixtureSchemata = require('./fixtures/schemata')
-const fixturesEvents = require('./fixtures/data/events')
+const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
+const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events')
 
 const storage = new Storage({
   schema: fixtureSchemata,

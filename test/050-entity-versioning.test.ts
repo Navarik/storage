@@ -1,16 +1,16 @@
-import { Storage } from '../src'
+import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
 import { expectSameEntity } from './steps/checks'
 import { EntitySteps } from './steps/entities'
 
-const fixtureSchemata = require('./fixtures/schemata')
-const fixtures = require('./fixtures/data/versions.json')
+const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
+const fixtures: Array<CanonicalEntity> = require('./fixtures/data/versions.json')
 
 const storage = new Storage({
   schema: fixtureSchemata
 })
 
 const steps = new EntitySteps(storage)
-let id
+let id: string
 
 describe('Entity versioning', () => {
   before(() => storage.up())

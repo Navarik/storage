@@ -1,12 +1,12 @@
 import expect from 'expect.js'
-import { Storage } from '../src'
+import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
 import { expectEntity } from './steps/checks'
 
-const fixtureSchemata = require('./fixtures/schemata')
-const fixturesEvents = require('./fixtures/data/events.json')
-const fixturesJobs = require('./fixtures/data/job-orders.json')
-const fixturesUsers = require('./fixtures/data/users.json')
-const fixturesMessages = require('./fixtures/data/messages.json')
+const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
+const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events.json')
+const fixturesJobs: Array<CanonicalEntity> = require('./fixtures/data/job-orders.json')
+const fixturesUsers: Array<CanonicalEntity> = require('./fixtures/data/users.json')
+const fixturesMessages: Array<CanonicalEntity> = require('./fixtures/data/messages.json')
 
 const fixtureData = [
   ...fixturesEvents,

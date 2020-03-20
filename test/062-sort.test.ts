@@ -1,13 +1,13 @@
 import expect from 'expect.js'
-import { Storage } from '../src'
+import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
 import { expectEntity } from './steps/checks'
 
-const fixtureSchemata = require('./fixtures/schemata')
-const fixturesEvents = require('./fixtures/data/events.json')
-const fixturesTasks = require('./fixtures/data/data-entry-tasks.json')
-const fixturesJobs = require('./fixtures/data/job-orders.json')
-const fixturesUsers = require('./fixtures/data/users.json')
-const fixturesMessages = require('./fixtures/data/messages.json')
+const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
+const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events.json')
+const fixturesTasks: Array<CanonicalEntity> = require('./fixtures/data/data-entry-tasks.json')
+const fixturesJobs: Array<CanonicalEntity> = require('./fixtures/data/job-orders.json')
+const fixturesUsers: Array<CanonicalEntity> = require('./fixtures/data/users.json')
+const fixturesMessages: Array<CanonicalEntity> = require('./fixtures/data/messages.json')
 
 const fixtureData = [
   ...fixturesEvents,
@@ -30,14 +30,14 @@ describe('Sorting of search results', () => {
     const response = await storage.find({ type: 'profile.user' }, { sort: 'body.first_name' })
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
-    expect(response.map(x => x.body.first_name)).to.eql([ 'Fraser', 'King', 'Manning' ])
+    expect(response.map((x: any) => x.body.first_name)).to.eql([ 'Fraser', 'King', 'Manning' ])
   })
 
   it("can perform descending sorting on top-level field", async () => {
     const response = await storage.find({ type: 'profile.user' }, { sort: 'body.first_name:desc' })
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
-    expect(response.map(x => x.body.first_name)).to.eql([ 'Manning', 'King', 'Fraser' ])
+    expect(response.map((x: any) => x.body.first_name)).to.eql([ 'Manning', 'King', 'Fraser' ])
   })
 
   it("can sort when target is a subfield", async () => {
@@ -45,7 +45,7 @@ describe('Sorting of search results', () => {
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
 
-    expect(response.map(x => x.body.summary['vefInspReportId'])).to.eql([ 6, 1, 5, 4 ])
+    expect(response.map((x: any) => x.body.summary['vefInspReportId'])).to.eql([ 6, 1, 5, 4 ])
   })
 
   it("can sort when some fields are missing", async () => {
@@ -53,7 +53,7 @@ describe('Sorting of search results', () => {
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
 
-    const propertyOrder = response.map(x => x.body.summary['vefInspReportId'])
+    const propertyOrder = response.map((x: any) => x.body.summary['vefInspReportId'])
     expect(propertyOrder.slice(0, 2)).to.eql([ 5, 6 ])
   })
 
@@ -63,28 +63,28 @@ describe('Sorting of search results', () => {
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
 
-    const propertyOrder = response.map(x => x.body.summary['vefInspReportId'])
+    const propertyOrder = response.map((x: any) => x.body.summary['vefInspReportId'])
     expect(propertyOrder.slice(0, 4)).to.eql([ 5, 4, 6, 1])
   })
 
-  it("will correctly sort when there are fields and subfields with identical identifiers and the subfield is the intended target", async () => {
-    const response = await storage.find({ type: 'dataEntry.task' }, { sort: 'body.summary.contract.vessels:desc' })
+  it("will correctly sort when there are fields and sub-fields with identical identifiers and the subfield is the intended target", async () => {
+    const response: any = await storage.find({ type: 'dataEntry.task' }, { sort: 'body.summary.contract.vessels:desc' })
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
 
     // Check that summary.contract.vessels was found rather than summary.vessels.
     expect(response[3]['body']['summary']['contract']['vessels'][0]).to.equal('HMS summary.contract.vessels')
 
-    const propertyOrder = response.map(x => x.body.summary['vefInspReportId'])
+    const propertyOrder = response.map((x: any) => x.body.summary['vefInspReportId'])
     expect(propertyOrder.slice(0, 4)).to.eql([ 1, 5, 4, 6])
   })
 
-  it("can sort and subsort", async () => {
+  it("can sort and sub-sort", async () => {
     const response = await storage.find({ type: 'dataEntry.task' }, { sort: ['body.summary.fileFormat', 'body.summary.fileName'] })
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
 
-    expect(response.map(x => x.body.summary['fileName'])).to.eql([
+    expect(response.map((x: any) => x.body.summary['fileName'])).to.eql([
       'message_330564.html',
       '599934_CBC_23_3525030_DISCHARGE_WARREN_EHC_45_06-05-18.pdf',
       '600109_LIN126025BPAM06-58Summary18-18-06-03182.pdf',
@@ -104,6 +104,6 @@ describe('Sorting of search results', () => {
     expect(response).to.be.an('array')
     response.forEach(expectEntity)
 
-    expect(response.map(x => x.body.summary['vefInspReportId'])).to.eql([ 1, 6, 5, 4 ])
+    expect(response.map((x: any) => x.body.summary['vefInspReportId'])).to.eql([ 1, 6, 5, 4 ])
   })
 })
