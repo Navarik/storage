@@ -1,8 +1,8 @@
 import { Dictionary, Map } from '@navarik/types'
 import { CoreDdl, SchemaRegistryAdapter, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
-import { Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, TransactionManager, TypedEntity, IdentifiedEntity, State } from './types'
+import { Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, TypedEntity, IdentifiedEntity, State } from './types'
+import { TransactionManager } from "@navarik/transaction-manager"
 import uuidv4 from 'uuid/v4'
-import { LocalTransactionManager } from './transaction'
 import { NeDbSearchIndex } from './adapters/ne-db-search-index'
 import { DefaultChangelog } from './adapters/default-changelog'
 import { ChangeEventFactory } from './change-event-factory'
@@ -15,7 +15,6 @@ type StorageConfig = {
   index?: SearchIndex<CanonicalEntity>
   state?: State<CanonicalEntity>
   schemaRegistry?: SchemaRegistryAdapter
-  transactionManager?: TransactionManager
   meta?: Dictionary<SchemaField>
   schema?: Array<CanonicalSchema>
   data?: Array<TypedEntity>
@@ -30,9 +29,9 @@ export class Storage {
   private changelog: Changelog
   private observers: Array<Observer>
   private changeEventFactory: ChangeEventFactory
-  private transactionManager: TransactionManager
+  private transactionManager: TransactionManager<CanonicalEntity>
 
-  constructor({ changelog, index, state, schemaRegistry, transactionManager, meta = {}, schema = [], data = [] }: StorageConfig = {}) {
+  constructor({ changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [] }: StorageConfig = {}) {
     this.isInitializing = true
 
     this.observers = []
@@ -58,7 +57,7 @@ export class Storage {
       staticChangelog.push(this.changeEventFactory.create(document))
     }
 
-    this.transactionManager = transactionManager || new LocalTransactionManager()
+    this.transactionManager = new TransactionManager()
     this.changelog = changelog || new DefaultChangelog(staticChangelog)
     this.searchIndex = index || new NeDbSearchIndex()
     this.currentState = state || new LocalState({
@@ -81,7 +80,7 @@ export class Storage {
       await this.searchIndex.update(event.entity, event.schema, this.metaDdl.describe('metadata'))
     }
 
-    this.transactionManager.commit(event.entity.version_id)
+    this.transactionManager.commit(event.entity.version_id, event.entity)
 
     if (!this.isInitializing) {
       await Promise.all(this.observers.map(f => f(event)))
@@ -150,7 +149,7 @@ export class Storage {
   async create(entity: TypedEntity): Promise<CanonicalEntity> {
     const changeEvent = this.changeEventFactory.create(entity)
 
-    const transaction = this.transactionManager.start(changeEvent.entity.version_id, changeEvent.entity)
+    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => x[0])
     await this.changelog.write(changeEvent)
 
     return transaction
@@ -168,7 +167,7 @@ export class Storage {
 
     const changeEvent = this.changeEventFactory.createVersion(entity, previous)
 
-    const transaction = this.transactionManager.start(changeEvent.entity.version_id, changeEvent.entity)
+    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => x[0])
     await this.changelog.write(changeEvent)
 
     return transaction
@@ -182,7 +181,7 @@ export class Storage {
 
     const changeEvent = this.changeEventFactory.delete(entity)
 
-    const transaction = this.transactionManager.start(entity.version_id, entity)
+    const transaction = this.transactionManager.start(entity.version_id, 1).then(x => x[0])
     await this.changelog.write(changeEvent)
 
     return transaction
