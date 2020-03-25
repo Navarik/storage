@@ -71,7 +71,7 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
       query.sort(sortParams)
     }
 
-    this.logger.debug({ component: 'Storage.NeDbSearchIndex', filter, limit, offset, sort: sortParams }, `Performing find operation`)
+    this.logger.trace({ component: 'Storage.NeDbSearchIndex', filter, limit, offset, sort: sortParams }, `Performing find operation`)
 
     const collection: Array<Searchable> = await new Promise((resolve, reject) => {
       query.exec((err, res) => {
@@ -85,7 +85,7 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
 
   count(searchParams: SearchQuery): Promise<number> {
     const filter = this.queryParser.parseFilter(searchParams)
-    this.logger.debug({ component: 'Storage.NeDbSearchIndex', filter }, `Performing find operation`)
+    this.logger.trace({ component: 'Storage.NeDbSearchIndex', filter }, `Performing find operation`)
 
     return new Promise((resolve, reject) => {
       this.client.count(filter, (err, res) => {
@@ -97,7 +97,7 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
 
   index(document: CanonicalEntity): Promise<void> {
     const data = this.convertToSearchable(document)
-    this.logger.debug({ component: 'Storage.NeDbSearchIndex', data }, `Indexing document`)
+    this.logger.trace({ component: 'Storage.NeDbSearchIndex', data }, `Indexing document`)
 
     return new Promise((resolve, reject) =>
       this.client.update(
@@ -117,7 +117,7 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
   }
 
   delete(document: CanonicalEntity): Promise<void> {
-    this.logger.debug({ component: 'Storage.NeDbSearchIndex', id: document.id }, `Deleting document`)
+    this.logger.trace({ component: 'Storage.NeDbSearchIndex', id: document.id }, `Deleting document`)
 
     return new Promise((resolve, reject) =>
       this.client.remove(
