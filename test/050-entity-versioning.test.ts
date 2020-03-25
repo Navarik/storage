@@ -1,12 +1,14 @@
 import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
 import { expectSameEntity } from './steps/checks'
 import { EntitySteps } from './steps/entities'
+import { nullLogger } from "./fixtures/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
 const fixtures: Array<CanonicalEntity> = require('./fixtures/data/versions.json')
 
 const storage = new Storage({
-  schema: fixtureSchemata
+  schema: fixtureSchemata,
+  logger: nullLogger
 })
 
 const steps = new EntitySteps(storage)

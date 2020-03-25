@@ -1,12 +1,13 @@
-import { Dictionary, Map } from '@navarik/types'
+import { Dictionary, Map, Logger } from '@navarik/types'
 import { CoreDdl, SchemaRegistryAdapter, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
 import { Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, TypedEntity, IdentifiedEntity, State } from './types'
 import { TransactionManager } from "@navarik/transaction-manager"
 import uuidv4 from 'uuid/v4'
-import { NeDbSearchIndex } from './adapters/ne-db-search-index'
+import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
 import { DefaultChangelog } from './adapters/default-changelog'
 import { ChangeEventFactory } from './change-event-factory'
 import { LocalState } from './adapters/local-state'
+import { defaultLogger } from "./adapters/default-logger"
 
 export * from './types'
 
@@ -18,6 +19,7 @@ type StorageConfig = {
   meta?: Dictionary<SchemaField>
   schema?: Array<CanonicalSchema>
   data?: Array<TypedEntity>
+  logger?: Logger
 }
 
 export class Storage {
@@ -30,9 +32,12 @@ export class Storage {
   private observers: Array<Observer>
   private changeEventFactory: ChangeEventFactory
   private transactionManager: TransactionManager<CanonicalEntity>
+  private logger: Logger
 
-  constructor({ changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [] }: StorageConfig = {}) {
+  constructor({ changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [], logger }: StorageConfig = {}) {
     this.isInitializing = true
+
+    this.logger = logger || defaultLogger
 
     this.observers = []
     this.ddl = new CoreDdl({ schema, registry: schemaRegistry })
@@ -59,7 +64,7 @@ export class Storage {
 
     this.transactionManager = new TransactionManager()
     this.changelog = changelog || new DefaultChangelog(staticChangelog)
-    this.searchIndex = index || new NeDbSearchIndex()
+    this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
     this.currentState = state || new LocalState({
       size: 50000,
       searchIndex: this.searchIndex

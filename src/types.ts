@@ -60,7 +60,7 @@ export interface State<T extends CanonicalEntity> extends Service {
   delete(id: string): Promise<void>
 }
 
-export type SearchQuery = Dictionary<string>
+export type SearchQuery = Dictionary<string|object|number|boolean>
 export type SearchOptions = {
   limit?: number
   offset?: number

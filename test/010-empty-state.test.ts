@@ -1,7 +1,8 @@
 import expect from 'expect.js'
+import { nullLogger } from "./fixtures/null-logger"
 import { Storage } from '../src'
 
-const storage = new Storage()
+const storage = new Storage({ logger: nullLogger })
 
 describe('Empty state', () => {
   before(() => storage.up())

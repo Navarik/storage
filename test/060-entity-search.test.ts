@@ -2,6 +2,7 @@ import expect from 'expect.js'
 import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
 import { expectEntity } from './steps/checks'
 import { EntitySteps } from './steps/entities'
+import { nullLogger } from "./fixtures/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events.json')
@@ -18,7 +19,8 @@ const fixtureData = [
 
 const storage = new Storage({
   schema: fixtureSchemata,
-  data: fixtureData
+  data: fixtureData,
+  logger: nullLogger
 })
 
 const steps = new EntitySteps(storage)

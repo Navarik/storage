@@ -1,10 +1,12 @@
 import expect from 'expect.js'
+import { nullLogger } from "./fixtures/null-logger"
 import { Storage, CanonicalSchema } from '../src'
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
 
 const storage = new Storage({
-  schema: fixtureSchemata
+  schema: fixtureSchemata,
+  logger: nullLogger
 })
 
 const invalidData = {

@@ -1,12 +1,14 @@
 import expect from 'expect.js'
 import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
+import { nullLogger } from "./fixtures/null-logger"
 import { EntitySteps } from './steps/entities'
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events')
 
 const storage = new Storage({
-  schema: fixtureSchemata
+  schema: fixtureSchemata,
+  logger: nullLogger
 })
 
 const steps = new EntitySteps(storage)
