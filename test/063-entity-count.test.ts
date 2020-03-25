@@ -1,5 +1,6 @@
 import expect from 'expect.js'
 import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
+import { nullLogger } from "./fixtures/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events.json')
@@ -7,7 +8,8 @@ const fixturesJobs: Array<CanonicalEntity> = require('./fixtures/data/job-orders
 
 const storage = new Storage({
   schema: fixtureSchemata,
-  data: [ ...fixturesEvents, ...fixturesJobs ]
+  data: [ ...fixturesEvents, ...fixturesJobs ],
+  logger: nullLogger
 })
 
 describe('Entity counts', () => {

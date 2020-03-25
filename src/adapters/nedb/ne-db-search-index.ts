@@ -1,6 +1,7 @@
-import { Dictionary } from '@navarik/types'
+import { Dictionary, Logger } from '@navarik/types'
 import Database from 'nedb'
-import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity } from '../types'
+import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity } from '../../types'
+import { NeDbQueryParser } from './ne-db-query-parser'
 
 interface Searchable {
   ___document: CanonicalEntity
@@ -32,10 +33,14 @@ const databaseError = (err: Error) => {
 }
 
 export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
+  private logger: Logger
   private client: Database
+  private queryParser: NeDbQueryParser
 
-  constructor() {
+  constructor({ logger }: { logger: Logger }) {
+    this.logger = logger
     this.client = new Database()
+    this.queryParser = new NeDbQueryParser()
     this.client.ensureIndex({ fieldName: 'id', unique: true })
   }
 
@@ -49,25 +54,9 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
     return searchable
   }
 
-  /**
-    * Translate the array of sort queries from CoreQL format to NeDB cursor.sort() format. Example:
-    *    received this:         [ 'vessels:asc', 'foo.bar.baz:desc', ... ]
-    *    NeDB wants this:       { vessels: 1 , 'foo.bar.baz': -1, ... }
-   * @param {string|string[]} sortQueries - A single sort query string or an array of sort query strings in descending priority.
-   * @returns {Array<Array>} - An array of one or more [string, number] pairs where string is the field to be sorted by and number is either 1 for ascending sorting or -1 for descending sorting.
-   */
-  private parseSortQuery(sortQueries: Array<string>): Dictionary<number> {
-    const result: Dictionary<number> = {}
-    for (const item of sortQueries) {
-      const [field, order] = item.split(':')
-      result[field] = (order || '').trim().toLowerCase() === 'desc' ? -1 : 1
-    }
-
-    return result
-  }
-
   async find(searchParams: SearchQuery, options: SearchOptions = {}): Promise<Array<CanonicalEntity>> {
-    const query = this.client.find(stringifyProperties(searchParams), { _id: 0 })
+    const filter = this.queryParser.parseFilter(searchParams)
+    const query = this.client.find(filter, { _id: 0 })
     const { offset, limit, sort } = options
 
     if (offset) {
@@ -76,10 +65,13 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
     if (limit) {
       query.limit(parseInt(`${limit}`))
     }
+    let sortParams
     if (sort) {
-      const nedbSortingObject = this.parseSortQuery(sort instanceof Array ? sort : [sort])
-      query.sort(nedbSortingObject)
+      sortParams = this.queryParser.parseSortQuery(sort instanceof Array ? sort : [sort])
+      query.sort(sortParams)
     }
+
+    this.logger.debug({ component: 'Storage.NeDbSearchIndex', filter, limit, offset, sort: sortParams }, `Performing find operation`)
 
     const collection: Array<Searchable> = await new Promise((resolve, reject) => {
       query.exec((err, res) => {
@@ -92,8 +84,11 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
   }
 
   count(searchParams: SearchQuery): Promise<number> {
+    const filter = this.queryParser.parseFilter(searchParams)
+    this.logger.debug({ component: 'Storage.NeDbSearchIndex', filter }, `Performing find operation`)
+
     return new Promise((resolve, reject) => {
-      this.client.count(stringifyProperties(searchParams), (err, res) => {
+      this.client.count(filter, (err, res) => {
         if (err) reject(databaseError(err))
         else resolve(res)
       })
@@ -101,10 +96,13 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
   }
 
   index(document: CanonicalEntity): Promise<void> {
+    const data = this.convertToSearchable(document)
+    this.logger.debug({ component: 'Storage.NeDbSearchIndex', data }, `Indexing document`)
+
     return new Promise((resolve, reject) =>
       this.client.update(
         { id: document.id },
-        this.convertToSearchable(document),
+        data,
         { upsert: true, multi: true },
         (err) => {
           if (err) reject(databaseError(err))
@@ -119,6 +117,8 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
   }
 
   delete(document: CanonicalEntity): Promise<void> {
+    this.logger.debug({ component: 'Storage.NeDbSearchIndex', id: document.id }, `Deleting document`)
+
     return new Promise((resolve, reject) =>
       this.client.remove(
         { id: document.id },
