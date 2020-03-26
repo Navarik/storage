@@ -17,15 +17,15 @@ describe('Entity counts', () => {
   after(() => storage.down())
 
   it("can count entities", async () => {
-    const response = await storage.count()
+    const response = await storage.count('doge')
     expect(response).to.equal(fixturesEvents.length + fixturesJobs.length)
   })
 
   it("can count entities with filters", async () => {
-    const response1 = await storage.count({ type: 'timelog.timelog_event' })
+    const response1 = await storage.count('doge', { type: 'timelog.timelog_event' })
     expect(response1).to.equal(fixturesEvents.length)
 
-    const response2 = await storage.count({ type: 'document.job_order' })
+    const response2 = await storage.count('doge', { type: 'document.job_order' })
     expect(response2).to.equal(fixturesJobs.length)
   })
 })

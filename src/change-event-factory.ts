@@ -1,6 +1,6 @@
 import uuidv5 from 'uuid/v5'
 import { CoreDdl } from '@navarik/core-ddl'
-import { IdGenerator, IdentifiedEntity, CanonicalEntity, TypedEntity, ChangeEvent } from './types'
+import { IdGenerator, IdentifiedEntity, CanonicalEntity, TypedEntity, ChangeEvent, UUID } from './types'
 
 type FactoryConfig = {
   generator: IdGenerator
@@ -22,7 +22,7 @@ export class ChangeEventFactory {
     this.metaType = metaType
   }
 
-  create(entity: TypedEntity): ChangeEvent {
+  create(user: UUID, entity: TypedEntity): ChangeEvent {
     const formatted = this.ddl.format(entity.type, entity.body)
     const formattedMeta = this.metaDdl.format(this.metaType, entity.meta || {})
 
@@ -35,7 +35,9 @@ export class ChangeEventFactory {
       id: id,
       version_id: version_id,
       parent_id: null,
+      created_by: user,
       created_at: now.toISOString(),
+      modified_by: user,
       modified_at: now.toISOString(),
       type: formatted.schema.type,
       body: formatted.body,
@@ -52,7 +54,7 @@ export class ChangeEventFactory {
     }
   }
 
-  createVersion(current: IdentifiedEntity, previous: CanonicalEntity): ChangeEvent {
+  createVersion(user: UUID, current: IdentifiedEntity, previous: CanonicalEntity): ChangeEvent {
     const type = current.type || previous.type
     const body = { ...previous.body, ...current.body }
     const meta = { ...previous.meta, ...(current.meta || {}) }
@@ -67,7 +69,9 @@ export class ChangeEventFactory {
       id: previous.id,
       version_id: version_id,
       parent_id: previous.version_id,
+      created_by: previous.created_by,
       created_at: previous.created_at,
+      modified_by: user,
       modified_at: now.toISOString(),
       type: formatted.schema.type,
       body: formatted.body,

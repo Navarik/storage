@@ -16,16 +16,16 @@ describe('Entity format and constraints', () => {
   after(() => storage.down())
 
   it("can't create entity of unknown type", async () => {
-    await steps.cannotCreate({ type: 'wow.doge', body: {} })
+    await steps.cannotCreate('doge', { type: 'wow.doge', body: {} })
   })
 
   it("can't create malformed entity", async () => {
-    await steps.cannotCreate({
+    await steps.cannotCreate('doge', {
       type: 'profile.user',
       body: {}
     })
 
-    await steps.cannotCreate({
+    await steps.cannotCreate('doge', {
       type: 'profile.user',
       body: {
         role: 100500,
@@ -38,7 +38,7 @@ describe('Entity format and constraints', () => {
   })
 
   it("can create properly structured entity", async () => {
-    await steps.canCreate({
+    await steps.canCreate('doge', {
       type: 'profile.user',
       body: {
         role: "Doge",

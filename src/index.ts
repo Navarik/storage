@@ -63,7 +63,7 @@ export class Storage {
     // Static data is used primarily for automated tests
     const staticChangelog = []
     for (const document of data) {
-      staticChangelog.push(this.changeEventFactory.create(document))
+      staticChangelog.push(this.changeEventFactory.create('none', document))
     }
 
     this.transactionManager = new TransactionManager()
@@ -141,80 +141,67 @@ export class Storage {
     return this.ddl.validate(entity.type, entity.body).isValid
   }
 
-  for(user: UUID) {
-    const get = async (id: UUID): Promise<CanonicalEntity> => {
-      const entity = await this.currentState.get(id)
-      const access = this.accessControl.access(user, 'read', entity);
+  async get(user: UUID, id: UUID): Promise<CanonicalEntity> {
+    const entity = await this.currentState.get(id)
+    const access = this.accessControl.access(user, 'read', entity);
 
-      if (!access.granted) {
-        throw new Error(access.explain())
-      }
-
-      return entity
+    if (!access.granted) {
+      throw new Error(access.explain())
     }
 
-    const find = async (query: SearchQuery = {}, options: SearchOptions = {}): Promise<Array<CanonicalEntity>> => {
-      return await this.searchIndex.find(query, options)
+    return entity
+  }
+
+  async find(user: UUID, query: SearchQuery = {}, options: SearchOptions = {}): Promise<Array<CanonicalEntity>> {
+    return await this.searchIndex.find(query, options)
+  }
+
+  async count(user: UUID, query: SearchQuery = {}): Promise<number> {
+    return this.searchIndex.count(query)
+  }
+
+  async create(user: UUID, entity: TypedEntity): Promise<CanonicalEntity> {
+    const changeEvent = this.changeEventFactory.create(user, entity)
+
+    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => x[0])
+    await this.changelog.write(changeEvent)
+
+    return transaction
+  }
+
+  async createBulk(user: UUID, collection: Array<TypedEntity>): Promise<Array<CanonicalEntity>> {
+    return Promise.all(collection.map(entity => this.create(user, entity)))
+  }
+
+  async update(user: UUID, entity: IdentifiedEntity): Promise<CanonicalEntity> {
+    const previous = await this.get(user, entity.id)
+    if (!previous) {
+      throw new Error(`[Storage] Entity not found or update not permitted: ${entity.id}`)
     }
 
-    const count = async (query: SearchQuery = {}): Promise<number> => {
-      return this.searchIndex.count(query)
+    const changeEvent = this.changeEventFactory.createVersion(user, entity, previous)
+
+    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => x[0])
+    await this.changelog.write(changeEvent)
+
+    return transaction
+  }
+
+  async deleteEntity(user: UUID, id: UUID): Promise<CanonicalEntity> {
+    const entity = await this.get(user, id)
+    if (!entity) {
+      throw new Error(`[Storage] Can't delete entity that doesn't exist: ${id}`)
     }
 
-    const create = async (entity: TypedEntity): Promise<CanonicalEntity> => {
-      const changeEvent = this.changeEventFactory.create(entity)
+    const changeEvent = this.changeEventFactory.delete(entity)
 
-      const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => x[0])
-      await this.changelog.write(changeEvent)
+    const transaction = this.transactionManager.start(entity.version_id, 1).then(x => x[0])
+    await this.changelog.write(changeEvent)
 
-      return transaction
-    }
+    return transaction
+  }
 
-    const createBulk = async (collection: Array<TypedEntity>): Promise<Array<CanonicalEntity>> => {
-      return Promise.all(collection.map(entity => create(entity)))
-    }
-
-    const update = async (entity: IdentifiedEntity): Promise<CanonicalEntity> => {
-      const previous = await get(entity.id)
-      if (!previous) {
-        throw new Error(`[Storage] Entity not found or update not permitted: ${entity.id}`)
-      }
-
-      const changeEvent = this.changeEventFactory.createVersion(entity, previous)
-
-      const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => x[0])
-      await this.changelog.write(changeEvent)
-
-      return transaction
-    }
-
-    const deleteEntity = async (id: UUID): Promise<CanonicalEntity> => {
-      const entity = await get(id)
-      if (!entity) {
-        throw new Error(`[Storage] Can't delete entity that doesn't exist: ${id}`)
-      }
-
-      const changeEvent = this.changeEventFactory.delete(entity)
-
-      const transaction = this.transactionManager.start(entity.version_id, 1).then(x => x[0])
-      await this.changelog.write(changeEvent)
-
-      return transaction
-    }
-
-    const observe = (handler: Observer) => {
-      this.observers.push(handler)
-    }
-
-    return {
-      get,
-      find,
-      count,
-      create,
-      createBulk,
-      update,
-      delete: deleteEntity,
-      observe
-    }
+  observe(handler: Observer) {
+    this.observers.push(handler)
   }
 }

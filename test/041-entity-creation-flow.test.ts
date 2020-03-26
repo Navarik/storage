@@ -18,25 +18,25 @@ describe('Entity creation flow', () => {
   after(() => storage.down())
 
   it("doesn't have entities before they are created", async () => {
-    const response = await storage.find()
+    const response = await storage.find('doge')
     expect(response).to.be.an('array')
     expect(response).to.be.empty()
   })
 
   it("correctly creates new entities", async () => {
-    await Promise.all(fixturesEvents.map(x => steps.canCreate(x)))
+    await Promise.all(fixturesEvents.map(x => steps.canCreate('doge', x)))
   })
 
   it("can find created entities", async () => {
-    await Promise.all(fixturesEvents.map(x => steps.canFind(x)))
+    await Promise.all(fixturesEvents.map(x => steps.canFind('doge', x)))
   })
 
   it("allows duplicates", async () => {
-    await Promise.all(fixturesEvents.map(x => steps.canCreate(x)))
+    await Promise.all(fixturesEvents.map(x => steps.canCreate('doge', x)))
   })
 
   it("correct number of entities is created", async () => {
-    const response = await storage.find()
+    const response = await storage.find('doge')
     expect(response).to.be.an('array')
     expect(response).to.have.length(fixturesEvents.length * 2)
   })

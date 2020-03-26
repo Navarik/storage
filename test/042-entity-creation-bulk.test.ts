@@ -18,15 +18,15 @@ describe('Bulk entity creation', () => {
   after(() => storage.down())
 
   it("correctly creates collection of new entities", async () => {
-    await steps.canCreateCollection(fixturesEvents)
+    await steps.canCreateCollection('doge', fixturesEvents)
   })
 
   it("can find created entities", async () => {
-    await Promise.all(fixturesEvents.map(x => steps.canFind(x)))
+    await Promise.all(fixturesEvents.map(x => steps.canFind('doge', x)))
   })
 
   it("correct number of entities is created", async () => {
-    const response = await storage.find()
+    const response = await storage.find('doge')
     expect(response).to.be.an('array')
     expect(response).to.have.length(fixturesEvents.length)
   })
