@@ -1,9 +1,10 @@
 import { Dictionary, Map, Logger } from '@navarik/types'
 import { CoreDdl, SchemaRegistryAdapter, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
-import { Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, TypedEntity, IdentifiedEntity, State } from './types'
+import { AccessControlAdapter, Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, TypedEntity, IdentifiedEntity, State } from './types'
 import { TransactionManager } from "@navarik/transaction-manager"
 import uuidv4 from 'uuid/v4'
 import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
+import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelog } from './adapters/default-changelog'
 import { ChangeEventFactory } from './change-event-factory'
 import { LocalState } from './adapters/local-state'
@@ -16,6 +17,7 @@ type StorageConfig = {
   index?: SearchIndex<CanonicalEntity>
   state?: State<CanonicalEntity>
   schemaRegistry?: SchemaRegistryAdapter
+  accessControl?: AccessControlAdapter<CanonicalEntity>
   meta?: Dictionary<SchemaField>
   schema?: Array<CanonicalSchema>
   data?: Array<TypedEntity>
@@ -26,6 +28,7 @@ export class Storage {
   private isInitializing: boolean
   private ddl: CoreDdl
   private metaDdl: CoreDdl
+  private accessControl: AccessControlAdapter<CanonicalEntity>
   private currentState: State<CanonicalEntity>
   private searchIndex: SearchIndex<CanonicalEntity>
   private changelog: Changelog
@@ -34,9 +37,10 @@ export class Storage {
   private transactionManager: TransactionManager<CanonicalEntity>
   private logger: Logger
 
-  constructor({ changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [], logger }: StorageConfig = {}) {
+  constructor({ accessControl, changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [], logger }: StorageConfig = {}) {
     this.isInitializing = true
 
+    this.accessControl = accessControl || new DefaultAccessControl
     this.logger = logger || defaultLogger
 
     this.observers = []
@@ -129,20 +133,6 @@ export class Storage {
     return this.ddl.define(schema)
   }
 
-  async get(id: UUID): Promise<CanonicalEntity> {
-    const entity = await this.currentState.get(id)
-
-    return entity
-  }
-
-  async find(query: SearchQuery = {}, options: SearchOptions = {}): Promise<Array<CanonicalEntity>> {
-    return await this.searchIndex.find(query, options)
-  }
-
-  async count(query: SearchQuery = {}): Promise<number> {
-    return this.searchIndex.count(query)
-  }
-
   validate(entity: TypedEntity): ValidationResponse {
     return this.ddl.validate(entity.type, entity.body)
   }
@@ -151,48 +141,80 @@ export class Storage {
     return this.ddl.validate(entity.type, entity.body).isValid
   }
 
-  async create(entity: TypedEntity): Promise<CanonicalEntity> {
-    const changeEvent = this.changeEventFactory.create(entity)
+  for(user: UUID) {
+    const get = async (id: UUID): Promise<CanonicalEntity> => {
+      const entity = await this.currentState.get(id)
+      const access = this.accessControl.access(user, 'read', entity);
 
-    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => x[0])
-    await this.changelog.write(changeEvent)
+      if (!access.granted) {
+        throw new Error(access.explain())
+      }
 
-    return transaction
-  }
-
-  async createBulk(collection: Array<TypedEntity>): Promise<Array<CanonicalEntity>> {
-    return Promise.all(collection.map(entity => this.create(entity)))
-  }
-
-  async update(entity: IdentifiedEntity): Promise<CanonicalEntity> {
-    const previous = await this.get(entity.id)
-    if (!previous) {
-      throw new Error(`[Storage] Can't update entity that doesn't exist: ${entity.id}`)
+      return entity
     }
 
-    const changeEvent = this.changeEventFactory.createVersion(entity, previous)
-
-    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => x[0])
-    await this.changelog.write(changeEvent)
-
-    return transaction
-  }
-
-  async delete(id: UUID): Promise<CanonicalEntity> {
-    const entity = await this.get(id)
-    if (!entity) {
-      throw new Error(`[Storage] Can't delete entity that doesn't exist: ${id}`)
+    const find = async (query: SearchQuery = {}, options: SearchOptions = {}): Promise<Array<CanonicalEntity>> => {
+      return await this.searchIndex.find(query, options)
     }
 
-    const changeEvent = this.changeEventFactory.delete(entity)
+    const count = async (query: SearchQuery = {}): Promise<number> => {
+      return this.searchIndex.count(query)
+    }
 
-    const transaction = this.transactionManager.start(entity.version_id, 1).then(x => x[0])
-    await this.changelog.write(changeEvent)
+    const create = async (entity: TypedEntity): Promise<CanonicalEntity> => {
+      const changeEvent = this.changeEventFactory.create(entity)
 
-    return transaction
-  }
+      const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => x[0])
+      await this.changelog.write(changeEvent)
 
-  observe(handler: Observer) {
-    this.observers.push(handler)
+      return transaction
+    }
+
+    const createBulk = async (collection: Array<TypedEntity>): Promise<Array<CanonicalEntity>> => {
+      return Promise.all(collection.map(entity => create(entity)))
+    }
+
+    const update = async (entity: IdentifiedEntity): Promise<CanonicalEntity> => {
+      const previous = await get(entity.id)
+      if (!previous) {
+        throw new Error(`[Storage] Entity not found or update not permitted: ${entity.id}`)
+      }
+
+      const changeEvent = this.changeEventFactory.createVersion(entity, previous)
+
+      const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => x[0])
+      await this.changelog.write(changeEvent)
+
+      return transaction
+    }
+
+    const deleteEntity = async (id: UUID): Promise<CanonicalEntity> => {
+      const entity = await get(id)
+      if (!entity) {
+        throw new Error(`[Storage] Can't delete entity that doesn't exist: ${id}`)
+      }
+
+      const changeEvent = this.changeEventFactory.delete(entity)
+
+      const transaction = this.transactionManager.start(entity.version_id, 1).then(x => x[0])
+      await this.changelog.write(changeEvent)
+
+      return transaction
+    }
+
+    const observe = (handler: Observer) => {
+      this.observers.push(handler)
+    }
+
+    return {
+      get,
+      find,
+      count,
+      create,
+      createBulk,
+      update,
+      delete: deleteEntity,
+      observe
+    }
   }
 }

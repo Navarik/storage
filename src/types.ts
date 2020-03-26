@@ -8,7 +8,9 @@ export interface CanonicalEntity {
   id: UUID
   version_id: UUID
   parent_id: UUID|null
+  created_by: UUID
   created_at: Timestamp
+  modified_by: UUID
   modified_at: Timestamp
   type: string
   body: Document
@@ -46,6 +48,15 @@ interface Service {
   up(): Promise<void>
   down(): Promise<void>
   isHealthy(): Promise<boolean>
+}
+
+export type AccessControlDecision = {
+  granted: boolean,
+  explain: () => string,
+}
+
+export interface AccessControlAdapter<T> {
+  access(subject: UUID, action: string, object: T): AccessControlDecision
 }
 
 export interface Changelog extends Service {
