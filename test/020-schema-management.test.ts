@@ -14,7 +14,7 @@ describe('Schema management', () => {
   after(() => storage.down())
 
   it("has no entities", async () => {
-    const response = await storage.find('doge')
+    const response = await storage.find()
     expect(response).to.be.an('array')
     expect(response).to.be.empty()
   })

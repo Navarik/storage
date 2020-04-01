@@ -50,13 +50,33 @@ interface Service {
   isHealthy(): Promise<boolean>
 }
 
+export type AccessType = 'read' | 'write'
+
+export type AccessGrant = {
+  subject: UUID
+  access: AccessType
+}
+
+export type AccessControlList = {
+  container: UUID
+  dac: Array<AccessGrant>
+  mac: Array<UUID>
+}
+
+export type AccessControlQueryTerms = {
+  dac: Array<AccessGrant>
+  mac: Array<UUID>
+}
+
 export type AccessControlDecision = {
-  granted: boolean,
-  explain: () => string,
+  granted: boolean
+  explain: () => string
 }
 
 export interface AccessControlAdapter<T> {
-  access(subject: UUID, action: string, object: T): AccessControlDecision
+  check(subject: UUID, action: AccessType, object: T): AccessControlDecision
+  createAcl(entity:T): Promise<any>
+  getQueryTerms(subject:UUID, access:AccessType): Promise<AccessControlQueryTerms>
 }
 
 export interface Changelog extends Service {
@@ -67,7 +87,7 @@ export interface Changelog extends Service {
 
 export interface State<T extends CanonicalEntity> extends Service {
   put(document: T): Promise<void>
-  get(id: string): Promise<T>
+  get(id: string, user?: UUID): Promise<T>
   delete(id: string): Promise<void>
 }
 
@@ -82,8 +102,8 @@ export interface SearchIndex<T extends CanonicalEntity> extends Service {
   index(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
   update(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
   delete(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
-  find(query: SearchQuery, options: SearchOptions): Promise<Array<T>>
-  count(query: SearchQuery): Promise<number>
+  find(user: UUID, query: SearchQuery, options: SearchOptions): Promise<Array<T>>
+  count(user: UUID, query: SearchQuery): Promise<number>
   isClean(): Promise<boolean>
 }
 

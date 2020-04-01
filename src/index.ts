@@ -2,7 +2,7 @@ import { Dictionary, Map, Logger } from '@navarik/types'
 import { CoreDdl, SchemaRegistryAdapter, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
 import { AccessControlAdapter, Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, TypedEntity, IdentifiedEntity, State } from './types'
 import { TransactionManager } from "@navarik/transaction-manager"
-import uuidv4 from 'uuid/v4'
+import { v4 as uuidv4 } from 'uuid'
 import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
 import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelog } from './adapters/default-changelog'
@@ -23,6 +23,8 @@ type StorageConfig = {
   data?: Array<TypedEntity>
   logger?: Logger
 }
+
+const none = '00000000-0000-0000-0000-000000000000'
 
 export class Storage {
   private isInitializing: boolean
@@ -63,12 +65,12 @@ export class Storage {
     // Static data is used primarily for automated tests
     const staticChangelog = []
     for (const document of data) {
-      staticChangelog.push(this.changeEventFactory.create('none', document))
+      staticChangelog.push(this.changeEventFactory.create(none, document))
     }
 
     this.transactionManager = new TransactionManager()
     this.changelog = changelog || new DefaultChangelog(staticChangelog)
-    this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
+    this.searchIndex = index || new NeDbSearchIndex({ accessControl: this.accessControl, logger: this.logger })
     this.currentState = state || new LocalState({
       size: 50000,
       searchIndex: this.searchIndex
@@ -141,9 +143,9 @@ export class Storage {
     return this.ddl.validate(entity.type, entity.body).isValid
   }
 
-  async get(user: UUID, id: UUID): Promise<CanonicalEntity> {
-    const entity = await this.currentState.get(id)
-    const access = this.accessControl.access(user, 'read', entity);
+  async get(id: UUID, user: UUID = none): Promise<CanonicalEntity> {
+    const entity = await this.currentState.get(user, id)
+    const access = this.accessControl.check(user, 'read', entity);
 
     if (!access.granted) {
       throw new Error(access.explain())
@@ -152,15 +154,15 @@ export class Storage {
     return entity
   }
 
-  async find(user: UUID, query: SearchQuery = {}, options: SearchOptions = {}): Promise<Array<CanonicalEntity>> {
-    return await this.searchIndex.find(query, options)
+  async find(query: SearchQuery = {}, options: SearchOptions = {}, user: UUID = none): Promise<Array<CanonicalEntity>> {
+    return await this.searchIndex.find(user, query, options)
   }
 
-  async count(user: UUID, query: SearchQuery = {}): Promise<number> {
-    return this.searchIndex.count(query)
+  async count(query: SearchQuery = {}, user: UUID = none): Promise<number> {
+    return this.searchIndex.count(user, query)
   }
 
-  async create(user: UUID, entity: TypedEntity): Promise<CanonicalEntity> {
+  async create(entity: TypedEntity, user: UUID = none): Promise<CanonicalEntity> {
     const changeEvent = this.changeEventFactory.create(user, entity)
 
     const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => x[0])
@@ -169,12 +171,12 @@ export class Storage {
     return transaction
   }
 
-  async createBulk(user: UUID, collection: Array<TypedEntity>): Promise<Array<CanonicalEntity>> {
-    return Promise.all(collection.map(entity => this.create(user, entity)))
+  async createBulk(collection: Array<TypedEntity>, user: UUID = none): Promise<Array<CanonicalEntity>> {
+    return Promise.all(collection.map(entity => this.create(entity, user)))
   }
 
-  async update(user: UUID, entity: IdentifiedEntity): Promise<CanonicalEntity> {
-    const previous = await this.get(user, entity.id)
+  async update(entity: IdentifiedEntity, user: UUID = none): Promise<CanonicalEntity> {
+    const previous = await this.get(entity.id, user)
     if (!previous) {
       throw new Error(`[Storage] Entity not found or update not permitted: ${entity.id}`)
     }
@@ -187,8 +189,8 @@ export class Storage {
     return transaction
   }
 
-  async deleteEntity(user: UUID, id: UUID): Promise<CanonicalEntity> {
-    const entity = await this.get(user, id)
+  async deleteEntity(id: UUID, user: UUID = none): Promise<CanonicalEntity> {
+    const entity = await this.get(id, user)
     if (!entity) {
       throw new Error(`[Storage] Can't delete entity that doesn't exist: ${id}`)
     }

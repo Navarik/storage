@@ -1,5 +1,5 @@
 import LRU from "lru-cache"
-import { State, CanonicalEntity, SearchIndex } from "../types"
+import { State, CanonicalEntity, SearchIndex, UUID } from "../types"
 
 interface LocalStateConfig {
   size: number
@@ -22,13 +22,13 @@ export class LocalState implements State<CanonicalEntity> {
     this.cache.set(document.id, document)
   }
 
-  async get(id: string) {
+  async get(user: UUID, id: string) {
     const cachedDocument = this.cache.get(id)
     if (cachedDocument) {
       return cachedDocument
     }
 
-    const [foundDocument] = await this.searchIndex.find({ id }, {})
+    const [foundDocument] = await this.searchIndex.find(user, { id }, {})
     if (foundDocument) {
       this.put(foundDocument)
     }

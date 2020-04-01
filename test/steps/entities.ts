@@ -1,5 +1,5 @@
 import expect from 'expect.js'
-import { TypedEntity, Storage, SearchQuery, IdentifiedEntity, CanonicalEntity, UUID } from '../../src'
+import { TypedEntity, Storage, SearchQuery, IdentifiedEntity, CanonicalEntity } from '../../src'
 import { expectSameEntity } from './checks'
 
 export class EntitySteps {
@@ -9,35 +9,35 @@ export class EntitySteps {
     this.storage = storage
   }
 
-  async cannotCreate(user: UUID, entity: TypedEntity) {
+  async cannotCreate(entity: TypedEntity) {
     try {
-      await this.storage.create(user, entity)
+      await this.storage.create(entity)
       expect().fail("Expected error didn't happen")
     } catch (err) {
       expect(true).to.equal(true)
     }
   }
 
-  async canCreate(user: UUID, entity: TypedEntity) {
+  async canCreate(entity: TypedEntity) {
     let response
 
     // Create entity
-    response = await this.storage.create(user, entity)
+    response = await this.storage.create(entity)
     expectSameEntity(response, entity)
 
     // Try to read it back by ID
     const id = response.id
-    response = await this.storage.get(user, id)
+    response = await this.storage.get(id)
     expectSameEntity(response, entity)
 
     return response
   }
 
-  async canCreateCollection(user: UUID, collection: Array<TypedEntity>) {
+  async canCreateCollection(collection: Array<TypedEntity>) {
     let response
 
     // Create entity
-    response = await this.storage.createBulk(user, collection)
+    response = await this.storage.createBulk(collection)
     expect(response).to.be.an('array')
     expect(response).to.have.length(collection.length)
 
@@ -46,7 +46,7 @@ export class EntitySteps {
     })
 
     // Try to read it back by ID
-    response = await Promise.all(response.map(x => this.storage.get(user, x.id)))
+    response = await Promise.all(response.map(x => this.storage.get(x.id)))
     expect(response).to.be.an('array')
     expect(response).to.have.length(collection.length)
 
@@ -55,7 +55,7 @@ export class EntitySteps {
     })
   }
 
-  async canFind(user: UUID, entity: CanonicalEntity) {
+  async canFind(entity: CanonicalEntity) {
     let response
 
     // Find using fields in a query
@@ -73,23 +73,23 @@ export class EntitySteps {
       }
     }
 
-    response = await this.storage.find(user, query)
+    response = await this.storage.find(query)
     expect(response).to.be.an('array')
     expect(response).to.have.length(1)
     expectSameEntity(response[0], entity)
   }
 
-  async cannotUpdate(user: UUID, entity: IdentifiedEntity) {
+  async cannotUpdate(entity: IdentifiedEntity) {
     try {
-      await this.storage.update(user, entity)
+      await this.storage.update(entity)
       expect().fail("Expected error didn't happen")
     } catch (err) {
       expect(true).to.equal(true)
     }
   }
 
-  async canUpdate(user: UUID, entity: IdentifiedEntity) {
-    const response = await this.storage.update(user, entity)
+  async canUpdate(entity: IdentifiedEntity) {
+    const response = await this.storage.update(entity)
     expectSameEntity(response, entity)
   }
 }

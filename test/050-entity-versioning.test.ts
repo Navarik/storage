@@ -20,16 +20,16 @@ describe('Entity versioning', () => {
 
 
   it("can't update nonexistent entity", async () => {
-    await steps.cannotUpdate('doge', { id: 'wow-such-much-doge', body: { a: 100, b: 500 } })
+    await steps.cannotUpdate({ id: 'wow-such-much-doge', body: { a: 100, b: 500 } })
   })
 
   it("can create and update entity after it's created", async () => {
     const [firstVersion, ...versions] = fixtures
-    const entity = await steps.canCreate('doge', firstVersion)
+    const entity = await steps.canCreate(firstVersion)
     id = entity.id
 
     for (const version of versions) {
-      await steps.canUpdate('doge', { id, body: version.body })
+      await steps.canUpdate({ id, body: version.body })
     }
   })
 
@@ -37,9 +37,9 @@ describe('Entity versioning', () => {
     const lastVersion = fixtures[fixtures.length - 1]
     let response
 
-    response = await storage.get('doge', id)
+    response = await storage.get(id)
     expectSameEntity(response, lastVersion)
 
-    await steps.canFind('doge', lastVersion)
+    await steps.canFind(lastVersion)
   })
 })

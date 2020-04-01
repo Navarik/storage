@@ -1,4 +1,4 @@
-import uuidv5 from 'uuid/v5'
+import { v5 as uuidv5 } from 'uuid'
 import { CoreDdl } from '@navarik/core-ddl'
 import { IdGenerator, IdentifiedEntity, CanonicalEntity, TypedEntity, ChangeEvent, UUID } from './types'
 
