@@ -1,16 +1,19 @@
 import LRU from "lru-cache"
-import { State, CanonicalEntity, SearchIndex, UUID } from "../types"
+import { State, CanonicalEntity, SearchIndex, UUID, AccessControlAdapter } from "../types"
 
 interface LocalStateConfig {
   size: number
   searchIndex: SearchIndex<CanonicalEntity>
+  accessControl: AccessControlAdapter<CanonicalEntity>
 }
 
 export class LocalState implements State<CanonicalEntity> {
   private cache: LRU<string, CanonicalEntity>
   private searchIndex: SearchIndex<CanonicalEntity>
+  private accessControl: AccessControlAdapter<CanonicalEntity>
 
-  constructor({ size, searchIndex }: LocalStateConfig) {
+  constructor({ size, searchIndex, accessControl }: LocalStateConfig) {
+    this.accessControl = accessControl
     this.searchIndex = searchIndex
     this.cache = new LRU({
       max: size,
@@ -25,6 +28,11 @@ export class LocalState implements State<CanonicalEntity> {
   async get(user: UUID, id: string) {
     const cachedDocument = this.cache.get(id)
     if (cachedDocument) {
+      const access = await this.accessControl.check(user, 'read', cachedDocument)
+
+      if (!access.granted)
+        throw new Error('Access denied')
+
       return cachedDocument
     }
 

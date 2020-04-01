@@ -73,7 +73,8 @@ export class Storage {
     this.searchIndex = index || new NeDbSearchIndex({ accessControl: this.accessControl, logger: this.logger })
     this.currentState = state || new LocalState({
       size: 50000,
-      searchIndex: this.searchIndex
+      searchIndex: this.searchIndex,
+      accessControl: this.accessControl
      })
 
     this.changelog.observe(x => this.onChange(x))
