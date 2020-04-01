@@ -166,7 +166,7 @@ export class Storage {
   async create(entity: TypedEntity, user: UUID = none): Promise<CanonicalEntity> {
     const changeEvent = this.changeEventFactory.create(user, entity)
 
-    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => x[0])
+    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => Array.isArray(x) ? x[0]: x)
     await this.changelog.write(changeEvent)
 
     return transaction
@@ -184,7 +184,7 @@ export class Storage {
 
     const changeEvent = this.changeEventFactory.createVersion(user, entity, previous)
 
-    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => x[0])
+    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => Array.isArray(x) ? x[0]: x)
     await this.changelog.write(changeEvent)
 
     return transaction
@@ -198,7 +198,7 @@ export class Storage {
 
     const changeEvent = this.changeEventFactory.delete(entity)
 
-    const transaction = this.transactionManager.start(entity.version_id, 1).then(x => x[0])
+    const transaction = this.transactionManager.start(entity.version_id, 1).then(x => Array.isArray(x) ? x[0]: x)
     await this.changelog.write(changeEvent)
 
     return transaction

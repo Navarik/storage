@@ -15,10 +15,10 @@
   },
   "dependencies": {
     "@navarik/core-ddl": "^2.3.0",
-    "@navarik/transaction-manager": "^1.0.0",
+    "@navarik/transaction-manager": "^1.1.1",
     "lru-cache": "^5.1.1",
     "nedb": "^1.8.0",
-    "uuid": "^7.0.2"
+    "uuid": "^7.0.3"
   },
   "engines": {
     "node": ">=4.0",
@@ -29,9 +29,9 @@
     "@navarik/types": "^4.0.0",
     "@types/expect.js": "^0.3.29",
     "@types/lru-cache": "^5.1.0",
-    "@types/mocha": "^5.2.7",
+    "@types/mocha": "^7.0.2",
     "@types/nedb": "^1.8.9",
-    "@types/node": "^12.12.30",
+    "@types/node": "^13.9.8",
     "@types/uuid": "^7.0.2",
     "expect.js": "^0.3.1",
     "mocha": "^7.1.1",
