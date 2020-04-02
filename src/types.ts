@@ -32,7 +32,7 @@ export type IdentifiedEntity = Partial<CanonicalEntity> & {
 
 export type IdGenerator = (body: Document) => UUID
 
-export type ActionType = 'create'|'update'|'delete'|'cast'
+export type ActionType = 'create'|'update'|'delete'
 
 export interface ChangeEvent {
   action: ActionType
@@ -50,17 +50,11 @@ interface Service {
   isHealthy(): Promise<boolean>
 }
 
-export type AccessType = 'read' | 'write'
+export type AccessType = 'read'|'write'
 
 export type AccessGrant = {
   subject: UUID
   access: AccessType
-}
-
-export type AccessControlList = {
-  container: UUID
-  dac: Array<AccessGrant>
-  mac: Array<UUID>
 }
 
 export type AccessControlQueryTerms = {
@@ -73,10 +67,10 @@ export type AccessControlDecision = {
   explanation: string
 }
 
-export interface AccessControlAdapter<T> {
+export interface AccessControlAdapter<T extends CanonicalEntity> {
   check(subject: UUID, action: AccessType, object: T): Promise<AccessControlDecision>
-  createAcl(entity:T): Promise<any>
-  getQueryTerms(subject:UUID, access:AccessType): Promise<AccessControlQueryTerms>
+  attachTerms(entity: T): Promise<T & Dictionary<any>>
+  getQuery(subject: UUID, access: AccessType): Promise<SearchQuery>
 }
 
 export interface Changelog extends Service {
@@ -87,7 +81,7 @@ export interface Changelog extends Service {
 
 export interface State<T extends CanonicalEntity> extends Service {
   put(document: T): Promise<void>
-  get(id: string, user?: UUID): Promise<T>
+  get(id: string): Promise<T>
   delete(id: string): Promise<void>
 }
 
@@ -102,8 +96,8 @@ export interface SearchIndex<T extends CanonicalEntity> extends Service {
   index(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
   update(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
   delete(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
-  find(user: UUID, query: SearchQuery, options: SearchOptions): Promise<Array<T>>
-  count(user: UUID, query: SearchQuery): Promise<number>
+  find(query: SearchQuery, options: SearchOptions): Promise<Array<T>>
+  count(query: SearchQuery): Promise<number>
   isClean(): Promise<boolean>
 }
 
