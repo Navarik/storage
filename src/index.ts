@@ -169,7 +169,7 @@ export class Storage {
     const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => Array.isArray(x) ? x[0]: x)
     await this.changelog.write(changeEvent)
 
-    return transaction
+    return transaction as Promise<CanonicalEntity>
   }
 
   async createBulk(collection: Array<TypedEntity>, user: UUID = none): Promise<Array<CanonicalEntity>> {
@@ -187,7 +187,7 @@ export class Storage {
     const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1).then(x => Array.isArray(x) ? x[0]: x)
     await this.changelog.write(changeEvent)
 
-    return transaction
+    return transaction as Promise<CanonicalEntity>
   }
 
   async deleteEntity(id: UUID, user: UUID = none): Promise<CanonicalEntity> {
@@ -201,7 +201,7 @@ export class Storage {
     const transaction = this.transactionManager.start(entity.version_id, 1).then(x => Array.isArray(x) ? x[0]: x)
     await this.changelog.write(changeEvent)
 
-    return transaction
+    return transaction as Promise<CanonicalEntity>
   }
 
   observe(handler: Observer) {
