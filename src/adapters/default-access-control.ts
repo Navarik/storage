@@ -1,10 +1,10 @@
 import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, AccessType, AccessControlList, AccessControlQueryTerms } from '../types'
 
 export class DefaultAccessControl implements AccessControlAdapter<CanonicalEntity> {
-  check(subject:UUID, action:AccessType, object:CanonicalEntity): AccessControlDecision {
+  async check(subject:UUID, action:AccessType, object:CanonicalEntity): Promise<AccessControlDecision> {
     return {
       granted: true,
-      explain: () => `[DefaultAccessControl]: All access requests granted. "${subject}" granted "${action}" on "${object.id}"`
+      explanation: `[DefaultAccessControl]: All access requests granted. "${subject}" granted "${action}" on "${object && object.id}"`
     }
   }
 

@@ -70,11 +70,11 @@ export type AccessControlQueryTerms = {
 
 export type AccessControlDecision = {
   granted: boolean
-  explain: () => string
+  explanation: string
 }
 
 export interface AccessControlAdapter<T> {
-  check(subject: UUID, action: AccessType, object: T): AccessControlDecision
+  check(subject: UUID, action: AccessType, object: T): Promise<AccessControlDecision>
   createAcl(entity:T): Promise<any>
   getQueryTerms(subject:UUID, access:AccessType): Promise<AccessControlQueryTerms>
 }

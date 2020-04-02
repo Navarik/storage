@@ -25,7 +25,7 @@ export class LocalState implements State<CanonicalEntity> {
     this.cache.set(document.id, document)
   }
 
-  async get(user: UUID, id: string) {
+  async get(user: UUID, id: UUID) {
     const cachedDocument = this.cache.get(id)
     if (cachedDocument) {
       const access = await this.accessControl.check(user, 'read', cachedDocument)
@@ -44,7 +44,7 @@ export class LocalState implements State<CanonicalEntity> {
     return foundDocument
   }
 
-  async delete(id: string) {
+  async delete(id: UUID) {
     this.cache.del(id)
   }
 

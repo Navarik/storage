@@ -146,10 +146,10 @@ export class Storage {
 
   async get(id: UUID, user: UUID = none): Promise<CanonicalEntity> {
     const entity = await this.currentState.get(user, id)
-    const access = this.accessControl.check(user, 'read', entity);
+    const access = await this.accessControl.check(user, 'read', entity);
 
     if (!access.granted) {
-      throw new Error(access.explain())
+      throw new Error(access.explanation)
     }
 
     return entity
@@ -177,7 +177,7 @@ export class Storage {
   }
 
   async update(entity: IdentifiedEntity, user: UUID = none): Promise<CanonicalEntity> {
-    const previous = await this.get(entity.id, user)
+    const previous = await this.get(entity.id, user).catch(() => null)
     if (!previous) {
       throw new Error(`[Storage] Entity not found or update not permitted: ${entity.id}`)
     }

@@ -29,7 +29,7 @@ describe('Entity search', () => {
   before(() => storage.up())
   after(() => storage.down())
 
-  it("can't get none-existing entities", async () => {
+  it("can't get non-existing entities", async () => {
     const response = await storage.get('nope')
     expect(response).to.be(undefined)
   })
