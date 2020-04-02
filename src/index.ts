@@ -1,9 +1,10 @@
 import { Dictionary, Map, Logger } from '@navarik/types'
 import { CoreDdl, SchemaRegistryAdapter, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
-import { Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, TypedEntity, IdentifiedEntity, State } from './types'
+import { AccessControlAdapter, Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, TypedEntity, IdentifiedEntity, State } from './types'
 import { TransactionManager } from "@navarik/transaction-manager"
-import uuidv4 from 'uuid/v4'
+import { v4 as uuidv4 } from 'uuid'
 import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
+import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelog } from './adapters/default-changelog'
 import { ChangeEventFactory } from './change-event-factory'
 import { LocalState } from './adapters/local-state'
@@ -16,16 +17,20 @@ type StorageConfig = {
   index?: SearchIndex<CanonicalEntity>
   state?: State<CanonicalEntity>
   schemaRegistry?: SchemaRegistryAdapter
+  accessControl?: AccessControlAdapter<CanonicalEntity>
   meta?: Dictionary<SchemaField>
   schema?: Array<CanonicalSchema>
   data?: Array<TypedEntity>
   logger?: Logger
 }
 
+const none = '00000000-0000-0000-0000-000000000000'
+
 export class Storage {
   private isInitializing: boolean
   private ddl: CoreDdl
   private metaDdl: CoreDdl
+  private accessControl: AccessControlAdapter<CanonicalEntity>
   private currentState: State<CanonicalEntity>
   private searchIndex: SearchIndex<CanonicalEntity>
   private changelog: Changelog
@@ -34,9 +39,10 @@ export class Storage {
   private transactionManager: TransactionManager<CanonicalEntity>
   private logger: Logger
 
-  constructor({ changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [], logger }: StorageConfig = {}) {
+  constructor({ accessControl, changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [], logger }: StorageConfig = {}) {
     this.isInitializing = true
 
+    this.accessControl = accessControl || new DefaultAccessControl
     this.logger = logger || defaultLogger
 
     this.observers = []
@@ -59,15 +65,16 @@ export class Storage {
     // Static data is used primarily for automated tests
     const staticChangelog = []
     for (const document of data) {
-      staticChangelog.push(this.changeEventFactory.create(document))
+      staticChangelog.push(this.changeEventFactory.create(none, document))
     }
 
     this.transactionManager = new TransactionManager()
     this.changelog = changelog || new DefaultChangelog(staticChangelog)
-    this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
+    this.searchIndex = index || new NeDbSearchIndex({ accessControl: this.accessControl, logger: this.logger })
     this.currentState = state || new LocalState({
       size: 50000,
-      searchIndex: this.searchIndex
+      searchIndex: this.searchIndex,
+      accessControl: this.accessControl
      })
 
     this.changelog.observe(x => this.onChange(x))
@@ -129,20 +136,6 @@ export class Storage {
     return this.ddl.define(schema)
   }
 
-  async get(id: UUID): Promise<CanonicalEntity> {
-    const entity = await this.currentState.get(id)
-
-    return entity
-  }
-
-  async find(query: SearchQuery = {}, options: SearchOptions = {}): Promise<Array<CanonicalEntity>> {
-    return await this.searchIndex.find(query, options)
-  }
-
-  async count(query: SearchQuery = {}): Promise<number> {
-    return this.searchIndex.count(query)
-  }
-
   validate(entity: TypedEntity): ValidationResponse {
     return this.ddl.validate(entity.type, entity.body)
   }
@@ -151,26 +144,27 @@ export class Storage {
     return this.ddl.validate(entity.type, entity.body).isValid
   }
 
-  async create(entity: TypedEntity): Promise<CanonicalEntity> {
-    const changeEvent = this.changeEventFactory.create(entity)
+  async get(id: UUID, user: UUID = none): Promise<CanonicalEntity> {
+    const entity = await this.currentState.get(user, id)
+    const access = await this.accessControl.check(user, 'read', entity);
 
-    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1)
-    await this.changelog.write(changeEvent)
-
-    return transaction as Promise<CanonicalEntity>
-  }
-
-  async createBulk(collection: Array<TypedEntity>): Promise<Array<CanonicalEntity>> {
-    return Promise.all(collection.map(entity => this.create(entity)))
-  }
-
-  async update(entity: IdentifiedEntity): Promise<CanonicalEntity> {
-    const previous = await this.get(entity.id)
-    if (!previous) {
-      throw new Error(`[Storage] Can't update entity that doesn't exist: ${entity.id}`)
+    if (!access.granted) {
+      throw new Error(access.explanation)
     }
 
-    const changeEvent = this.changeEventFactory.createVersion(entity, previous)
+    return entity
+  }
+
+  async find(query: SearchQuery = {}, options: SearchOptions = {}, user: UUID = none): Promise<Array<CanonicalEntity>> {
+    return await this.searchIndex.find(user, query, options)
+  }
+
+  async count(query: SearchQuery = {}, user: UUID = none): Promise<number> {
+    return this.searchIndex.count(user, query)
+  }
+
+  async create(entity: TypedEntity, user: UUID = none): Promise<CanonicalEntity> {
+    const changeEvent = this.changeEventFactory.create(user, entity)
 
     const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1)
     await this.changelog.write(changeEvent)
@@ -178,8 +172,26 @@ export class Storage {
     return transaction as Promise<CanonicalEntity>
   }
 
-  async delete(id: UUID): Promise<CanonicalEntity> {
-    const entity = await this.get(id)
+  async createBulk(collection: Array<TypedEntity>, user: UUID = none): Promise<Array<CanonicalEntity>> {
+    return Promise.all(collection.map(entity => this.create(entity, user)))
+  }
+
+  async update(entity: IdentifiedEntity, user: UUID = none): Promise<CanonicalEntity> {
+    const previous = await this.get(entity.id, user).catch(() => null)
+    if (!previous) {
+      throw new Error(`[Storage] Entity not found or update not permitted: ${entity.id}`)
+    }
+
+    const changeEvent = this.changeEventFactory.createVersion(user, entity, previous)
+
+    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1)
+    await this.changelog.write(changeEvent)
+
+    return transaction as Promise<CanonicalEntity>
+  }
+
+  async deleteEntity(id: UUID, user: UUID = none): Promise<CanonicalEntity> {
+    const entity = await this.get(id, user)
     if (!entity) {
       throw new Error(`[Storage] Can't delete entity that doesn't exist: ${id}`)
     }
