@@ -42,7 +42,6 @@ export class Storage {
   constructor({ accessControl, changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [], logger }: StorageConfig = {}) {
     this.isInitializing = true
 
-    this.accessControl = accessControl || new DefaultAccessControl
     this.logger = logger || defaultLogger
 
     this.observers = []
@@ -69,13 +68,10 @@ export class Storage {
     }
 
     this.transactionManager = new TransactionManager()
+    this.accessControl = accessControl || new DefaultAccessControl
     this.changelog = changelog || new DefaultChangelog(staticChangelog)
-    this.searchIndex = index || new NeDbSearchIndex({ accessControl: this.accessControl, logger: this.logger })
-    this.currentState = state || new LocalState({
-      size: 50000,
-      searchIndex: this.searchIndex,
-      accessControl: this.accessControl
-     })
+    this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
+    this.currentState = state || new LocalState({ size: 50000, searchIndex: this.searchIndex })
 
     this.changelog.observe(x => this.onChange(x))
   }
@@ -116,12 +112,13 @@ export class Storage {
   }
 
   async isHealthy() {
-    const [changelogHealth, indexHealth] = await Promise.all([
+    const [changelogHealth, indexHealth, stateHealth] = await Promise.all([
       this.changelog.isHealthy(),
-      this.searchIndex.isHealthy()
+      this.searchIndex.isHealthy(),
+      this.currentState.isHealthy()
     ])
 
-    return changelogHealth && indexHealth
+    return changelogHealth && indexHealth && stateHealth
   }
 
   types() {
@@ -145,7 +142,7 @@ export class Storage {
   }
 
   async get(id: UUID, user: UUID = none): Promise<CanonicalEntity> {
-    const entity = await this.currentState.get(user, id)
+    const entity = await this.currentState.get(id)
     const access = await this.accessControl.check(user, 'read', entity);
 
     if (!access.granted) {
@@ -156,11 +153,13 @@ export class Storage {
   }
 
   async find(query: SearchQuery = {}, options: SearchOptions = {}, user: UUID = none): Promise<Array<CanonicalEntity>> {
-    return await this.searchIndex.find(user, query, options)
+    const aclTerms = await this.accessControl.getQuery(user, 'read')
+    return await this.searchIndex.find({ ...query, ...aclTerms }, options)
   }
 
   async count(query: SearchQuery = {}, user: UUID = none): Promise<number> {
-    return this.searchIndex.count(user, query)
+    const aclTerms = await this.accessControl.getQuery(user, 'read')
+    return this.searchIndex.count({ ...query, ...aclTerms })
   }
 
   async create(entity: TypedEntity, user: UUID = none): Promise<CanonicalEntity> {

@@ -1,4 +1,5 @@
-import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, AccessType, AccessControlList, AccessControlQueryTerms } from '../types'
+import { Dictionary } from "@navarik/types"
+import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, AccessType, SearchQuery } from '../types'
 
 export class DefaultAccessControl implements AccessControlAdapter<CanonicalEntity> {
   async check(subject:UUID, action:AccessType, object:CanonicalEntity): Promise<AccessControlDecision> {
@@ -8,20 +9,11 @@ export class DefaultAccessControl implements AccessControlAdapter<CanonicalEntit
     }
   }
 
-  async createAcl(entity:CanonicalEntity): Promise<AccessControlList> {
-    return {
-      container: 'deadbeef-dead-dead-dead-deaddeadbeef',
-      dac: [{subject: entity.created_by, access: 'read'}, {subject: entity.created_by, access: 'write'}],
-      mac: ['dogedoge-orca-orca-doge-dogeorcadoge'],
-    }
+  async attachTerms(entity: CanonicalEntity): Promise<CanonicalEntity & Dictionary<any>> {
+    return entity
   }
 
-  async getQueryTerms(subject:UUID, access:AccessType): Promise<AccessControlQueryTerms> {
-    const result = {
-      dac: [{subject, access}, {subject, access: 'whale'}],
-      mac: ['dogedoge-orca-orca-doge-dogeorcadoge']
-    }
-
-    return <any>result
+  async getQuery(subject:UUID, access:AccessType): Promise<SearchQuery> {
+    return {}
   }
 }
