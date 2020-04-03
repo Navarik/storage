@@ -40,10 +40,18 @@ describe('Entity multiuser search', () => {
 
   it("can find by user and complete bodies", async () => {
     await Promise.all(fixtureDataA.map(x => steps.canFind(x, userA)))
+    await Promise.all(fixtureDataB.map(x => steps.canFind(x, userB)))
   })
 
   it("cannot find by incorrect user and complete bodies", async () => {
     await Promise.all(fixtureDataA.map(x => steps.cannotFind(x, userB)))
+    await Promise.all(fixtureDataB.map(x => steps.cannotFind(x, userA)))
+    await Promise.all(fixtureDataA.map(x => steps.cannotFind(x)))
+  })
+
+  it("cannot find by unspecified user", async () => {
+    await Promise.all(fixtureDataA.map(x => steps.cannotFind(x)))
+    await Promise.all(fixtureDataB.map(x => steps.cannotFind(x)))
   })
 
   it("can find entities by user and one field", async () => {
