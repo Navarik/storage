@@ -43,6 +43,9 @@ describe('Metadata support', () => {
 
   it("can create default metadata if it's not required", async () => {
     const entity = await steps.canCreate(fixturesEvents[0])
+    if (undefined === entity) {
+      throw new Error('No entity created')
+    }
     expect(entity.meta).to.be.an('object')
     expect(entity.meta.wow).to.equal(null)
     expect(entity.meta.very).to.equal(null)

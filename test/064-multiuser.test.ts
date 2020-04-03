@@ -1,6 +1,8 @@
+import expect from 'expect.js'
 import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
 import { EntitySteps } from './steps/entities'
 import { nullLogger } from "./fixtures/null-logger"
+import { expectEntity } from './steps/checks'
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events.json')
@@ -28,7 +30,7 @@ const storage = new Storage({
 
 const steps = new EntitySteps(storage)
 
-describe('Entity search', () => {
+describe('Entity multiuser search', () => {
   before(async () => {
     storage.up()
     await storage.createBulk(fixtureDataA, userA)
@@ -42,5 +44,12 @@ describe('Entity search', () => {
 
   it("cannot find by incorrect user and complete bodies", async () => {
     await Promise.all(fixtureDataA.map(x => steps.cannotFind(x, userB)))
+  })
+
+  it("can find entities by user and one field", async () => {
+    const response = await storage.find({ 'body.sender': '1' }, {}, userA)
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(2)
+    response.forEach(expectEntity)
   })
 })

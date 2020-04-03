@@ -26,6 +26,10 @@ describe('Entity versioning', () => {
   it("can create and update entity after it's created", async () => {
     const [firstVersion, ...versions] = fixtures
     const entity = await steps.canCreate(firstVersion)
+    if (undefined === entity) {
+      throw new Error('No entity created')
+    }
+
     id = entity.id
 
     for (const version of versions) {

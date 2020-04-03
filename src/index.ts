@@ -144,12 +144,13 @@ export class Storage {
     return this.ddl.validate(entity.type, entity.body).isValid
   }
 
-  async get(id: UUID, user: UUID = none): Promise<CanonicalEntity> {
+  async get(id: UUID, user: UUID = none): Promise<CanonicalEntity|undefined> {
     const entity = await this.currentState.get(id)
     const access = await this.accessControl.check(user, 'read', entity);
 
     if (!access.granted) {
-      throw new Error(access.explanation)
+      this.logger.trace(access.explanation)
+      return
     }
 
     return entity

@@ -3,9 +3,11 @@ import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, Acc
 
 export class DefaultAccessControl implements AccessControlAdapter<CanonicalEntity> {
   async check(subject:UUID, action:AccessType, object:CanonicalEntity): Promise<AccessControlDecision> {
+    const granted = object && subject === object.created_by
+
     return {
-      granted: true,
-      explanation: `[DefaultAccessControl]: All access requests granted. "${subject}" granted "${action}" on "${object && object.id}"`
+      granted,
+      explanation: `[DefaultAccessControl]: ${granted ? 'Granted' : 'Denied'} - "${subject}" => "${action}" => "${object && object.id}"`
     }
   }
 
@@ -14,6 +16,8 @@ export class DefaultAccessControl implements AccessControlAdapter<CanonicalEntit
   }
 
   async getQuery(subject:UUID, access:AccessType): Promise<SearchQuery> {
-    return {}
+    return {
+      created_by:subject
+    }
   }
 }
