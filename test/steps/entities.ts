@@ -1,5 +1,5 @@
 import expect from 'expect.js'
-import { TypedEntity, Storage, SearchQuery, IdentifiedEntity, CanonicalEntity } from '../../src'
+import { TypedEntity, Storage, SearchQuery, IdentifiedEntity, CanonicalEntity, UUID } from '../../src'
 import { expectSameEntity } from './checks'
 
 export class EntitySteps {
@@ -55,7 +55,7 @@ export class EntitySteps {
     })
   }
 
-  async canFind(entity: CanonicalEntity) {
+  async canFind(entity: CanonicalEntity, user: UUID|undefined = undefined) {
     let response
 
     // Find using fields in a query
@@ -73,10 +73,33 @@ export class EntitySteps {
       }
     }
 
-    response = await this.storage.find(query)
+    response = await this.storage.find(query, {}, user)
     expect(response).to.be.an('array')
     expect(response).to.have.length(1)
     expectSameEntity(response[0], entity)
+  }
+
+  async cannotFind(entity: CanonicalEntity, user: UUID|undefined = undefined) {
+    let response
+
+    // Find using fields in a query
+    const query: SearchQuery = {}
+    if (entity.id) query.id = entity.id
+    if (entity.type) query.type = entity.type
+    if (entity.body) {
+      for (const field in entity.body) {
+        query[`body.${field}`] = String(entity.body[field])
+      }
+    }
+    if (entity.meta) {
+      for (const field in entity.meta) {
+        query[`meta.${field}`] = String(entity.meta[field])
+      }
+    }
+
+    response = await this.storage.find(query, {}, user)
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(0)
   }
 
   async cannotUpdate(entity: IdentifiedEntity) {
