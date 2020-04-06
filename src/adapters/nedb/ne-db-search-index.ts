@@ -44,7 +44,6 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
   constructor({ logger }: Config) {
     this.logger = logger
     this.client = new Database()
-    // this.queryParser = new NeDbQueryParser(this.accessControl)
     this.queryParser = new NeDbQueryParser()
     this.client.ensureIndex({ fieldName: 'id', unique: true })
   }

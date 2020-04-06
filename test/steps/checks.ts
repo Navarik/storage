@@ -1,8 +1,11 @@
 import expect from 'expect.js'
 import { CanonicalEntity } from '../../src'
 
-export const expectEntity = (given: Partial<CanonicalEntity>) => {
+export const expectEntity = (given: Partial<CanonicalEntity>|undefined) => {
   expect(given).to.be.an('object')
+  if (undefined === given) {
+    throw new Error('No entity given')
+  }
   expect(given).to.have.keys(['body', 'meta', 'type', 'id', 'version_id', 'created_at', 'modified_at'])
   expect(given.body).to.be.an('object')
   expect(given.meta).to.be.an('object')
@@ -12,8 +15,11 @@ export const expectEntity = (given: Partial<CanonicalEntity>) => {
   expect(given.version_id).to.be.a('string')
 }
 
-export const expectSameEntity = (given: Partial<CanonicalEntity>, expected: Partial<CanonicalEntity>) => {
+export const expectSameEntity = (given: Partial<CanonicalEntity>|undefined, expected: Partial<CanonicalEntity>) => {
   expectEntity(given)
+  if (undefined === given) {
+    throw new Error('No entity given')
+  }
   expect(given.body).to.eql(expected.body)
   if (expected.type) {
     expect(given.type).to.eql(expected.type)
