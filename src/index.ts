@@ -193,7 +193,7 @@ export class Storage {
     return transaction as Promise<CanonicalEntity>
   }
 
-  async deleteEntity(id: UUID, user: UUID = none): Promise<CanonicalEntity> {
+  async delete(id: UUID, user: UUID = none): Promise<CanonicalEntity> {
     const entity = await this.get(id, user)
     if (!entity) {
       throw new Error(`[Storage] Can't delete entity that doesn't exist: ${id}`)
