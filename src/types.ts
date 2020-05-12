@@ -36,6 +36,7 @@ export type ActionType = 'create'|'update'|'delete'
 
 export interface ChangeEvent {
   action: ActionType
+  user: UUID
   timestamp: Timestamp
   entity: CanonicalEntity
   schema: CanonicalSchema|undefined
