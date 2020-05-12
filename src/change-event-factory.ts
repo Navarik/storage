@@ -47,6 +47,7 @@ export class ChangeEventFactory {
 
     return {
       action: 'create',
+      user,
       entity: canonical,
       schema: formatted.schema,
       parent: undefined,
@@ -81,6 +82,7 @@ export class ChangeEventFactory {
 
     return {
       action: 'update',
+      user,
       entity: canonical,
       schema: formatted.schema,
       parent: previous,
@@ -88,11 +90,12 @@ export class ChangeEventFactory {
     }
   }
 
-  delete(entity: CanonicalEntity): ChangeEvent {
+  delete(user: UUID, entity: CanonicalEntity): ChangeEvent {
     const now = new Date()
 
     return {
       action: 'delete',
+      user,
       entity: entity,
       schema: this.ddl.describe(entity.schema),
       parent: undefined,

@@ -199,7 +199,7 @@ export class Storage {
       throw new Error(`[Storage] Can't delete entity that doesn't exist: ${id}`)
     }
 
-    const changeEvent = this.changeEventFactory.delete(entity)
+    const changeEvent = this.changeEventFactory.delete(user, entity)
 
     const transaction = this.transactionManager.start(entity.version_id, 1)
     await this.changelog.write(changeEvent)
