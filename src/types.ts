@@ -94,9 +94,7 @@ export type SearchOptions = {
 }
 
 export interface SearchIndex<T extends CanonicalEntity> extends Service {
-  index(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
-  update(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
-  delete(document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
+  update(action: ActionType, document: T, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
   find(query: SearchQuery, options: SearchOptions): Promise<Array<T>>
   count(query: SearchQuery): Promise<number>
   isClean(): Promise<boolean>

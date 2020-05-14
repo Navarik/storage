@@ -1,6 +1,6 @@
 import { Dictionary, Logger } from '@navarik/types'
 import Database from 'nedb'
-import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity } from '../../types'
+import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, ActionType } from '../../types'
 import { NeDbQueryParser } from './ne-db-query-parser'
 
 interface Searchable {
@@ -130,8 +130,14 @@ export class NeDbSearchIndex implements SearchIndex<CanonicalEntity> {
     )
   }
 
-  update(document: CanonicalEntity): Promise<void> {
-    return this.index(document)
+  async update(action: ActionType, document: CanonicalEntity): Promise<void> {
+    if (action === "create" || action === "update") {
+      await this.index(document)
+    } else if (action === "delete")  {
+      await this.delete(document)
+    } else {
+      throw new Error(`[Storage] Unknown action: ${action}`)
+    }
   }
 
   delete(document: CanonicalEntity): Promise<void> {
