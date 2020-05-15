@@ -77,25 +77,25 @@ export class Storage {
   }
 
   private async onChange(event: ChangeEvent) {
+    const entityWithAcl = await this.accessControl.attachTerms(event.entity)
+
+    // Update current state
     if (event.action === 'delete') {
       await this.currentState.delete(event.entity.id)
-      await this.searchIndex.delete(event.entity, event.schema, this.metaDdl.describe('metadata'))
     } else {
-      await this.currentState.put(event.entity)
-      const entityWithAcl = await this.accessControl.attachTerms(event.entity)
-
-      if (event.action === 'create') {
-        await this.searchIndex.index(entityWithAcl, event.schema, this.metaDdl.describe('metadata'))
-      } else {
-        await this.searchIndex.update(entityWithAcl, event.schema, this.metaDdl.describe('metadata'))
-      }
+      await this.currentState.put(entityWithAcl)
     }
 
-    this.transactionManager.commit(event.entity.version_id, event.entity)
-
+    // Notify observers
     if (!this.isInitializing) {
       await Promise.all(this.observers.map(f => f(event)))
     }
+
+    // Update search index
+    await this.searchIndex.update(event.action, entityWithAcl, event.schema, this.metaDdl.describe('metadata'))
+
+    // Close transaction
+    this.transactionManager.commit(event.entity.version_id, event.entity)
   }
 
   async up() {
