@@ -1,15 +1,14 @@
-import { Dictionary } from "@navarik/types"
 import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, AccessType, SearchQuery } from '../types'
 
-export class DefaultAccessControl implements AccessControlAdapter<CanonicalEntity> {
-  async check(subject: UUID, action: AccessType, object: CanonicalEntity): Promise<AccessControlDecision> {
+export class DefaultAccessControl<B, M> implements AccessControlAdapter<B, M> {
+  async check(subject: UUID, action: AccessType, object: CanonicalEntity<B, M>): Promise<AccessControlDecision> {
     return {
       granted: true,
       explanation: `[DefaultAccessControl]: Granted - "${subject}" => "${action}" => "${object && object.id}"`
     }
   }
 
-  async attachTerms(entity: CanonicalEntity): Promise<CanonicalEntity & Dictionary<any>> {
+  async attachTerms(entity: CanonicalEntity<B, M>): Promise<CanonicalEntity<B, M>> {
     return entity
   }
 

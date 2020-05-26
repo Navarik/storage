@@ -5,7 +5,7 @@ import { expectEntity } from './steps/checks'
 import { nullLogger } from "./fixtures/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
-const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events')
+const fixturesEvents: Array<CanonicalEntity<any, any>> = require('./fixtures/data/events')
 
 const storage = new Storage({
   schema: fixtureSchemata,

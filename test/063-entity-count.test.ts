@@ -3,8 +3,8 @@ import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
 import { nullLogger } from "./fixtures/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
-const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events.json')
-const fixturesJobs: Array<CanonicalEntity> = require('./fixtures/data/job-orders.json')
+const fixturesEvents: Array<CanonicalEntity<any, any>> = require('./fixtures/data/events.json')
+const fixturesJobs: Array<CanonicalEntity<any, any>> = require('./fixtures/data/job-orders.json')
 
 const storage = new Storage({
   schema: fixtureSchemata,
