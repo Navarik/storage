@@ -4,11 +4,11 @@ import { expectEntity } from './steps/checks'
 import { nullLogger } from "./fixtures/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
-const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events.json')
-const fixturesTasks: Array<CanonicalEntity> = require('./fixtures/data/data-entry-tasks.json')
-const fixturesJobs: Array<CanonicalEntity> = require('./fixtures/data/job-orders.json')
-const fixturesUsers: Array<CanonicalEntity> = require('./fixtures/data/users.json')
-const fixturesMessages: Array<CanonicalEntity> = require('./fixtures/data/messages.json')
+const fixturesEvents: Array<CanonicalEntity<any, any>> = require('./fixtures/data/events.json')
+const fixturesTasks: Array<CanonicalEntity<any, any>> = require('./fixtures/data/data-entry-tasks.json')
+const fixturesJobs: Array<CanonicalEntity<any, any>> = require('./fixtures/data/job-orders.json')
+const fixturesUsers: Array<CanonicalEntity<any, any>> = require('./fixtures/data/users.json')
+const fixturesMessages: Array<CanonicalEntity<any, any>> = require('./fixtures/data/messages.json')
 
 const fixtureData = [
   ...fixturesEvents,

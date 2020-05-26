@@ -5,10 +5,10 @@ import { nullLogger } from "./fixtures/null-logger"
 // import { expectEntity } from './steps/checks'
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
-const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events.json')
-const fixturesJobs: Array<CanonicalEntity> = require('./fixtures/data/job-orders.json')
-const fixturesUsers: Array<CanonicalEntity> = require('./fixtures/data/users.json')
-const fixturesMessages: Array<CanonicalEntity> = require('./fixtures/data/messages.json')
+const fixturesEvents: Array<CanonicalEntity<any, any>> = require('./fixtures/data/events.json')
+const fixturesJobs: Array<CanonicalEntity<any, any>> = require('./fixtures/data/job-orders.json')
+const fixturesUsers: Array<CanonicalEntity<any, any>> = require('./fixtures/data/users.json')
+const fixturesMessages: Array<CanonicalEntity<any, any>> = require('./fixtures/data/messages.json')
 
 const userA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 const userB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'

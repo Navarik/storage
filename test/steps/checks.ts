@@ -1,7 +1,7 @@
 import expect from 'expect.js'
 import { CanonicalEntity } from '../../src'
 
-export const expectEntity = (given: Partial<CanonicalEntity>|undefined) => {
+export const expectEntity = (given: Partial<CanonicalEntity<any, any>>|undefined) => {
   expect(given).to.be.an('object')
   if (undefined === given) {
     throw new Error('No entity given')
@@ -15,7 +15,7 @@ export const expectEntity = (given: Partial<CanonicalEntity>|undefined) => {
   expect(given.version_id).to.be.a('string')
 }
 
-export const expectSameEntity = (given: Partial<CanonicalEntity>|undefined, expected: Partial<CanonicalEntity>) => {
+export const expectSameEntity = (given: Partial<CanonicalEntity<any, any>>|undefined, expected: Partial<CanonicalEntity<any, any>>) => {
   expectEntity(given)
   if (undefined === given) {
     throw new Error('No entity given')

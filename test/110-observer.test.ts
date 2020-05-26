@@ -3,8 +3,8 @@ import { Storage, CanonicalSchema, CanonicalEntity, ChangeEvent } from '../src'
 import { nullLogger } from "./fixtures/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
-const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events.json')
-const fixturesJobs: Array<CanonicalEntity> = require('./fixtures/data/job-orders.json')
+const fixturesEvents: Array<CanonicalEntity<any, any>> = require('./fixtures/data/events.json')
+const fixturesJobs: Array<CanonicalEntity<any, any>> = require('./fixtures/data/job-orders.json')
 
 const storage = new Storage({
   schema: fixtureSchemata,
@@ -16,7 +16,7 @@ describe('Observing changes', () => {
   after(() => storage.down())
 
   it("can observe entity changes", async () => {
-    const results: Array<ChangeEvent> = []
+    const results: Array<ChangeEvent<any, any>> = []
     storage.observe((x) => { results.push(x) })
 
     for (const entity of fixturesJobs) {

@@ -1,6 +1,6 @@
 import { v5 as uuidv5 } from 'uuid'
 import { CoreDdl } from '@navarik/core-ddl'
-import { IdGenerator, IdentifiedEntity, CanonicalEntity, TypedEntity, ChangeEvent, UUID } from './types'
+import { IdGenerator, IdentifiedEntity, CanonicalEntity, TypedEntity, ChangeEvent, UUID, Document } from './types'
 
 type FactoryConfig = {
   generator: IdGenerator
@@ -9,7 +9,7 @@ type FactoryConfig = {
   metaType: string
 }
 
-export class ChangeEventFactory {
+export class ChangeEventFactory<B extends Document, M extends Document> {
   private generateId: IdGenerator
   private ddl: CoreDdl
   private metaDdl: CoreDdl
@@ -22,7 +22,7 @@ export class ChangeEventFactory {
     this.metaType = metaType
   }
 
-  create(user: UUID, entity: TypedEntity): ChangeEvent {
+  create(user: UUID, entity: TypedEntity<B, M>): ChangeEvent<B, M> {
     const formatted = this.ddl.format(entity.type, entity.body)
     const formattedMeta = this.metaDdl.format(this.metaType, entity.meta || {})
 
@@ -31,7 +31,7 @@ export class ChangeEventFactory {
 
     const now = new Date()
 
-    const canonical = {
+    const canonical: CanonicalEntity<B, M> = {
       id: id,
       version_id: version_id,
       parent_id: null,
@@ -40,8 +40,8 @@ export class ChangeEventFactory {
       modified_by: user,
       modified_at: now.toISOString(),
       type: formatted.schema.type,
-      body: formatted.body,
-      meta: formattedMeta.body,
+      body: <B>formatted.body,
+      meta: <M>formattedMeta.body,
       schema: formatted.schemaId
     }
 
@@ -55,7 +55,7 @@ export class ChangeEventFactory {
     }
   }
 
-  createVersion(user: UUID, current: IdentifiedEntity, previous: CanonicalEntity): ChangeEvent {
+  createVersion(user: UUID, current: IdentifiedEntity<B, M>, previous: CanonicalEntity<B, M>): ChangeEvent<B, M> {
     const type = current.type || previous.type
     const body = { ...previous.body, ...current.body }
     const meta = { ...previous.meta, ...(current.meta || {}) }
@@ -66,7 +66,7 @@ export class ChangeEventFactory {
 
     const now = new Date()
 
-    const canonical = {
+    const canonical: CanonicalEntity<B, M> = {
       id: previous.id,
       version_id: version_id,
       parent_id: previous.version_id,
@@ -75,8 +75,8 @@ export class ChangeEventFactory {
       modified_by: user,
       modified_at: now.toISOString(),
       type: formatted.schema.type,
-      body: formatted.body,
-      meta: formattedMeta.body,
+      body: <B>formatted.body,
+      meta: <M>formattedMeta.body,
       schema: formatted.schemaId
     }
 
@@ -90,7 +90,7 @@ export class ChangeEventFactory {
     }
   }
 
-  delete(user: UUID, entity: CanonicalEntity): ChangeEvent {
+  delete(user: UUID, entity: CanonicalEntity<B, M>): ChangeEvent<B, M> {
     const now = new Date()
 
     return {

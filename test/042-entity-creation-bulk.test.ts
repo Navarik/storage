@@ -4,7 +4,7 @@ import { nullLogger } from "./fixtures/null-logger"
 import { EntitySteps } from './steps/entities'
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
-const fixturesEvents: Array<CanonicalEntity> = require('./fixtures/data/events')
+const fixturesEvents: Array<CanonicalEntity<any, any>> = require('./fixtures/data/events')
 
 const storage = new Storage({
   schema: fixtureSchemata,

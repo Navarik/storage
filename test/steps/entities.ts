@@ -3,13 +3,13 @@ import { TypedEntity, Storage, SearchQuery, IdentifiedEntity, CanonicalEntity, U
 import { expectSameEntity } from './checks'
 
 export class EntitySteps {
-  private storage: Storage
+  private storage: Storage<any, any>
 
-  constructor(storage: Storage) {
+  constructor(storage: Storage<any, any>) {
     this.storage = storage
   }
 
-  async cannotCreate(entity: TypedEntity) {
+  async cannotCreate(entity: TypedEntity<any, any>) {
     try {
       await this.storage.create(entity)
       expect().fail("Expected error didn't happen")
@@ -18,7 +18,7 @@ export class EntitySteps {
     }
   }
 
-  async canCreate(entity: TypedEntity) {
+  async canCreate(entity: TypedEntity<any, any>) {
     let response
 
     // Create entity
@@ -33,7 +33,7 @@ export class EntitySteps {
     return response
   }
 
-  async canCreateCollection(collection: Array<TypedEntity>) {
+  async canCreateCollection(collection: Array<TypedEntity<any, any>>) {
     let response
 
     // Create entity
@@ -55,7 +55,7 @@ export class EntitySteps {
     })
   }
 
-  async canFind(entity: CanonicalEntity, user: UUID|undefined = undefined) {
+  async canFind(entity: CanonicalEntity<any, any>, user: UUID|undefined = undefined) {
     let response
 
     // Find using fields in a query
@@ -79,7 +79,7 @@ export class EntitySteps {
     expectSameEntity(response[0], entity)
   }
 
-  async cannotFind(entity: CanonicalEntity, user: UUID|undefined = undefined) {
+  async cannotFind(entity: CanonicalEntity<any, any>, user: UUID|undefined = undefined) {
     let response
 
     // Find using fields in a query
@@ -102,7 +102,7 @@ export class EntitySteps {
     expect(response).to.have.length(0)
   }
 
-  async cannotUpdate(entity: IdentifiedEntity) {
+  async cannotUpdate(entity: IdentifiedEntity<any, any>) {
     try {
       await this.storage.update(entity)
       expect().fail("Expected error didn't happen")
@@ -111,7 +111,7 @@ export class EntitySteps {
     }
   }
 
-  async canUpdate(entity: IdentifiedEntity) {
+  async canUpdate(entity: IdentifiedEntity<any, any>) {
     const response = await this.storage.update(entity)
     expectSameEntity(response, entity)
   }
