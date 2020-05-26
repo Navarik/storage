@@ -4,6 +4,7 @@
   "version": "11.1.0",
   "scripts": {
     "build": "rm -rf dist && tsc -d",
+    "prepublishOnly": "npm run build",
     "test": "mocha -r ts-node/register test/**/*.test.ts"
   },
   "main": "dist/index.js",
