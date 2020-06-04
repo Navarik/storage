@@ -28,15 +28,17 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@navarik/types": "^5.1.0",
+    "@types/chai": "^4.2.11",
     "@types/expect.js": "^0.3.29",
     "@types/lru-cache": "^5.1.0",
     "@types/mocha": "^7.0.2",
     "@types/nedb": "^1.8.9",
     "@types/node": "^13.13.9",
     "@types/uuid": "^7.0.4",
+    "chai": "^4.2.0",
     "expect.js": "^0.3.1",
     "mocha": "^7.2.0",
-    "ts-node": "^8.10.1",
+    "ts-node": "^8.10.2",
     "typescript": "^3.9.3"
   }
 }

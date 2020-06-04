@@ -1,4 +1,4 @@
-import expect from 'expect.js'
+import { expect } from "chai"
 import { nullLogger } from "./fixtures/null-logger"
 import { Storage } from '../src'
 
@@ -10,13 +10,13 @@ describe('Empty state', () => {
 
   it("has no types", async () => {
     const response = storage.types()
-    expect(response).to.be.an('array')
-    expect(response).to.be.empty()
+    expect(response).to.be.an("array")
+    expect(response).to.be.empty
   })
 
   it("has no entities", async () => {
     const response = await storage.find()
-    expect(response).to.be.an('array')
-    expect(response).to.be.empty()
+    expect(response).to.be.an("array")
+    expect(response).to.be.empty
   })
 })

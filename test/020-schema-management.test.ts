@@ -1,4 +1,4 @@
-import expect from 'expect.js'
+import { expect } from "chai"
 import { nullLogger } from "./fixtures/null-logger"
 import { Storage, CanonicalSchema } from '../src'
 
@@ -15,8 +15,8 @@ describe('Schema management', () => {
 
   it("has no entities", async () => {
     const response = await storage.find()
-    expect(response).to.be.an('array')
-    expect(response).to.be.empty()
+    expect(response).to.be.an("array")
+    expect(response).to.be.empty
   })
 
   it("has statically defined types", async () => {

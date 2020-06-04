@@ -1,8 +1,9 @@
-// import expect from 'expect.js'
+import { expect } from "chai"
 import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
 import { EntitySteps } from './steps/entities'
 import { nullLogger } from "./fixtures/null-logger"
-// import { expectEntity } from './steps/checks'
+import { expectEntity } from './steps/checks'
+import { OnlyMineAccessControl } from "./fixtures/only-mine-control"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity<any, any>> = require('./fixtures/data/events.json')
@@ -25,16 +26,17 @@ const fixtureDataB =[
 
 const storage = new Storage({
   schema: fixtureSchemata,
-  logger: nullLogger
+  logger: nullLogger,
+  accessControl: new OnlyMineAccessControl()
 })
 
 const steps = new EntitySteps(storage)
 
-describe('Entity multiuser search', () => {
+describe('Entity multi-user search given creator-only access control strategy', () => {
   before(async () => {
     storage.up()
-    await storage.createBulk(fixtureDataA, userA)
-    await storage.createBulk(fixtureDataB, userB)
+    await storage.updateBulk(fixtureDataA, "", userA)
+    await storage.updateBulk(fixtureDataB, "", userB)
   })
   after(() => storage.down())
 
@@ -43,21 +45,21 @@ describe('Entity multiuser search', () => {
     await Promise.all(fixtureDataB.map(x => steps.canFind(x, userB)))
   })
 
-  // it("cannot find by incorrect user and complete bodies", async () => {
-  //   await Promise.all(fixtureDataA.map(x => steps.cannotFind(x, userB)))
-  //   await Promise.all(fixtureDataB.map(x => steps.cannotFind(x, userA)))
-  //   await Promise.all(fixtureDataA.map(x => steps.cannotFind(x)))
-  // })
+  it("cannot find by incorrect user and complete bodies", async () => {
+    await Promise.all(fixtureDataA.map(x => steps.cannotFind(x, userB)))
+    await Promise.all(fixtureDataB.map(x => steps.cannotFind(x, userA)))
+    await Promise.all(fixtureDataA.map(x => steps.cannotFind(x)))
+  })
 
-  // it("cannot find by unspecified user", async () => {
-  //   await Promise.all(fixtureDataA.map(x => steps.cannotFind(x)))
-  //   await Promise.all(fixtureDataB.map(x => steps.cannotFind(x)))
-  // })
+  it("cannot find by unspecified user", async () => {
+    await Promise.all(fixtureDataA.map(x => steps.cannotFind(x)))
+    await Promise.all(fixtureDataB.map(x => steps.cannotFind(x)))
+  })
 
-  // it("can find entities by user and one field", async () => {
-  //   const response = await storage.find({ 'body.sender': '1' }, {}, userA)
-  //   expect(response).to.be.an('array')
-  //   expect(response).to.have.length(2)
-  //   response.forEach(expectEntity)
-  // })
+  it("can find entities by user and one field", async () => {
+    const response = await storage.find({ 'body.sender': '1' }, {}, userA)
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(2)
+    response.forEach(expectEntity)
+  })
 })

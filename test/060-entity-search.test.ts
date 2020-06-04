@@ -1,4 +1,4 @@
-import expect from 'expect.js'
+import { expect } from "chai"
 import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
 import { expectEntity } from './steps/checks'
 import { EntitySteps } from './steps/entities'
@@ -31,7 +31,7 @@ describe('Entity search', () => {
 
   it("can't get non-existing entities", async () => {
     const response = await storage.get('nope')
-    expect(response).to.be(undefined)
+    expect(response).to.be.undefined
   })
 
   it("can find by complete bodies: timelog events", async () => {
