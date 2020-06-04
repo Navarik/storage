@@ -1,4 +1,4 @@
-import expect from 'expect.js'
+import { expect } from "chai"
 import { Storage, CanonicalSchema, CanonicalEntity, ChangeEvent } from '../src'
 import { nullLogger } from "./fixtures/null-logger"
 
@@ -20,14 +20,14 @@ describe('Observing changes', () => {
     storage.observe((x) => { results.push(x) })
 
     for (const entity of fixturesJobs) {
-      await storage.create(entity)
+      await storage.update(entity)
     }
 
     expect(results).to.be.an('array')
     expect(results).to.have.length(fixturesJobs.length)
 
     for (const entity of fixturesEvents) {
-      await storage.create(entity)
+      await storage.update(entity)
     }
 
     expect(results).to.be.an('array')

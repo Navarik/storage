@@ -1,4 +1,4 @@
-import expect from 'expect.js'
+import { expect } from "chai"
 import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
 import { EntitySteps } from './steps/entities'
 import { expectEntity } from './steps/checks'

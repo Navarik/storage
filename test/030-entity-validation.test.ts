@@ -1,4 +1,4 @@
-import expect from 'expect.js'
+import { expect } from "chai"
 import { nullLogger } from "./fixtures/null-logger"
 import { Storage, CanonicalSchema } from '../src'
 
@@ -58,11 +58,11 @@ describe('Entity validation', () => {
 
   it("can tell what is wrong with invalid entities", async () => {
     let response = await storage.validate(invalidData)
-    expect(response.isValid).to.be(false)
+    expect(response.isValid).to.equal(false)
     expect(response.message).to.be.equal('Invalid value provided for: role, last_name, first_name')
 
     response = await storage.validate({ type: 'wow.doge', body: invalidData.body })
-    expect(response.isValid).to.be(false)
+    expect(response.isValid).to.equal(false)
     expect(response.message).to.be.equal('Unknown schema: wow.doge')
   })
 })

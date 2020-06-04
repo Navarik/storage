@@ -8,8 +8,6 @@ export interface CanonicalEntity<B extends Document, M extends Document> {
   id: UUID
   version_id: UUID
   parent_id: UUID|null
-  created_by: UUID
-  created_at: Timestamp
   modified_by: UUID
   modified_at: Timestamp
   type: string
@@ -18,14 +16,9 @@ export interface CanonicalEntity<B extends Document, M extends Document> {
   schema: UUID
 }
 
-export type TypedEntity<B extends Document, M extends Document> = Partial<CanonicalEntity<B, M>> & {
-  type: string
-  body: Document
-  meta?: Document
-}
-
-export type IdentifiedEntity<B extends Document, M extends Document> = Partial<CanonicalEntity<B, M>> & {
-  id: UUID
+export type PartialEntity<B extends Document, M extends Document> = Partial<CanonicalEntity<B, M>> & {
+  id?: UUID
+  type?: string
   body: Document
   meta?: Document
 }
@@ -38,6 +31,7 @@ export interface ChangeEvent<B extends Document, M extends Document> {
   action: ActionType
   user: UUID
   timestamp: Timestamp
+  message: string
   entity: CanonicalEntity<B, M>
   schema: CanonicalSchema|undefined
   parent: CanonicalEntity<B, M>|undefined

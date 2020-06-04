@@ -1,4 +1,4 @@
-import expect from 'expect.js'
+import { expect } from "chai"
 import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
 import { nullLogger } from "./fixtures/null-logger"
 import { EntitySteps } from './steps/entities'
@@ -19,8 +19,8 @@ describe('Entity creation flow', () => {
 
   it("doesn't have entities before they are created", async () => {
     const response = await storage.find()
-    expect(response).to.be.an('array')
-    expect(response).to.be.empty()
+    expect(response).to.be.an("array")
+    expect(response).to.be.empty
   })
 
   it("correctly creates new entities", async () => {

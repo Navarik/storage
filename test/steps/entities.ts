@@ -1,5 +1,5 @@
-import expect from 'expect.js'
-import { TypedEntity, Storage, SearchQuery, IdentifiedEntity, CanonicalEntity, UUID } from '../../src'
+import { expect } from "chai"
+import { PartialEntity, Storage, SearchQuery, CanonicalEntity, UUID } from '../../src'
 import { expectSameEntity } from './checks'
 
 export class EntitySteps {
@@ -9,35 +9,41 @@ export class EntitySteps {
     this.storage = storage
   }
 
-  async cannotCreate(entity: TypedEntity<any, any>) {
+  async cannotCreate(entity: PartialEntity<any, any>) {
     try {
-      await this.storage.create(entity)
-      expect().fail("Expected error didn't happen")
+      await this.storage.update(entity)
+      expect(true).to.equal(false, "Expected error didn't happen")
     } catch (err) {
       expect(true).to.equal(true)
     }
   }
 
-  async canCreate(entity: TypedEntity<any, any>) {
-    let response
-
+  async canCreate(entity: PartialEntity<any, any>) {
     // Create entity
-    response = await this.storage.create(entity)
-    expectSameEntity(response, entity)
+    const created = await this.storage.update(entity)
+    expectSameEntity(created, entity)
 
     // Try to read it back by ID
-    const id = response.id
-    response = await this.storage.get(id)
-    expectSameEntity(response, entity)
+    const id = created.id
+    const found = await this.storage.get(id)
+    expectSameEntity(found, entity)
+
+    return created
+  }
+
+  async canDelete(id: string) {
+    const lastVersion = await this.storage.get(id)
+    const response = await this.storage.delete(id)
+    expectSameEntity(response, lastVersion)
 
     return response
   }
 
-  async canCreateCollection(collection: Array<TypedEntity<any, any>>) {
+  async canCreateCollection(collection: Array<PartialEntity<any, any>>) {
     let response
 
     // Create entity
-    response = await this.storage.createBulk(collection)
+    response = await this.storage.updateBulk(collection)
     expect(response).to.be.an('array')
     expect(response).to.have.length(collection.length)
 
@@ -55,7 +61,7 @@ export class EntitySteps {
     })
   }
 
-  async canFind(entity: CanonicalEntity<any, any>, user: UUID|undefined = undefined) {
+  async canFind(entity: Partial<CanonicalEntity<any, any>>, user: UUID|undefined = undefined) {
     let response
 
     // Find using fields in a query
@@ -79,7 +85,7 @@ export class EntitySteps {
     expectSameEntity(response[0], entity)
   }
 
-  async cannotFind(entity: CanonicalEntity<any, any>, user: UUID|undefined = undefined) {
+  async cannotFind(entity: Partial<CanonicalEntity<any, any>>, user: UUID|undefined = undefined) {
     let response
 
     // Find using fields in a query
@@ -102,16 +108,16 @@ export class EntitySteps {
     expect(response).to.have.length(0)
   }
 
-  async cannotUpdate(entity: IdentifiedEntity<any, any>) {
+  async cannotUpdate(entity: PartialEntity<any, any>) {
     try {
       await this.storage.update(entity)
-      expect().fail("Expected error didn't happen")
+      expect(true).to.equal(false, "Expected error didn't happen")
     } catch (err) {
       expect(true).to.equal(true)
     }
   }
 
-  async canUpdate(entity: IdentifiedEntity<any, any>) {
+  async canUpdate(entity: PartialEntity<any, any>) {
     const response = await this.storage.update(entity)
     expectSameEntity(response, entity)
   }
