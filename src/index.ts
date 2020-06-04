@@ -2,7 +2,6 @@ import { Dictionary, Map, Logger, Document } from '@navarik/types'
 import { CoreDdl, SchemaRegistryAdapter, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
 import { AccessControlAdapter, Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, PartialEntity, State, IdGenerator } from './types'
 import { TransactionManager } from "@navarik/transaction-manager"
-import { v4 as uuidv4 } from 'uuid'
 import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
 import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelog } from './adapters/default-changelog'
@@ -19,7 +18,7 @@ type StorageConfig<B, M> = {
   state?: State<B, M>
   schemaRegistry?: SchemaRegistryAdapter
   accessControl?: AccessControlAdapter<B, M>
-  idGenerator?: IdGenerator
+  idGenerators?: Dictionary<IdGenerator>
   meta?: Dictionary<SchemaField>
   schema?: Array<CanonicalSchema>
   data?: Array<PartialEntity<B, M>>
@@ -43,7 +42,7 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
   private logger: Logger
 
   constructor(config: StorageConfig<BodyType, MetaType> = {}) {
-    const { accessControl, changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [], logger, idGenerator } = config
+    const { accessControl, changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [], logger, idGenerators = {} } = config
     this.isInitializing = true
 
     this.logger = logger || defaultLogger
@@ -58,9 +57,8 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
       }]
     })
 
-    const defaultIdGenerator = () => uuidv4()
     this.entityFactory = new EntityFactory({
-      generator: idGenerator || defaultIdGenerator,
+      generators: idGenerators,
       ddl: this.ddl,
       metaDdl: this.metaDdl,
       metaType: 'metadata'
