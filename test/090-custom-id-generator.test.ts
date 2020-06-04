@@ -9,7 +9,9 @@ const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
 const storage = new Storage({
   schema: fixtureSchemata,
   logger: nullLogger,
-  idGenerator: (body) => uuidv5(<string>body['email'], "00000000-0000-0000-0000-000000000000")
+  idGenerators: {
+    "profile.user": (body) => uuidv5(<string>body['email'], "00000000-0000-0000-0000-000000000000")
+  }
 })
 
 describe('Custom ID generator support', () => {
