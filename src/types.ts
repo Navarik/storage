@@ -16,6 +16,13 @@ export interface CanonicalEntity<B extends Document, M extends Document> {
   schema: UUID
 }
 
+export type EntityData<B extends Document, M extends Document> = Partial<CanonicalEntity<B, M>> & {
+  id?: UUID
+  type: string
+  body: Document
+  meta: Document
+}
+
 export type PartialEntity<B extends Document, M extends Document> = Partial<CanonicalEntity<B, M>> & {
   id?: UUID
   type?: string

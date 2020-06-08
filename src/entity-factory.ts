@@ -1,7 +1,8 @@
 import { v5 as uuidv5, v4 as uuidv4 } from 'uuid'
 import { Dictionary } from '@navarik/types'
 import { CoreDdl } from '@navarik/core-ddl'
-import { IdGenerator, CanonicalEntity, PartialEntity, UUID, Document } from './types'
+import { IdGenerator, CanonicalEntity, EntityData, UUID, Document } from './types'
+import { ValidationError } from "./validation-error"
 
 type FactoryConfig = {
   generators: Dictionary<IdGenerator>
@@ -31,27 +32,26 @@ export class EntityFactory<B extends Document, M extends Document> {
     return generator(body)
   }
 
-  create(user: UUID, current: PartialEntity<B, M>, previous?: CanonicalEntity<B, M>): CanonicalEntity<B, M> {
-    const prevType = previous ? previous.type : ""
-    const prevBody = previous ? previous.body : {}
-    const prevMeta = previous ? previous.meta : {}
+  create(data: EntityData<B, M>, user: UUID, parentVersionId: UUID|null): CanonicalEntity<B, M> {
+    const { id, type, body, meta } = data
 
-    const type = current.type || prevType
-    const body = { ...prevBody, ...current.body }
-    const meta = { ...prevMeta, ...(current.meta || {}) }
+    const { isValid, message } = this.ddl.validate(data.type, data.body)
+    if (!isValid) {
+      throw new ValidationError(`[Storage] Validation failed for ${data.type}. ${message}`)
+    }
 
     const formatted = this.ddl.format(type, body)
     const formattedMeta = this.metaDdl.format(this.metaType, meta)
 
-    const id = previous ? previous.id : this.generateId(type, <B>formatted.body)
-    const version_id = uuidv5(JSON.stringify(formatted.body), id)
+    const newId = id || this.generateId(type, <B>formatted.body)
+    const version_id = uuidv5(JSON.stringify(formatted.body), newId)
 
     const now = new Date()
 
     const canonical: CanonicalEntity<B, M> = {
-      id: id,
+      id: newId,
       version_id: version_id,
-      parent_id: previous ? previous.version_id : null,
+      parent_id: parentVersionId,
       modified_by: user,
       modified_at: now.toISOString(),
       type: formatted.schema.type,
