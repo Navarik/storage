@@ -1,6 +1,6 @@
 import { Dictionary, Map, Logger, Document } from '@navarik/types'
 import { CoreDdl, SchemaRegistryAdapter, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
-import { AccessControlAdapter, Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, PartialEntity, State, IdGenerator } from './types'
+import { AccessControlAdapter, Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, PartialEntity, State, IdGenerator, EntityData } from './types'
 import { TransactionManager } from "@navarik/transaction-manager"
 import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
 import { DefaultAccessControl } from './adapters/default-access-control'
@@ -21,7 +21,7 @@ type StorageConfig<B, M> = {
   idGenerators?: Dictionary<IdGenerator>
   meta?: Dictionary<SchemaField>
   schema?: Array<CanonicalSchema>
-  data?: Array<PartialEntity<B, M>>
+  data?: Array<EntityData<B, M>>
   logger?: Logger
 }
 
@@ -71,7 +71,7 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
     // Static data is used primarily for automated tests
     const staticChangelog = []
     for (const document of data) {
-      const entity = this.entityFactory.create(none, document)
+      const entity = this.entityFactory.create(document, none, null)
       const changeEvent = this.changeEventFactory.create('create', entity, "Static data loaded")
       staticChangelog.push(changeEvent)
     }
@@ -190,7 +190,19 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
 
   async update(entity: PartialEntity<BodyType, MetaType>, commitMessage: string = "", user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType>> {
     const previous = entity.id ? await this.get(entity.id, user) : undefined
-    const canonical = this.entityFactory.create(user, entity, previous)
+
+    const prevVersionId = previous ? previous.version_id : null
+    const prevType = previous ? previous.type : ""
+    const prevBody = previous ? previous.body : {}
+    const prevMeta = previous ? previous.meta : {}
+    const newEntity = {
+      id: previous ? previous.id : undefined,
+      type: entity.type || prevType,
+      body: <BodyType>{ ...prevBody, ...(entity.body || {}) },
+      meta: <MetaType>{ ...prevMeta, ...(entity.meta || {}) }
+    }
+
+    const canonical = this.entityFactory.create(newEntity, user, prevVersionId)
 
     const action = previous ? "update" : "create"
     const changeEvent = this.changeEventFactory.create(action, canonical, commitMessage)
