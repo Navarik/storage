@@ -196,7 +196,7 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
     const prevBody = previous ? previous.body : {}
     const prevMeta = previous ? previous.meta : {}
     const newEntity = {
-      id: previous ? previous.id : undefined,
+      id: entity.id,
       type: entity.type || prevType,
       body: <BodyType>{ ...prevBody, ...(entity.body || {}) },
       meta: <MetaType>{ ...prevMeta, ...(entity.meta || {}) }
