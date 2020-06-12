@@ -55,6 +55,8 @@ export class NeDbSearchIndex<B extends Document, M extends Document> implements 
       id: document.id,
       version_id: document.version_id,
       parent_id: document.parent_id,
+      created_by: document.created_by,
+      created_at: document.created_at,
       modified_by: document.modified_by,
       modified_at: document.modified_at,
       type: document.type,
