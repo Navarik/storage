@@ -52,6 +52,8 @@ export class EntityFactory<B extends Document, M extends Document> {
       id: newId,
       version_id: version_id,
       parent_id: parentVersionId,
+      created_by: data.created_by || user,
+      created_at: data.created_at || now.toISOString(),
       modified_by: user,
       modified_at: now.toISOString(),
       type: formatted.schema.type,

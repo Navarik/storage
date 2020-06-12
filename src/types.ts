@@ -8,6 +8,8 @@ export interface CanonicalEntity<B extends Document, M extends Document> {
   id: UUID
   version_id: UUID
   parent_id: UUID|null
+  created_by: UUID
+  created_at: Timestamp
   modified_by: UUID
   modified_at: Timestamp
   type: string
