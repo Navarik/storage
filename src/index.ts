@@ -52,7 +52,6 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
     this.metaDdl = new CoreDdl({
       schema: [{
         type: 'metadata',
-        description: 'metadata',
         fields: <Map<SchemaField>>meta
       }]
     })

@@ -58,7 +58,7 @@ export class EntityFactory<B extends Document, M extends Document> {
       modified_at: now.toISOString(),
       type: formatted.schema.type,
       body: <B>formatted.body,
-      meta: <M>formattedMeta.body,
+      meta: <M>formattedMeta.body || {},
       schema: formatted.schemaId
     }
 

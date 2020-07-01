@@ -1,7 +1,6 @@
 [
   {
     "type": "profile.user",
-    "description": "User",
     "fields": {
       "email": "string, required",
       "role": "string",
@@ -12,7 +11,6 @@
   },
   {
     "type": "document.job_order",
-    "description": "Job Order",
     "fields": {
       "status": "string",
       "code": "string",
@@ -29,7 +27,6 @@
   },
   {
     "type": "chat.text_message",
-    "description": "Text Message",
     "fields": {
       "sender": "int",
       "timestamp": "string",
@@ -40,7 +37,6 @@
   },
   {
     "type": "chat.chat_group",
-    "description": "Chat Group",
     "fields": {
       "name": "string",
       "job_order": "string",
@@ -51,7 +47,6 @@
   },
   {
     "type": "timelog.timelog_event",
-    "description": "Vessel Arrived",
     "fields": {
       "event_type": "string",
       "sender": "int",
@@ -61,7 +56,6 @@
   },
   {
     "type": "dataEntry.task",
-    "description": "Data Entry Task",
     "fields": {
       "inspection": {
         "contract": "string",

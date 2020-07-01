@@ -33,7 +33,6 @@ describe('Schema management', () => {
   it("allows defining new types", async () => {
     const schema = {
       type: "doge",
-      description: "Whale, doge!",
       fields: {
         "such": "string",
         "much": "string"
@@ -49,7 +48,6 @@ describe('Schema management', () => {
   it("allows updating types", async () => {
     const newSchema = {
       type: "doge",
-      description: "Whale, doge!",
       fields: {
         "very": "int",
         "much": "int"
