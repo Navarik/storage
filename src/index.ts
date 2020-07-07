@@ -161,7 +161,7 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
     return this.ddl.validate(entity.type, entity.body).isValid
   }
 
-  async get(id: UUID, user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType>|undefined> {
+  async get(id: UUID, user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
     const entity = await this.currentState.get(id)
     const access = await this.accessControl.check(user, 'read', entity);
 
@@ -194,8 +194,12 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
     const prevType = previous ? previous.type : ""
     const prevBody = previous ? previous.body : {}
     const prevMeta = previous ? previous.meta : {}
+    const prevCreatedBy = previous ? previous.created_by : ''
+    const prevCreatedAt = previous ? previous.created_at : ''
     const newEntity = {
       id: entity.id,
+      created_by: prevCreatedBy,
+      created_at: prevCreatedAt,
       type: entity.type || prevType,
       body: <BodyType>{ ...prevBody, ...(entity.body || {}) },
       meta: <MetaType>{ ...prevMeta, ...(entity.meta || {}) }
@@ -216,7 +220,7 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
     return Promise.all(collection.map(entity => this.update(entity, commitMessage, user)))
   }
 
-  async delete(id: UUID, commitMessage: string = "", user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType>|undefined> {
+  async delete(id: UUID, commitMessage: string = "", user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
     const entity = await this.get(id, user)
     if (!entity) {
       return undefined
