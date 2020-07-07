@@ -1,7 +1,7 @@
 {
   "name": "@navarik/storage",
   "description": "Document storage with schemas and versions",
-  "version": "12.2.4",
+  "version": "12.2.5",
   "scripts": {
     "build": "rm -rf dist && tsc -d",
     "prepublishOnly": "npm run build",
