@@ -11,6 +11,7 @@ steps:
         path: /root
     args:
       - audit
+      - --audit-level=high
   - name: gcr.io/${PROJECT_ID}/buildtool.npm
     volumes:
       - name: root
