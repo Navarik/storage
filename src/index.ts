@@ -156,9 +156,11 @@ export class Storage<BodyType extends object, MetaType extends object> {
   }
 
   async stats() {
+    const cacheStats = await this.currentState.stats()
+
     return {
-      ...this.healthStats
-      ...(await this.currentState.stats())
+      ...this.healthStats,
+      ...cacheStats
     }
   }
 
