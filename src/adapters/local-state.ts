@@ -7,12 +7,12 @@ interface LocalStateConfig<B extends object, M extends object> {
 }
 
 export class LocalState<B extends object, M extends object> implements State<B, M> {
-  private size: number
+  private maxSize: number
   private cache: LRU<string, CanonicalEntity<B, M>>
   private searchIndex: SearchIndex<B, M>
 
   constructor({ size, searchIndex }: LocalStateConfig<B, M>) {
-    this.size = size
+    this.maxSize = size
     this.searchIndex = searchIndex
     this.cache = new LRU({
       max: size,
@@ -48,10 +48,11 @@ export class LocalState<B extends object, M extends object> implements State<B, 
     return true
   }
 
-  async stats() {
-    return {
-      size: this.size,
-      used: this.cache.length
-    }
+  get size() {
+    return Promise.resolve(this.maxSize)
+  }
+
+  get used() {
+    return Promise.resolve(this.cache.length)
   }
 }

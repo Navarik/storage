@@ -156,16 +156,14 @@ export class Storage<BodyType extends object, MetaType extends object> {
   }
 
   async stats() {
-    const cacheStats = await this.currentState.stats()
-
     return {
       upSince: this.healthStats.upSince.toJSON(),
       totalChangesProduced: this.healthStats.changesProduced,
       totalChangesReceived: this.healthStats.changesReceived,
       totalIdLookups: this.healthStats.idLookups,
       totalSearchQueries: this.healthStats.searchQueries,
-      cacheSize: cacheStats.size,
-      cacheUsed: cacheStats.used
+      cacheSize: await this.currentState.size,
+      cacheUsed: await this.currentState.used
     }
   }
 
