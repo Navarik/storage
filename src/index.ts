@@ -162,8 +162,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
       totalChangesReceived: this.healthStats.changesReceived,
       totalIdLookups: this.healthStats.idLookups,
       totalSearchQueries: this.healthStats.searchQueries,
-      cacheSize: await this.currentState.cacheSize,
-      cacheUsed: await this.currentState.cacheUsed
+      ...(await this.currentState.stats())
     }
   }
 

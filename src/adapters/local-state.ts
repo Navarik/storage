@@ -48,11 +48,10 @@ export class LocalState<B extends object, M extends object> implements State<B, 
     return true
   }
 
-  get cacheSize() {
-    return Promise.resolve(this.maxSize)
-  }
-
-  get cacheUsed() {
-    return Promise.resolve(this.cache.length)
+  async stats() {
+    return {
+      cacheSize: this.maxSize,
+      cacheUsed: this.cache.length
+    }
   }
 }

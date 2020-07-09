@@ -77,8 +77,7 @@ export interface State<B extends object, M extends object> extends Service {
   put(document: CanonicalEntity<B, M>): Promise<void>
   get(id: string): Promise<CanonicalEntity<B, M>>
   delete(id: string): Promise<void>
-  cacheSize: Promise<number>
-  cacheUsed: Promise<number>
+  stats(): Promise<object>
 }
 
 export type SearchQuery = Dictionary<string|object|number|boolean>
