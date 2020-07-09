@@ -1,11 +1,11 @@
 import { CoreDdl } from '@navarik/core-ddl'
-import { CanonicalEntity, ChangeEvent, Document, ActionType } from './types'
+import { CanonicalEntity, ChangeEvent, ActionType } from './types'
 
 type FactoryConfig = {
   ddl: CoreDdl
 }
 
-export class ChangeEventFactory<B extends Document, M extends Document> {
+export class ChangeEventFactory<B extends object, M extends object> {
   private ddl: CoreDdl
 
   constructor({ ddl }: FactoryConfig) {

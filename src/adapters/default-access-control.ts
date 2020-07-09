@@ -1,6 +1,6 @@
 import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, AccessType, SearchQuery } from '../types'
 
-export class DefaultAccessControl<B, M> implements AccessControlAdapter<B, M> {
+export class DefaultAccessControl<B extends object, M extends object> implements AccessControlAdapter<B, M> {
   async check(subject: UUID, action: AccessType, object: CanonicalEntity<B, M>): Promise<AccessControlDecision> {
     return {
       granted: true,
