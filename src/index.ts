@@ -52,10 +52,10 @@ export class Storage<BodyType extends object, MetaType extends object> {
   private logger: Logger
   private healthStats = {
     upSince: new Date(),
-    changesProduced: 0,
-    changesReceived: 0,
-    idLookups: 0,
-    searchQueries: 0
+    totalChangesProduced: 0,
+    totalChangesReceived: 0,
+    totalIdLookups: 0,
+    totalSearchQueries: 0
   }
 
   constructor(config: StorageConfig<BodyType, MetaType> = {}) {
@@ -105,7 +105,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
   }
 
   private async onChange(event: ChangeEvent<BodyType, MetaType>) {
-    this.healthStats.changesReceived++
+    this.healthStats.totalChangesReceived++
 
     const entityWithAcl = await this.accessControl.attachTerms(event.entity)
 
@@ -157,11 +157,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
 
   async stats() {
     return {
-      upSince: this.healthStats.upSince.toJSON(),
-      totalChangesProduced: this.healthStats.changesProduced,
-      totalChangesReceived: this.healthStats.changesReceived,
-      totalIdLookups: this.healthStats.idLookups,
-      totalSearchQueries: this.healthStats.searchQueries,
+      ...this.healthStats
       ...(await this.currentState.stats())
     }
   }
@@ -195,7 +191,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
   }
 
   async get(id: UUID, user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
-    this.healthStats.idLookups++
+    this.healthStats.totalIdLookups++
 
     const entity = await this.currentState.get(id)
     const access = await this.accessControl.check(user, 'read', entity)
@@ -209,7 +205,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
   }
 
   async find(query: SearchQuery = {}, options: SearchOptions = {}, user: UUID = none): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
-    this.healthStats.searchQueries++
+    this.healthStats.totalSearchQueries++
 
     const aclTerms = await this.accessControl.getQuery(user, 'read')
     const collection = await this.searchIndex.find({ ...query, ...aclTerms }, options)
@@ -244,7 +240,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
     const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1)
     await this.changelog.write(changeEvent)
 
-    this.healthStats.changesProduced++
+    this.healthStats.totalChangesProduced++
 
     return transaction as Promise<CanonicalEntity<BodyType, MetaType>>
   }
@@ -264,7 +260,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
     const transaction = this.transactionManager.start(entity.version_id, 1)
     await this.changelog.write(changeEvent)
 
-    this.healthStats.changesProduced++
+    this.healthStats.totalChangesProduced++
 
     return transaction as Promise<CanonicalEntity<BodyType, MetaType>>
   }
