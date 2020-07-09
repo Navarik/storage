@@ -1,7 +1,7 @@
-import { Dictionary, Map, Logger, Document } from '@navarik/types'
+import { Dictionary, Map, Logger } from '@navarik/types'
 import { CoreDdl, SchemaRegistryAdapter, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
-import { AccessControlAdapter, Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, PartialEntity, State, IdGenerator, EntityData } from './types'
 import { TransactionManager } from "@navarik/transaction-manager"
+import { AccessControlAdapter, Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, PartialEntity, State, IdGenerator, EntityData } from './types'
 import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
 import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelog } from './adapters/default-changelog'
@@ -12,22 +12,32 @@ import { defaultLogger } from "./adapters/default-logger"
 
 export * from './types'
 
-type StorageConfig<B, M> = {
+type StorageConfig<B extends object, M extends object> = {
+  // Adapters - override when changing underlying technology
   changelog?: Changelog<B, M>
   index?: SearchIndex<B, M>
   state?: State<B, M>
+
+  // Extensions - override when adding new rules/capacities
   schemaRegistry?: SchemaRegistryAdapter
   accessControl?: AccessControlAdapter<B, M>
   idGenerators?: Dictionary<IdGenerator>
+  logger?: Logger
+
+  // Built-in schemas for entity body and metadata
   meta?: Dictionary<SchemaField>
   schema?: Array<CanonicalSchema>
+
+  // Built-in entities if any
   data?: Array<EntityData<B, M>>
-  logger?: Logger
+
+  // Configuration
+  cacheSize?: number
 }
 
 const none = '00000000-0000-0000-0000-000000000000'
 
-export class Storage<BodyType extends Document, MetaType extends Document> {
+export class Storage<BodyType extends object, MetaType extends object> {
   private isInitializing: boolean
   private ddl: CoreDdl
   private metaDdl: CoreDdl
@@ -40,6 +50,13 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
   private changeEventFactory: ChangeEventFactory<BodyType, MetaType>
   private transactionManager: TransactionManager<CanonicalEntity<BodyType, MetaType>>
   private logger: Logger
+  private healthStats = {
+    upSince: new Date(),
+    changesProduced: 0,
+    changesReceived: 0,
+    idLookups: 0,
+    searchQueries: 0
+  }
 
   constructor(config: StorageConfig<BodyType, MetaType> = {}) {
     const { accessControl, changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [], logger, idGenerators = {} } = config
@@ -70,7 +87,7 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
     // Static data is used primarily for automated tests
     const staticChangelog = []
     for (const document of data) {
-      const entity = this.entityFactory.create(document, none, null)
+      const entity = this.entityFactory.create(document, none)
       const changeEvent = this.changeEventFactory.create('create', entity, "Static data loaded")
       staticChangelog.push(changeEvent)
     }
@@ -79,12 +96,17 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
     this.accessControl = accessControl || new DefaultAccessControl<BodyType, MetaType>()
     this.changelog = changelog || new DefaultChangelog(staticChangelog)
     this.searchIndex = index || new NeDbSearchIndex<BodyType, MetaType>({ logger: this.logger })
-    this.currentState = state || new LocalState<BodyType, MetaType>({ size: 50000, searchIndex: this.searchIndex })
+    this.currentState = state || new LocalState<BodyType, MetaType>({
+      size: config.cacheSize || 5000000,
+      searchIndex: this.searchIndex
+    })
 
     this.changelog.observe(x => this.onChange(x))
   }
 
   private async onChange(event: ChangeEvent<BodyType, MetaType>) {
+    this.healthStats.changesReceived++
+
     const entityWithAcl = await this.accessControl.attachTerms(event.entity)
 
     // Update current state
@@ -133,6 +155,20 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
     return changelogHealth && indexHealth && stateHealth
   }
 
+  async stats() {
+    const cacheStats = await this.currentState.stats()
+
+    return {
+      upSince: this.healthStats.upSince.toJSON(),
+      totalChangesProduced: this.healthStats.changesProduced,
+      totalChangesReceived: this.healthStats.changesReceived,
+      totalIdLookups: this.healthStats.idLookups,
+      totalSearchQueries: this.healthStats.searchQueries,
+      cacheSize: cacheStats.size,
+      cacheUsed: cacheStats.used
+    }
+  }
+
   types() {
     return this.ddl.types()
   }
@@ -162,8 +198,10 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
   }
 
   async get(id: UUID, user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
+    this.healthStats.idLookups++
+
     const entity = await this.currentState.get(id)
-    const access = await this.accessControl.check(user, 'read', entity);
+    const access = await this.accessControl.check(user, 'read', entity)
 
     if (!access.granted) {
       this.logger.trace(access.explanation)
@@ -174,6 +212,8 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
   }
 
   async find(query: SearchQuery = {}, options: SearchOptions = {}, user: UUID = none): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
+    this.healthStats.searchQueries++
+
     const aclTerms = await this.accessControl.getQuery(user, 'read')
     const collection = await this.searchIndex.find({ ...query, ...aclTerms }, options)
 
@@ -188,30 +228,26 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
   }
 
   async update(entity: PartialEntity<BodyType, MetaType>, commitMessage: string = "", user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType>> {
-    const previous = entity.id ? await this.get(entity.id, user) : undefined
+    const currentVersion = entity.id ? await this.get(entity.id, user) : undefined
+    const previous = currentVersion || this.entityFactory.getEmpty()
 
-    const prevVersionId = previous ? previous.version_id : null
-    const prevType = previous ? previous.type : ""
-    const prevBody = previous ? previous.body : {}
-    const prevMeta = previous ? previous.meta : {}
-    const prevCreatedBy = previous ? previous.created_by : ''
-    const prevCreatedAt = previous ? previous.created_at : ''
+    const action = previous.id ? "update" : "create"
+
     const newEntity = {
       id: entity.id,
-      created_by: prevCreatedBy,
-      created_at: prevCreatedAt,
-      type: entity.type || prevType,
-      body: <BodyType>{ ...prevBody, ...(entity.body || {}) },
-      meta: <MetaType>{ ...prevMeta, ...(entity.meta || {}) }
+      created_by: previous.created_by,
+      created_at: previous.created_at,
+      type: entity.type || previous.type,
+      body: <BodyType>{ ...previous.body, ...(entity.body || {}) },
+      meta: <MetaType>{ ...previous.meta, ...(entity.meta || {}) }
     }
 
-    const canonical = this.entityFactory.create(newEntity, user, prevVersionId)
-
-    const action = previous ? "update" : "create"
+    const canonical = this.entityFactory.create(newEntity, user, previous.version_id)
     const changeEvent = this.changeEventFactory.create(action, canonical, commitMessage)
-
     const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1)
     await this.changelog.write(changeEvent)
+
+    this.healthStats.changesProduced++
 
     return transaction as Promise<CanonicalEntity<BodyType, MetaType>>
   }
@@ -230,6 +266,8 @@ export class Storage<BodyType extends Document, MetaType extends Document> {
 
     const transaction = this.transactionManager.start(entity.version_id, 1)
     await this.changelog.write(changeEvent)
+
+    this.healthStats.changesProduced++
 
     return transaction as Promise<CanonicalEntity<BodyType, MetaType>>
   }

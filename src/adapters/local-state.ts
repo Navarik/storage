@@ -1,16 +1,18 @@
 import LRU from "lru-cache"
 import { State, CanonicalEntity, SearchIndex, UUID } from "../types"
 
-interface LocalStateConfig<B, M> {
+interface LocalStateConfig<B extends object, M extends object> {
   size: number
   searchIndex: SearchIndex<B, M>
 }
 
-export class LocalState<B, M> implements State<B, M> {
+export class LocalState<B extends object, M extends object> implements State<B, M> {
+  private size: number
   private cache: LRU<string, CanonicalEntity<B, M>>
   private searchIndex: SearchIndex<B, M>
 
   constructor({ size, searchIndex }: LocalStateConfig<B, M>) {
+    this.size = size
     this.searchIndex = searchIndex
     this.cache = new LRU({
       max: size,
@@ -44,5 +46,12 @@ export class LocalState<B, M> implements State<B, M> {
   async down() {}
   async isHealthy() {
     return true
+  }
+
+  async stats() {
+    return {
+      size: this.size,
+      used: this.cache.length
+    }
   }
 }

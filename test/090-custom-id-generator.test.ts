@@ -6,11 +6,11 @@ import { nullLogger } from "./fixtures/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
 
-const storage = new Storage({
+const storage = new Storage<any, any>({
   schema: fixtureSchemata,
   logger: nullLogger,
   idGenerators: {
-    "profile.user": (body) => uuidv5(<string>body['email'], "00000000-0000-0000-0000-000000000000")
+    "profile.user": (body: any) => uuidv5(<string>body['email'], "00000000-0000-0000-0000-000000000000")
   }
 })
 

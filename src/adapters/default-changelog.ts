@@ -1,6 +1,6 @@
-import { Changelog, Observer, ChangeEvent, Document } from '../types'
+import { Changelog, Observer, ChangeEvent } from '../types'
 
-export class DefaultChangelog<B extends Document, M extends Document> implements Changelog<B, M> {
+export class DefaultChangelog<B extends object, M extends object> implements Changelog<B, M> {
   private observer?: Observer<B, M>
   private log: Array<ChangeEvent<B, M>>
 

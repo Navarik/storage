@@ -1,9 +1,9 @@
 import { Dictionary, Logger } from '@navarik/types'
 import Database from 'nedb'
-import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, ActionType, Document } from '../../types'
+import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, ActionType } from '../../types'
 import { NeDbQueryParser } from './ne-db-query-parser'
 
-interface Searchable<B, M> {
+interface Searchable<B extends object, M extends object> {
   ___document: CanonicalEntity<B, M>
   _id?: any
 }
@@ -37,7 +37,7 @@ const databaseError = (err: Error) => {
   throw new Error(`[NeDB] Database error: ${err.message}`)
 }
 
-export class NeDbSearchIndex<B extends Document, M extends Document> implements SearchIndex<B, M> {
+export class NeDbSearchIndex<B extends object, M extends object> implements SearchIndex<B, M> {
   private logger: Logger
   private client: Database
   private queryParser: NeDbQueryParser
