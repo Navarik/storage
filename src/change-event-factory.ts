@@ -13,12 +13,17 @@ export class ChangeEventFactory<B extends object, M extends object> {
   }
 
   create(action: ActionType, entity: CanonicalEntity<B, M>, commitMessage: string): ChangeEvent<B, M> {
+    const schema = this.ddl.describe(entity.schema)
+    if (!schema) {
+      throw new Error(`[Storage] Cannot find schema for ${entity.schema}`)
+    }
+
     return {
       action,
       user: entity.modified_by,
       message: commitMessage,
       entity: entity,
-      schema: this.ddl.describe(entity.schema),
+      schema: schema,
       parent: undefined,
       timestamp: entity.modified_at
     }

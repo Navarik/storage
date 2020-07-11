@@ -55,7 +55,8 @@ export class Storage<BodyType extends object, MetaType extends object> {
     totalChangesProduced: 0,
     totalChangesReceived: 0,
     totalIdLookups: 0,
-    totalSearchQueries: 0
+    totalSearchQueries: 0,
+    totalProcessingErrors: 0
   }
 
   constructor(config: StorageConfig<BodyType, MetaType> = {}) {
@@ -63,6 +64,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
     this.isInitializing = true
 
     this.logger = logger || defaultLogger
+    this.logger.info({ component: "Storage" }, "Initializing storage")
 
     this.observers = []
     this.ddl = new CoreDdl({ schema, registry: schemaRegistry })
@@ -104,28 +106,38 @@ export class Storage<BodyType extends object, MetaType extends object> {
     this.changelog.observe(x => this.onChange(x))
   }
 
-  private async onChange(event: ChangeEvent<BodyType, MetaType>) {
-    this.healthStats.totalChangesReceived++
-
-    const entityWithAcl = await this.accessControl.attachTerms(event.entity)
-
-    // Update current state
+  private async updateCurrentState(event: ChangeEvent<BodyType, MetaType>) {
     if (event.action === 'delete') {
       await this.currentState.delete(event.entity.id)
     } else {
-      await this.currentState.put(entityWithAcl)
+      await this.currentState.put(event.entity)
     }
+  }
 
-    // Notify observers
+  private async notifyObservers(event: ChangeEvent<BodyType, MetaType>) {
     if (!this.isInitializing) {
       await Promise.all(this.observers.map(f => f(event)))
     }
+  }
 
-    // Update search index
-    await this.searchIndex.update(event.action, entityWithAcl, event.schema, this.metaDdl.describe('metadata'))
+  private async onChange(event: ChangeEvent<BodyType, MetaType>) {
+    this.healthStats.totalChangesReceived++
 
-    // Close transaction
-    this.transactionManager.commit(event.entity.version_id, event.entity)
+    try {
+      this.logger.debug({ component: "Storage" }, `Received change event for entity: ${event.entity.id}`)
+
+      await this.updateCurrentState(event)
+      await this.notifyObservers(event)
+
+      const entityWithAcl = await this.accessControl.attachTerms(event.entity)
+      await this.searchIndex.update(event.action, entityWithAcl, event.schema, this.metaDdl.describe('metadata'))
+
+      this.transactionManager.commit(event.entity.version_id, event.entity)
+    } catch (error) {
+      this.healthStats.totalProcessingErrors++
+      this.logger.error({ component: "Storage", stack: error.stack }, `Error processing change event: ${error.message}`)
+      this.transactionManager.reject(event.entity.version_id, error)
+    }
   }
 
   async up() {
@@ -226,20 +238,14 @@ export class Storage<BodyType extends object, MetaType extends object> {
     const currentVersion = entity.id ? await this.get(entity.id, user) : undefined
     const previous = currentVersion || this.entityFactory.getEmpty()
 
-    const action = previous.id ? "update" : "create"
-
-    const newEntity = {
-      id: entity.id,
-      created_by: previous.created_by,
-      created_at: previous.created_at,
-      type: entity.type || previous.type,
-      body: <BodyType>{ ...previous.body, ...(entity.body || {}) },
-      meta: <MetaType>{ ...previous.meta, ...(entity.meta || {}) }
-    }
-
+    const newEntity = this.entityFactory.merge(previous, entity)
     const canonical = this.entityFactory.create(newEntity, user, previous.version_id)
+
+    const action = previous.id ? "update" : "create"
     const changeEvent = this.changeEventFactory.create(action, canonical, commitMessage)
+
     const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1)
+
     await this.changelog.write(changeEvent)
 
     this.healthStats.totalChangesProduced++
