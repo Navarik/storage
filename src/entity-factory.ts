@@ -1,7 +1,7 @@
 import { v5 as uuidv5, v4 as uuidv4 } from 'uuid'
 import { Dictionary } from '@navarik/types'
 import { CoreDdl } from '@navarik/core-ddl'
-import { IdGenerator, CanonicalEntity, EntityData, UUID } from './types'
+import { IdGenerator, CanonicalEntity, EntityData, PartialEntity, UUID } from './types'
 import { ValidationError } from "./validation-error"
 
 type FactoryConfig = {
@@ -45,6 +45,17 @@ export class EntityFactory<B extends object, M extends object> {
       body: {},
       meta: {},
       schema: ""
+    }
+  }
+
+  merge(oldEntity: CanonicalEntity<Partial<B>, Partial<M>>, newEntity: PartialEntity<B, M>): EntityData<B, M> {
+    return {
+      id: oldEntity.id,
+      created_by: oldEntity.created_by,
+      created_at: oldEntity.created_at,
+      type: newEntity.type || oldEntity.type,
+      body: <B>{ ...oldEntity.body, ...(newEntity.body || {}) },
+      meta: <M>{ ...oldEntity.meta, ...(newEntity.meta || {}) }
     }
   }
 
