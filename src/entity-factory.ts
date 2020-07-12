@@ -50,7 +50,7 @@ export class EntityFactory<B extends object, M extends object> {
 
   merge(oldEntity: CanonicalEntity<Partial<B>, Partial<M>>, newEntity: PartialEntity<B, M>): EntityData<B, M> {
     return {
-      id: oldEntity.id,
+      id: newEntity.id,
       created_by: oldEntity.created_by,
       created_at: oldEntity.created_at,
       type: newEntity.type || oldEntity.type,
