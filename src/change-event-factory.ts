@@ -13,9 +13,15 @@ export class ChangeEventFactory<B extends object, M extends object> {
   }
 
   create(action: ActionType, entity: CanonicalEntity<B, M>, commitMessage: string): ChangeEvent<B, M> {
-    const schema = this.ddl.describe(entity.schema)
+    let schema = this.ddl.describe(entity.schema)
+
+    // If can't find this particular version of the schema, fallback to the latest version
     if (!schema) {
-      throw new Error(`[Storage] Cannot find schema for ${entity.schema}`)
+      schema = this.ddl.describe(entity.type)
+    }
+
+    if (!schema) {
+      throw new Error(`[Storage] Cannot find schema for ${entity.type} (schema version: ${entity.schema})`)
     }
 
     return {
