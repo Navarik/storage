@@ -1,5 +1,6 @@
 import { expect } from "chai"
 import { PartialEntity, Storage, SearchQuery, CanonicalEntity, UUID } from '../../src'
+import { ValidationError } from '../../src/validation-error'
 import { expectSameEntity } from './checks'
 
 export class EntitySteps {
@@ -113,12 +114,18 @@ export class EntitySteps {
       await this.storage.update(entity)
       expect(true).to.equal(false, "Expected error didn't happen")
     } catch (err) {
-      expect(true).to.equal(true)
+      if (err instanceof ValidationError){
+        expect(true).to.equal(true)
+      }
+      else{
+        throw err
+      }
     }
   }
 
   async canUpdate(entity: PartialEntity<any, any>) {
     const response = await this.storage.update(entity)
     expectSameEntity(response, entity)
+    return response
   }
 }
