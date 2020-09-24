@@ -30,7 +30,7 @@ export type PartialEntity<B extends object, M extends object> = Partial<Canonica
   type?: string
   body: B
   meta?: M
-  versionId?: UUID
+  version_id?: UUID
 }
 
 export type IdGenerator = <T>(body: T) => UUID

@@ -32,12 +32,12 @@ export class EntityFactory<B extends object, M extends object> {
     return generator(body)
   }
 
-  private checkVersions(id: string, prevVersionId: string, versionId: string|undefined) {
-    if (!versionId){
+  private checkVersions(id: string, prevVersionId: string, version_id: string|undefined) {
+    if (!version_id){
       throw new ValidationError(`[Storage] Update unsuccessful due to missing version_id`)
     }
-    if (prevVersionId != versionId) {
-      throw new ValidationError(`[Storage] ${versionId} is not the latest version id for entity ${id}`)
+    if (prevVersionId != version_id) {
+      throw new ValidationError(`[Storage] ${version_id} is not the latest version id for entity ${id}`)
     }
   }
 
@@ -61,10 +61,9 @@ export class EntityFactory<B extends object, M extends object> {
 
     // check if update is not based on an outdated entity
     const { id, version_id } = oldEntity
-    const { versionId } = newEntity
     
     if (oldEntity.id){
-      this.checkVersions(id, version_id, versionId)
+      this.checkVersions(id, version_id, newEntity.version_id)
     }
 
     return {

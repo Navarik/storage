@@ -13,7 +13,7 @@ const storage = new Storage({
 
 const steps = new EntitySteps(storage)
 let id: string
-let versionId: string
+let version_id: string
 
 describe('Entity versioning', () => {
   before(() => storage.up())
@@ -32,11 +32,11 @@ describe('Entity versioning', () => {
     }
 
     id = entity.id
-    versionId = entity.version_id
+    version_id = entity.version_id
 
     for (const version of versions) {
-      const entity = await steps.canUpdate({ id, versionId, body: version.body })
-      versionId = entity.version_id
+      const entity = await steps.canUpdate({ id, version_id, body: version.body })
+      version_id = entity.version_id
     }
   })
 

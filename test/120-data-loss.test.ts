@@ -12,7 +12,7 @@ const storage = new Storage({
 
 const steps = new EntitySteps(storage)
 let id: string
-let versionId: string
+let version_id: string
 let outdatedVersionId: string
 
 describe('Prevent entity data loss', () => {
@@ -28,7 +28,7 @@ describe('Prevent entity data loss', () => {
     }
 
     id = entity.id
-    versionId = entity.version_id
+    version_id = entity.version_id
     outdatedVersionId = entity.version_id
 
     const secondVersion = fixtures[1]
@@ -38,13 +38,13 @@ describe('Prevent entity data loss', () => {
   it("can update with up-to-date version id", async () => {
     const versions = fixtures.slice(1, fixtures.length - 1)
     for (const version of versions) {
-      const entity = await steps.canUpdate({ id, versionId, body: version.body })
-      versionId = entity.version_id
+      const entity = await steps.canUpdate({ id, version_id, body: version.body })
+      version_id = entity.version_id
     }
   })
 
   it('cannot update with an outdated version id', async () => {
     const lastVersion = fixtures[fixtures.length - 1]
-    await steps.cannotUpdate({ id, versionId: outdatedVersionId, body: lastVersion.body })
+    await steps.cannotUpdate({ id, version_id: outdatedVersionId, body: lastVersion.body })
   })
 })
