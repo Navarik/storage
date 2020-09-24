@@ -120,5 +120,6 @@ export class EntitySteps {
   async canUpdate(entity: PartialEntity<any, any>) {
     const response = await this.storage.update(entity)
     expectSameEntity(response, entity)
+    return response
   }
 }
