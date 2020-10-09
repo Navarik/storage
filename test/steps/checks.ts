@@ -6,7 +6,7 @@ export const expectEntity = (given: Partial<CanonicalEntity<any, any>>|undefined
   if (!given) {
     throw new Error('No entity given')
   }
-  expect(given).to.have.keys(['body', 'meta', 'type', 'id', 'version_id', 'created_at', 'created_by', 'modified_at', 'modified_by', "parent_id", "schema"])
+  expect(given).to.have.keys(['body', 'meta', 'type', 'id', 'version_id', 'created_at', 'created_by', 'modified_at', 'modified_by', "previous_version_id", "schema"])
   expect(given.body).to.be.an('object')
   expect(given.meta).to.be.an('object')
   expect(given.type).to.be.a('string')
