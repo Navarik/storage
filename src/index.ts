@@ -250,8 +250,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
       throw new ConflictError(`[Storage] Update failed: can't find entity ${entity.id}`)
     }
 
-    const newEntity = this.entityFactory.merge(previous, entity)
-    const canonical = this.entityFactory.create(newEntity, user, previous.version_id)
+    const canonical = this.entityFactory.merge(previous, entity, user)
     const changeEvent = this.changeEventFactory.create("update", canonical, commitMessage)
     const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1)
     await this.changelog.write(changeEvent)

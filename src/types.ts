@@ -7,7 +7,7 @@ export type UUID = string
 export interface CanonicalEntity<B extends object, M extends object> {
   id: UUID
   version_id: UUID
-  parent_id: UUID|null
+  previous_version_id: UUID|null
   created_by: UUID
   created_at: Timestamp
   modified_by: UUID

@@ -54,7 +54,7 @@ export class NeDbSearchIndex<B extends object, M extends object> implements Sear
     const originalDocument = {
       id: document.id,
       version_id: document.version_id,
-      parent_id: document.parent_id,
+      previous_version_id: document.previous_version_id,
       created_by: document.created_by,
       created_at: document.created_at,
       modified_by: document.modified_by,
