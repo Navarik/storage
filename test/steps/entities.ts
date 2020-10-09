@@ -1,6 +1,5 @@
 import { expect } from "chai"
-import { PartialEntity, Storage, SearchQuery, CanonicalEntity, UUID } from '../../src'
-import { ValidationError } from '../../src/validation-error'
+import { EntityPatch, Storage, SearchQuery, CanonicalEntity, UUID, EntityData } from '../../src'
 import { expectSameEntity } from './checks'
 
 export class EntitySteps {
@@ -10,18 +9,18 @@ export class EntitySteps {
     this.storage = storage
   }
 
-  async cannotCreate(entity: PartialEntity<any, any>) {
+  async cannotCreate(entity: EntityData<any, any>) {
     try {
-      await this.storage.update(entity)
+      await this.storage.create(entity)
       expect(true).to.equal(false, "Expected error didn't happen")
     } catch (err) {
       expect(true).to.equal(true)
     }
   }
 
-  async canCreate(entity: PartialEntity<any, any>) {
+  async canCreate(entity: EntityData<any, any>) {
     // Create entity
-    const created = await this.storage.update(entity)
+    const created = await this.storage.create(entity)
     expectSameEntity(created, entity)
 
     // Try to read it back by ID
@@ -38,28 +37,6 @@ export class EntitySteps {
     expectSameEntity(response, lastVersion)
 
     return response
-  }
-
-  async canCreateCollection(collection: Array<PartialEntity<any, any>>) {
-    let response
-
-    // Create entity
-    response = await this.storage.updateBulk(collection)
-    expect(response).to.be.an('array')
-    expect(response).to.have.length(collection.length)
-
-    response.forEach((entity, index) => {
-      expectSameEntity(entity, collection[index])
-    })
-
-    // Try to read it back by ID
-    response = await Promise.all(response.map(x => this.storage.get(x.id)))
-    expect(response).to.be.an('array')
-    expect(response).to.have.length(collection.length)
-
-    response.forEach((entity, index) => {
-      expectSameEntity(entity, collection[index])
-    })
   }
 
   async canFind(entity: Partial<CanonicalEntity<any, any>>, user: UUID|undefined = undefined) {
@@ -109,21 +86,16 @@ export class EntitySteps {
     expect(response).to.have.length(0)
   }
 
-  async cannotUpdate(entity: PartialEntity<any, any>) {
+  async cannotUpdate(entity: EntityPatch<any, any>) {
     try {
       await this.storage.update(entity)
       expect(true).to.equal(false, "Expected error didn't happen")
     } catch (err) {
-      if (err instanceof ValidationError){
-        expect(true).to.equal(true)
-      }
-      else{
-        throw err
-      }
+      expect(true).to.equal(true)
     }
   }
 
-  async canUpdate(entity: PartialEntity<any, any>) {
+  async canUpdate(entity: EntityPatch<any, any>) {
     const response = await this.storage.update(entity)
     expectSameEntity(response, entity)
     return response

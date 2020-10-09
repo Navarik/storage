@@ -1,7 +1,7 @@
 import { Dictionary, Map, Logger } from '@navarik/types'
 import { CoreDdl, SchemaRegistryAdapter, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
 import { TransactionManager } from "@navarik/transaction-manager"
-import { AccessControlAdapter, Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, PartialEntity, State, IdGenerator, EntityData } from './types'
+import { AccessControlAdapter, Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, EntityPatch, State, EntityData } from './types'
 import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
 import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelog } from './adapters/default-changelog'
@@ -9,6 +9,7 @@ import { ChangeEventFactory } from './change-event-factory'
 import { EntityFactory } from "./entity-factory"
 import { LocalState } from './adapters/local-state'
 import { defaultLogger } from "./adapters/default-logger"
+import { ConflictError } from './errors/conflict-error'
 
 export * from './types'
 
@@ -21,7 +22,6 @@ type StorageConfig<B extends object, M extends object> = {
   // Extensions - override when adding new rules/capacities
   schemaRegistry?: SchemaRegistryAdapter
   accessControl?: AccessControlAdapter<B, M>
-  idGenerators?: Dictionary<IdGenerator>
   logger?: Logger
 
   // Built-in schemas for entity body and metadata
@@ -60,7 +60,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
   }
 
   constructor(config: StorageConfig<BodyType, MetaType> = {}) {
-    const { accessControl, changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [], logger, idGenerators = {} } = config
+    const { accessControl, changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [], logger } = config
     this.isInitializing = true
 
     this.logger = logger || defaultLogger
@@ -76,7 +76,6 @@ export class Storage<BodyType extends object, MetaType extends object> {
     })
 
     this.entityFactory = new EntityFactory({
-      generators: idGenerators,
       ddl: this.ddl,
       metaDdl: this.metaDdl,
       metaType: 'metadata'
@@ -188,7 +187,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
     return this.ddl.define(schema)
   }
 
-  validate(entity: PartialEntity<BodyType, MetaType>): ValidationResponse {
+  validate(entity: EntityData<BodyType, MetaType>): ValidationResponse {
     if (!entity.type) {
       return { isValid: false, message: "Type must be provided" }
     }
@@ -196,7 +195,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
     return this.ddl.validate(entity.type, entity.body)
   }
 
-  isValid(entity: PartialEntity<BodyType, MetaType>): boolean {
+  isValid(entity: EntityData<BodyType, MetaType>): boolean {
     if (!entity.type) {
       return false
     }
@@ -234,18 +233,10 @@ export class Storage<BodyType extends object, MetaType extends object> {
     return count
   }
 
-  async update(entity: PartialEntity<BodyType, MetaType>, commitMessage: string = "", user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType>> {
-    const currentVersion = entity.id ? await this.get(entity.id, user) : undefined
-    const previous = currentVersion || this.entityFactory.getEmpty()
-
-    const newEntity = this.entityFactory.merge(previous, entity)
-    const canonical = this.entityFactory.create(newEntity, user, previous.version_id)
-
-    const action = previous.id ? "update" : "create"
-    const changeEvent = this.changeEventFactory.create(action, canonical, commitMessage)
-
+  async create(entity: EntityData<BodyType, MetaType>, commitMessage: string = "", user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType>> {
+    const canonical = this.entityFactory.create(entity, user)
+    const changeEvent = this.changeEventFactory.create("create", canonical, commitMessage)
     const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1)
-
     await this.changelog.write(changeEvent)
 
     this.healthStats.totalChangesProduced++
@@ -253,8 +244,21 @@ export class Storage<BodyType extends object, MetaType extends object> {
     return transaction as Promise<CanonicalEntity<BodyType, MetaType>>
   }
 
-  async updateBulk(collection: Array<PartialEntity<BodyType, MetaType>>, commitMessage: string = "", user: UUID = none): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
-    return Promise.all(collection.map(entity => this.update(entity, commitMessage, user)))
+  async update(entity: EntityPatch<BodyType, MetaType>, commitMessage: string = "", user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType>> {
+    const previous = await this.get(entity.id, user)
+    if (!previous) {
+      throw new ConflictError(`[Storage] Update failed: can't find entity ${entity.id}`)
+    }
+
+    const newEntity = this.entityFactory.merge(previous, entity)
+    const canonical = this.entityFactory.create(newEntity, user, previous.version_id)
+    const changeEvent = this.changeEventFactory.create("update", canonical, commitMessage)
+    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1)
+    await this.changelog.write(changeEvent)
+
+    this.healthStats.totalChangesProduced++
+
+    return transaction as Promise<CanonicalEntity<BodyType, MetaType>>
   }
 
   async delete(id: UUID, commitMessage: string = "", user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
@@ -264,7 +268,6 @@ export class Storage<BodyType extends object, MetaType extends object> {
     }
 
     const changeEvent = this.changeEventFactory.create("delete", entity, commitMessage)
-
     const transaction = this.transactionManager.start(entity.version_id, 1)
     await this.changelog.write(changeEvent)
 

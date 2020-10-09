@@ -1,63 +1,36 @@
 import { v5 as uuidv5, v4 as uuidv4 } from 'uuid'
-import { Dictionary } from '@navarik/types'
 import { CoreDdl } from '@navarik/core-ddl'
-import { IdGenerator, CanonicalEntity, EntityData, PartialEntity, UUID } from './types'
-import { ValidationError } from "./validation-error"
+import { CanonicalEntity, EntityData, EntityPatch, UUID } from './types'
+import { ValidationError } from "./errors/validation-error"
+import { ConflictError } from './errors/conflict-error'
 
 type FactoryConfig = {
-  generators: Dictionary<IdGenerator>
   ddl: CoreDdl
   metaDdl: CoreDdl
   metaType: string
 }
 
-const defaultIdGenerator = () => uuidv4()
-
 export class EntityFactory<B extends object, M extends object> {
-  private idGenerators: Dictionary<IdGenerator>
   private ddl: CoreDdl
   private metaDdl: CoreDdl
   private metaType: string
 
-  constructor({ generators, ddl, metaDdl, metaType }: FactoryConfig) {
-    this.idGenerators = generators
+  constructor({  ddl, metaDdl, metaType }: FactoryConfig) {
     this.ddl = ddl
     this.metaDdl = metaDdl
     this.metaType = metaType
   }
 
-  private generateId(type: string, body: B) {
-    const generator = this.idGenerators[type] || defaultIdGenerator
-
-    return generator(body)
-  }
-
   private checkVersions(id: string, prevVersionId: string, version_id: string|undefined) {
     if (!version_id){
-      throw new ValidationError(`[Storage] Update unsuccessful due to missing version_id`)
+      throw new ConflictError(`[Storage] Update unsuccessful due to missing version_id`)
     }
     if (prevVersionId != version_id) {
-      throw new ValidationError(`[Storage] ${version_id} is not the latest version id for entity ${id}`)
+      throw new ConflictError(`[Storage] ${version_id} is not the latest version id for entity ${id}`)
     }
   }
 
-  getEmpty(): CanonicalEntity<Partial<B>, Partial<M>> {
-    return {
-      id: "",
-      version_id: "",
-      parent_id: null,
-      created_by: "",
-      created_at: "",
-      modified_by: "",
-      modified_at: "",
-      type: "",
-      body: {},
-      meta: {},
-      schema: ""
-    }
-  }
-
-  merge(oldEntity: CanonicalEntity<Partial<B>, Partial<M>>, newEntity: PartialEntity<B, M>): EntityData<B, M> {
+  merge(oldEntity: CanonicalEntity<Partial<B>, Partial<M>>, newEntity: EntityPatch<B, M>): EntityData<B, M> {
     // check if update is not based on an outdated entity
     const { id, version_id } = oldEntity
 
@@ -76,7 +49,7 @@ export class EntityFactory<B extends object, M extends object> {
   }
 
   create(data: EntityData<B, M>, user: UUID, parentVersionId?: UUID): CanonicalEntity<B, M> {
-    const { id, type, body, meta } = data
+    const { id, type, body, meta = {} } = data
 
     const { isValid, message } = this.ddl.validate(data.type, data.body)
     if (!isValid) {
@@ -86,7 +59,7 @@ export class EntityFactory<B extends object, M extends object> {
     const formatted = this.ddl.format(type, body)
     const formattedMeta = this.metaDdl.format(this.metaType, meta)
 
-    const newId = id || this.generateId(type, <B>formatted.body)
+    const newId = id || uuidv4()
     const version_id = uuidv5(JSON.stringify(formatted.body), newId)
 
     const now = new Date()

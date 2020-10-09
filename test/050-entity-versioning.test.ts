@@ -21,7 +21,7 @@ describe('Entity versioning', () => {
 
 
   it("can't update nonexistent entity", async () => {
-    await steps.cannotUpdate({ id: 'wow-such-much-doge', body: { a: 100, b: 500 } })
+    await steps.cannotUpdate({ id: 'wow-such-much-doge', body: { a: 100, b: 500 }, version_id: 'wow-such-much-doge' })
   })
 
   it("can create and update entity after it's created", async () => {

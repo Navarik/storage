@@ -19,21 +19,15 @@ export interface CanonicalEntity<B extends object, M extends object> {
 }
 
 export type EntityData<B extends object, M extends object> = Partial<CanonicalEntity<B, M>> & {
-  id?: UUID
   type: string
   body: B
-  meta: M
 }
 
-export type PartialEntity<B extends object, M extends object> = Partial<CanonicalEntity<B, M>> & {
-  id?: UUID
-  type?: string
+export type EntityPatch<B extends object, M extends object> = Partial<CanonicalEntity<B, M>> & {
+  id: UUID
   body: B
-  meta?: M
-  version_id?: UUID
+  version_id: UUID
 }
-
-export type IdGenerator = <T>(body: T) => UUID
 
 export type ActionType = 'create'|'update'|'delete'
 

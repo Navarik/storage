@@ -66,9 +66,12 @@ describe('Entity validation', () => {
     expect(response.message).to.be.equal('Unknown schema: wow.doge')
   })
 
-  it("doesn't allow saving invalid entities", () =>
-    storage.update({ type: 'profile.user', body: {} })
+  it("doesn't allow saving invalid entities", () => Promise.all([
+    storage.create({ id: "NOOO", type: 'profile.user', body: {} })
       .then(() => expect(true).to.equal(false, "Expected error didn't happen"))
-      .catch((error) => expect(error.message).to.include("Validation failed"))
-  )
+      .catch((error) => expect(error.message).to.include("Validation failed")),
+    storage.update({ id: "NOOO", type: 'profile.user', body: {}, version_id: "AAAAAAAAAAAAAAAAAAAAA" })
+      .then(() => expect(true).to.equal(false, "Expected error didn't happen"))
+      .catch((error) => expect(error.message).to.include("NOOO"))
+  ]))
 })

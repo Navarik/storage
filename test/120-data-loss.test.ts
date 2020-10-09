@@ -32,7 +32,7 @@ describe('Prevent entity data loss', () => {
     outdatedVersionId = entity.version_id
 
     const secondVersion = fixtures[1]
-    await steps.cannotUpdate({ id, body: secondVersion.body })
+    await steps.cannotUpdate({ id, body: secondVersion.body, version_id: "AAAAAAAAAAAAAAAAAAAAAA" })
   })
 
   it("can update with up-to-date version id", async () => {

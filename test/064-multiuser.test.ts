@@ -34,9 +34,9 @@ const steps = new EntitySteps(storage)
 
 describe('Entity multi-user search given creator-only access control strategy', () => {
   before(async () => {
-    storage.up()
-    await storage.updateBulk(fixtureDataA, "", userA)
-    await storage.updateBulk(fixtureDataB, "", userB)
+    await storage.up()
+    await Promise.all(fixtureDataA.map(x => storage.create(x, "AAAAAA", userA)))
+    await Promise.all(fixtureDataB.map(x => storage.create(x, "BBBBBB", userB)))
   })
   after(() => storage.down())
 
