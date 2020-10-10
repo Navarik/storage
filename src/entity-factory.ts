@@ -21,7 +21,7 @@ export class EntityFactory<B extends object, M extends object> {
     this.metaType = metaType
   }
 
-  create({ type, body, meta }: EntityData<B, M>, user: UUID): CanonicalEntity<B, M> {
+  create({ id, type, body, meta }: EntityData<B, M>, user: UUID): CanonicalEntity<B, M> {
     const { isValid, message } = this.ddl.validate(type, body)
     if (!isValid) {
       throw new ValidationError(`[Storage] Validation failed for ${type}. ${message}`)
@@ -30,12 +30,12 @@ export class EntityFactory<B extends object, M extends object> {
     const formatted = this.ddl.format(type, body)
     const formattedMeta = this.metaDdl.format(this.metaType, meta || {})
 
-    const id = uuidv4()
+    const newId = id || uuidv4()
     const now = new Date()
 
     const canonical: CanonicalEntity<B, M> = {
-      id,
-      version_id: uuidv5(JSON.stringify(formatted.body), id),
+      id: newId,
+      version_id: uuidv5(JSON.stringify(formatted.body), newId),
       previous_version_id: null,
       created_by: user,
       created_at: now.toISOString(),
