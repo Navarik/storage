@@ -1,7 +1,7 @@
 import { Dictionary, Map, Logger } from '@navarik/types'
-import { CoreDdl, SchemaRegistryAdapter, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
+import { CoreDdl, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
 import { TransactionManager } from "@navarik/transaction-manager"
-import { AccessControlAdapter, Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, EntityPatch, State, EntityData } from './types'
+import { AccessControlAdapter, Changelog, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, EntityPatch, State, EntityData, SchemaRegistry } from './types'
 import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
 import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelog } from './adapters/default-changelog'
@@ -20,7 +20,7 @@ type StorageConfig<B extends object, M extends object> = {
   state?: State<B, M>
 
   // Extensions - override when adding new rules/capacities
-  schemaRegistry?: SchemaRegistryAdapter
+  schemaRegistry?: SchemaRegistry
   accessControl?: AccessControlAdapter<B, M>
   logger?: Logger
 
@@ -39,8 +39,8 @@ const none = '00000000-0000-0000-0000-000000000000'
 
 export class Storage<BodyType extends object, MetaType extends object> {
   private isInitializing: boolean
-  private ddl: CoreDdl
-  private metaDdl: CoreDdl
+  private ddl: SchemaRegistry
+  private metaDdl: SchemaRegistry
   private accessControl: AccessControlAdapter<BodyType, MetaType>
   private currentState: State<BodyType, MetaType>
   private searchIndex: SearchIndex<BodyType, MetaType>
@@ -67,7 +67,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
     this.logger.info({ component: "Storage" }, "Initializing storage")
 
     this.observers = []
-    this.ddl = new CoreDdl({ schema, registry: schemaRegistry })
+    this.ddl = schemaRegistry || new CoreDdl({})
     this.metaDdl = new CoreDdl({
       schema: [{
         type: 'metadata',
@@ -84,6 +84,9 @@ export class Storage<BodyType extends object, MetaType extends object> {
     this.changeEventFactory = new ChangeEventFactory({
       ddl: this.ddl
     })
+
+    // Static schema definitions if there is any
+    schema.forEach(s => this.ddl.define(s))
 
     // Static data is used primarily for automated tests
     const staticChangelog = []

@@ -1,5 +1,5 @@
 import { Dictionary, Service, EventLog } from '@navarik/types'
-import { SchemaRegistryAdapter, CanonicalSchema, ValidationResponse, FormattedEntity } from '@navarik/core-ddl'
+import { CanonicalSchema, ValidationResponse, FormattedEntity } from '@navarik/core-ddl'
 
 export type Timestamp = string
 export type UUID = string
@@ -89,4 +89,12 @@ export interface SearchIndex<B extends object, M extends object> extends Service
   isClean(): Promise<boolean>
 }
 
-export { SchemaRegistryAdapter, CanonicalSchema, ValidationResponse, FormattedEntity }
+export declare class SchemaRegistry {
+  types(): Array<string>
+  define(schema: CanonicalSchema): void
+  describe(key: string): CanonicalSchema | undefined
+  validate(key: string, body: Partial<Dictionary<any>>): ValidationResponse
+  format(key: string, body: Partial<Dictionary<any>>): FormattedEntity;
+}
+
+export { CanonicalSchema, ValidationResponse, FormattedEntity }
