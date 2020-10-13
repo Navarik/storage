@@ -1,18 +1,17 @@
 import { v5 as uuidv5, v4 as uuidv4 } from 'uuid'
-import { CoreDdl } from '@navarik/core-ddl'
-import { CanonicalEntity, EntityData, EntityPatch, UUID } from './types'
+import { CanonicalEntity, EntityData, EntityPatch, UUID, SchemaRegistry } from './types'
 import { ValidationError } from "./errors/validation-error"
 import { ConflictError } from './errors/conflict-error'
 
 type FactoryConfig = {
-  ddl: CoreDdl
-  metaDdl: CoreDdl
+  ddl: SchemaRegistry
+  metaDdl: SchemaRegistry
   metaType: string
 }
 
 export class EntityFactory<B extends object, M extends object> {
-  private ddl: CoreDdl
-  private metaDdl: CoreDdl
+  private ddl: SchemaRegistry
+  private metaDdl: SchemaRegistry
   private metaType: string
 
   constructor({  ddl, metaDdl, metaType }: FactoryConfig) {
