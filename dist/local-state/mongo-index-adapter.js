@@ -197,7 +197,11 @@ var MongoDbIndexAdapter = function () {
       }
 
       this.pendingReset = new Promise(function (resolve, reject) {
-        _mongodb.MongoClient.connect(_this5.config.url, { useNewUrlParser: true }, function (err, client) {
+        var options = {
+          useNewUrlParser: true,
+          useUnifiedTopology: true
+        };
+        _mongodb.MongoClient.connect(_this5.config.url, options, function (err, client) {
           if (err) {
             reject(err);
             return;
