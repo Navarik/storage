@@ -124,7 +124,11 @@ class MongoDbIndexAdapter {
     }
 
     this.pendingReset = new Promise((resolve, reject) => {
-      MongoClient.connect(this.config.url, { useNewUrlParser: true }, (err, client) => {
+      const options = {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      }
+      MongoClient.connect(this.config.url, options, (err, client) => {
         if (err) {
           reject(err)
           return
