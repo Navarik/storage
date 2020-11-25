@@ -65,6 +65,7 @@ class MongoDbIndexAdapter {
 
     this.supportsRegex = true
     this.pendingReset = null
+    this.clean = true
     this.reset()
   }
 

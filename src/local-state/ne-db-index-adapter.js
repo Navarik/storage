@@ -17,6 +17,7 @@ const prepareSearch = searchParams => Object.entries(searchParams || {}).reduce(
 
 class NeDbIndexAdapter {
   constructor() {
+    this.clean = false
     this.reset()
   }
 

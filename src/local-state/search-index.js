@@ -38,6 +38,10 @@ class SearchIndex {
     await this.adapter.reset()
   }
 
+  isClean() {
+    return this.adapter.clean
+  }
+
   isConnected() {
     return this.adapter.isConnected()
   }

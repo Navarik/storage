@@ -13,6 +13,10 @@ class LocalState {
     this.logger = logger
   }
 
+  isClean() {
+    return this.searchIndex.isClean()
+  }
+
   async exists(key) {
     const document = await this.get(key)
     return !!document

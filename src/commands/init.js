@@ -18,9 +18,14 @@ const initCommand = (schemaChangeLog, entityChangeLog, schemaState, entityState,
       return entity
     })
 
-    await schemaChangeLog.reconstruct(['schema'])
-    const types = schemaRegistry.listUserTypes()
-    await entityChangeLog.reconstruct(types)
+    if (!schemaState.isClean()) {
+      await schemaChangeLog.reconstruct(['schema'])
+    }
+
+    if (!entityState.isClean()) {
+      const types = schemaRegistry.listUserTypes()
+      await entityChangeLog.reconstruct(types)
+    }
   }
 
   return init
