@@ -38,6 +38,11 @@ var LocalState = function () {
   }
 
   _createClass(LocalState, [{
+    key: 'isClean',
+    value: function isClean() {
+      return this.searchIndex.isClean();
+    }
+  }, {
     key: 'exists',
     value: function () {
       var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(key) {

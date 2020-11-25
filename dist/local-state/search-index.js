@@ -86,6 +86,11 @@ var SearchIndex = function () {
       return reset;
     }()
   }, {
+    key: 'isClean',
+    value: function isClean() {
+      return this.adapter.clean;
+    }
+  }, {
     key: 'isConnected',
     value: function isConnected() {
       return this.adapter.isConnected();

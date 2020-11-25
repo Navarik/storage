@@ -48,6 +48,7 @@ var NeDbIndexAdapter = function () {
   function NeDbIndexAdapter() {
     _classCallCheck(this, NeDbIndexAdapter);
 
+    this.clean = false;
     this.reset();
   }
 

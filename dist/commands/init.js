@@ -79,15 +79,25 @@ var initCommand = function initCommand(schemaChangeLog, entityChangeLog, schemaS
                 };
               }());
 
-              _context3.next = 10;
+              if (schemaState.isClean()) {
+                _context3.next = 11;
+                break;
+              }
+
+              _context3.next = 11;
               return schemaChangeLog.reconstruct(['schema']);
 
-            case 10:
+            case 11:
+              if (entityState.isClean()) {
+                _context3.next = 15;
+                break;
+              }
+
               types = schemaRegistry.listUserTypes();
-              _context3.next = 13;
+              _context3.next = 15;
               return entityChangeLog.reconstruct(types);
 
-            case 13:
+            case 15:
             case 'end':
               return _context3.stop();
           }
