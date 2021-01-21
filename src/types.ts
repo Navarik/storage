@@ -83,7 +83,7 @@ export type SearchOptions = {
 }
 
 export interface SearchIndex<B extends object, M extends object> extends Service {
-  update(action: ActionType, document: CanonicalEntity<B, M>, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
+  update(action: ActionType, document: CanonicalEntity<B, M>, schema?: CanonicalSchema, metaSchema?: CanonicalSchema, schemaId?: string): Promise<void>
   find(query: SearchQuery, options: SearchOptions): Promise<Array<CanonicalEntity<B, M>>>
   count(query: SearchQuery): Promise<number>
   isClean(): Promise<boolean>

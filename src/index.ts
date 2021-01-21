@@ -132,7 +132,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
       await this.notifyObservers(event)
 
       const entityWithAcl = await this.accessControl.attachTerms(event.entity)
-      await this.searchIndex.update(event.action, entityWithAcl, event.schema, this.metaDdl.describe('metadata'))
+      await this.searchIndex.update(event.action, entityWithAcl, event.schema, this.metaDdl.describe('metadata'), event.entity.schema)
 
       this.transactionManager.commit(event.entity.version_id, event.entity)
     } catch (error) {
