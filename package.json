@@ -1,7 +1,7 @@
 {
   "name": "@navarik/storage",
   "description": "Document storage with schemas and versions",
-  "version": "14.0.5",
+  "version": "14.0.6",
   "scripts": {
     "build": "rimraf dist && tsc -d",
     "prepublishOnly": "npm run build",
@@ -19,7 +19,7 @@
     "@navarik/transaction-manager": "^1.2.4",
     "lru-cache": "^5.1.1",
     "nedb": "^1.8.0",
-    "uuid": "^7.0.3"
+    "uuid": "^8.3.2"
   },
   "engines": {
     "node": ">=4.0",
