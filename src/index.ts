@@ -141,8 +141,8 @@ export class Storage<BodyType extends object, MetaType extends object> {
 
       this.logger.debug({ component: "Storage" }, `Change event for entity ${event.entity.id} is processed. Notifying observers.`)
 
-      if (!this.transactionManager.commit(event.entity.version_id, event.entity)) {
-        this.logger.warn({ component: "Storage" }, `Can't find transaction ${event.entity.version_id}`)
+      if (!this.transactionManager.commit(event.id, event.entity)) {
+        this.logger.debug({ component: "Storage" }, `Can't find transaction ${event.id}`)
       }
 
       this.notifyObservers(event)
@@ -150,8 +150,8 @@ export class Storage<BodyType extends object, MetaType extends object> {
       this.healthStats.totalProcessingErrors++
       this.logger.error({ component: "Storage", stack: error.stack }, `Error processing change event: ${error.message}`)
 
-      if (!this.transactionManager.reject(event.entity.version_id, error)) {
-        this.logger.warn({ component: "Storage" }, `Can't find transaction ${event.entity.version_id}`)
+      if (!this.transactionManager.reject(event.id, error)) {
+        this.logger.debug({ component: "Storage" }, `Can't find transaction ${event.id}`)
       }
     }
   }
@@ -253,7 +253,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
   async create(entity: EntityData<BodyType, MetaType>, commitMessage: string = "", user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType>> {
     const canonical = this.entityFactory.create(entity, user)
     const changeEvent = this.changeEventFactory.create("create", canonical, commitMessage)
-    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1)
+    const transaction = this.transactionManager.start(changeEvent.id, 1)
     await this.changelog.write(changeEvent)
 
     this.healthStats.totalChangesProduced++
@@ -269,7 +269,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
 
     const canonical = this.entityFactory.merge(previous, entity, user)
     const changeEvent = this.changeEventFactory.create("update", canonical, commitMessage)
-    const transaction = this.transactionManager.start(changeEvent.entity.version_id, 1)
+    const transaction = this.transactionManager.start(changeEvent.id, 1)
     await this.changelog.write(changeEvent)
 
     this.healthStats.totalChangesProduced++
@@ -284,7 +284,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
     }
 
     const changeEvent = this.changeEventFactory.create("delete", entity, commitMessage)
-    const transaction = this.transactionManager.start(entity.version_id, 1)
+    const transaction = this.transactionManager.start(changeEvent.id, 1)
     await this.changelog.write(changeEvent)
 
     this.healthStats.totalChangesProduced++

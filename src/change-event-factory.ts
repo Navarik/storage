@@ -1,4 +1,5 @@
 import { CanonicalEntity, ChangeEvent, ActionType, SchemaRegistry } from './types'
+import { v4 as uuidv4 } from "uuid"
 
 type FactoryConfig = {
   ddl: SchemaRegistry
@@ -24,6 +25,7 @@ export class ChangeEventFactory<B extends object, M extends object> {
     }
 
     return {
+      id: uuidv4(),
       action,
       user: entity.modified_by,
       message: commitMessage,

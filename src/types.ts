@@ -32,6 +32,7 @@ export type EntityPatch<B extends object, M extends object> = Partial<CanonicalE
 export type ActionType = 'create'|'update'|'delete'
 
 export interface ChangeEvent<B extends object, M extends object> {
+  id: UUID
   action: ActionType
   user: UUID
   timestamp: Timestamp
