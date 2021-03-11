@@ -118,7 +118,13 @@ export class Storage<BodyType extends object, MetaType extends object> {
 
   private async notifyObservers(event: ChangeEvent<BodyType, MetaType>) {
     if (!this.isInitializing) {
-      await Promise.all(this.observers.map(f => f(event)))
+      this.observers.forEach(async (observer) => {
+        try {
+          await observer(event)
+        } catch (error) {
+          this.logger.error({ component: "Storage", stack: error.stack }, `Error notifying observer of change event: ${error.message}`)
+        }
+      })
     }
   }
 
@@ -129,12 +135,14 @@ export class Storage<BodyType extends object, MetaType extends object> {
       this.logger.debug({ component: "Storage" }, `Received change event for entity: ${event.entity.id}`)
 
       await this.updateCurrentState(event)
-      await this.notifyObservers(event)
 
       const entityWithAcl = await this.accessControl.attachTerms(event.entity)
       await this.searchIndex.update(event.action, entityWithAcl, event.schema, this.metaDdl.describe('metadata'))
 
+      this.logger.debug({ component: "Storage" }, `Change event for entity ${event.entity.id} is processed. Notifying observers.`)
+
       this.transactionManager.commit(event.entity.version_id, event.entity)
+      this.notifyObservers(event)
     } catch (error) {
       this.healthStats.totalProcessingErrors++
       this.logger.error({ component: "Storage", stack: error.stack }, `Error processing change event: ${error.message}`)
