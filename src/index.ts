@@ -116,7 +116,7 @@ export class Storage<BodyType extends object, MetaType extends object> {
     }
   }
 
-  private async notifyObservers(event: ChangeEvent<BodyType, MetaType>) {
+  private notifyObservers(event: ChangeEvent<BodyType, MetaType>) {
     if (!this.isInitializing) {
       this.observers.forEach(async (observer) => {
         try {
@@ -141,12 +141,18 @@ export class Storage<BodyType extends object, MetaType extends object> {
 
       this.logger.debug({ component: "Storage" }, `Change event for entity ${event.entity.id} is processed. Notifying observers.`)
 
-      this.transactionManager.commit(event.entity.version_id, event.entity)
+      if (!this.transactionManager.commit(event.entity.version_id, event.entity)) {
+        this.logger.warn({ component: "Storage" }, `Can't find transaction ${event.entity.version_id}`)
+      }
+
       this.notifyObservers(event)
     } catch (error) {
       this.healthStats.totalProcessingErrors++
       this.logger.error({ component: "Storage", stack: error.stack }, `Error processing change event: ${error.message}`)
-      this.transactionManager.reject(event.entity.version_id, error)
+
+      if (!this.transactionManager.reject(event.entity.version_id, error)) {
+        this.logger.warn({ component: "Storage" }, `Can't find transaction ${event.entity.version_id}`)
+      }
     }
   }
 
