@@ -67,9 +67,10 @@ export interface AccessControlAdapter<B extends object, M extends object> {
 
 export type Observer<B extends object, M extends object> = (event: ChangeEvent<B, M>) => void|Promise<void>
 
-export interface Changelog<B extends object, M extends object> extends EventLog<ChangeEvent<B, M>> {}
+export interface Changelog<B extends object, M extends object> extends EventLog<ChangeEvent<B, M>>, Service {}
 
 export interface State<B extends object, M extends object> extends Service {
+  has(id: string): Promise<boolean>
   put(document: CanonicalEntity<B, M>): Promise<void>
   get(id: string): Promise<CanonicalEntity<B, M>>
   delete(id: string): Promise<void>

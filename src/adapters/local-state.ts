@@ -24,6 +24,18 @@ export class LocalState<B extends object, M extends object> implements State<B, 
     this.cache.set(document.id, document)
   }
 
+  async has(id: UUID) {
+    const cached = this.cache.has(id)
+    if (cached) {
+      return true
+    }
+
+    const count = await this.searchIndex.count({ id })
+    const exists = count > 0
+
+    return exists
+  }
+
   async get(id: UUID) {
     const cachedDocument = this.cache.get(id)
     if (cachedDocument) {
