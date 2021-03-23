@@ -9,18 +9,18 @@ export class EntitySteps {
     this.storage = storage
   }
 
-  async cannotCreate(entity: EntityData<any, any>) {
+  async cannotCreate(entity: EntityData<any, any>, user: UUID|undefined = undefined) {
     try {
-      await this.storage.create(entity)
+      await this.storage.create(entity, "AAA", user)
       expect(true).to.equal(false, "Expected error didn't happen")
     } catch (err) {
       expect(true).to.equal(true)
     }
   }
 
-  async canCreate(entity: EntityData<any, any>) {
+  async canCreate(entity: EntityData<any, any>, user: UUID|undefined = undefined) {
     // Create entity
-    const created = await this.storage.create(entity)
+    const created = await this.storage.create(entity, "AAAA", user)
     expectSameEntity(created, entity)
 
     // Try to read it back by ID
