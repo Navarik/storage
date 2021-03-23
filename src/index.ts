@@ -220,6 +220,12 @@ export class Storage<BodyType extends object, MetaType extends object> {
     return this.ddl.validate(entity.type, entity.body).isValid
   }
 
+  async has(id: UUID): Promise<boolean> {
+    const entityExists = await this.currentState.has(id)
+
+    return entityExists
+  }
+
   async get(id: UUID, user: UUID = none): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
     this.healthStats.totalIdLookups++
 
