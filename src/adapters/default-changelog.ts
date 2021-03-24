@@ -4,9 +4,9 @@ export class DefaultChangelogAdapter<M extends object> implements ChangelogAdapt
   private observer?: Observer<any, M>
   private log: Array<ChangeEvent<any, M>>
 
-  constructor() {
+  constructor(log: Array<ChangeEvent<any, M>>) {
     this.observer = undefined
-    this.log = []
+    this.log = log
   }
 
   observe<B extends object>(handler: Observer<B, M>) {
@@ -14,7 +14,6 @@ export class DefaultChangelogAdapter<M extends object> implements ChangelogAdapt
   }
 
   async write<B extends object>(message: ChangeEvent<B, M>) {
-    this.log.push(message)
     if (this.observer) {
       await this.observer(message)
     }
