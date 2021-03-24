@@ -4,9 +4,10 @@ import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, Acc
 interface Permissions {
   read?: boolean
   write?: boolean
+  search?: boolean
 }
 
-export class PermissionsBasedAccessControl implements AccessControlAdapter<any, any> {
+export class PermissionsBasedAccessControl implements AccessControlAdapter {
   private acl: Dictionary<Permissions> = {}
 
   private isGranted(subject: string, permission: AccessType) {
@@ -46,6 +47,6 @@ export class PermissionsBasedAccessControl implements AccessControlAdapter<any, 
       return {}
     }
 
-    return { "_______": true } // this is always false for the purpose of these tests so that the query yields nothing
+    return { "_______": "100500" } // this is always false for the purpose of these tests so that the query yields nothing
   }
 }

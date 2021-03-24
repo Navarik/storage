@@ -37,7 +37,7 @@ const databaseError = (err: Error) => {
   throw new Error(`[NeDB] Database error: ${err.message}`)
 }
 
-export class NeDbSearchIndex<B extends object, M extends object> implements SearchIndex<B, M> {
+export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
   private logger: Logger
   private client: Database
   private queryParser: NeDbQueryParser
@@ -49,7 +49,7 @@ export class NeDbSearchIndex<B extends object, M extends object> implements Sear
     this.client.ensureIndex({ fieldName: 'id', unique: true })
   }
 
-  private async convertToSearchable(document: CanonicalEntity<B, M>): Promise<Searchable<B, M>> {
+  private async convertToSearchable<B extends object, M extends object>(document: CanonicalEntity<B, M>): Promise<Searchable<B, M>> {
     // Removing ACL and other additional terms
     const originalDocument = {
       id: document.id,
@@ -73,7 +73,7 @@ export class NeDbSearchIndex<B extends object, M extends object> implements Sear
     return searchable
   }
 
-  async find(searchParams: SearchQuery, options: SearchOptions = {}): Promise<Array<CanonicalEntity<B, M>>> {
+  async find<B extends object, M extends object>(searchParams: SearchQuery, options: SearchOptions = {}): Promise<Array<CanonicalEntity<B, M>>> {
     const filter = this.queryParser.parseFilter(searchParams)
     const query = this.client.find(filter, { _id: 0 })
     const { offset, limit, sort } = options
@@ -114,7 +114,7 @@ export class NeDbSearchIndex<B extends object, M extends object> implements Sear
     })
   }
 
-  async index(document: CanonicalEntity<B, M>): Promise<void> {
+  async index<B extends object, M extends object>(document: CanonicalEntity<B, M>): Promise<void> {
     const data = await this.convertToSearchable(document)
     this.logger.trace({ component: 'Storage.NeDbSearchIndex', data }, `Indexing document`)
 
@@ -131,7 +131,7 @@ export class NeDbSearchIndex<B extends object, M extends object> implements Sear
     )
   }
 
-  async update(action: ActionType, document: CanonicalEntity<B, M>): Promise<void> {
+  async update<B extends object, M extends object>(action: ActionType, document: CanonicalEntity<B, M>): Promise<void> {
     if (action === "create" || action === "update") {
       await this.index(document)
     } else if (action === "delete")  {
@@ -141,7 +141,7 @@ export class NeDbSearchIndex<B extends object, M extends object> implements Sear
     }
   }
 
-  delete(document: CanonicalEntity<B, M>): Promise<void> {
+  delete<B extends object, M extends object>(document: CanonicalEntity<B, M>): Promise<void> {
     this.logger.trace({ component: 'Storage.NeDbSearchIndex', id: document.id }, `Deleting document`)
 
     return new Promise((resolve, reject) =>

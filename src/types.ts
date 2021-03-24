@@ -1,4 +1,4 @@
-import { Dictionary, Service, EventLog } from '@navarik/types'
+import { Dictionary, Service } from '@navarik/types'
 import { CanonicalSchema, ValidationResponse, FormattedEntity } from '@navarik/core-ddl'
 
 export type Timestamp = string
@@ -42,7 +42,7 @@ export interface ChangeEvent<B extends object, M extends object> {
   parent: CanonicalEntity<B, M>|undefined
 }
 
-export type AccessType = 'read'|'write'
+export type AccessType = 'read'|'write'|'search'
 
 export type AccessGrant = {
   subject: UUID
@@ -59,20 +59,24 @@ export type AccessControlDecision = {
   explanation: string
 }
 
-export interface AccessControlAdapter<B extends object, M extends object> {
-  check(subject: UUID, action: AccessType, object: CanonicalEntity<B, M>): Promise<AccessControlDecision>
-  attachTerms(entity: CanonicalEntity<B, M>): Promise<CanonicalEntity<B, M>>
+export interface AccessControlAdapter {
+  check<B extends object, M extends object>(subject: UUID, action: AccessType, object: CanonicalEntity<B, M>): Promise<AccessControlDecision>
+  attachTerms<B extends object, M extends object>(entity: CanonicalEntity<B, M>): Promise<CanonicalEntity<B, M>>
   getQuery(subject: UUID, access: AccessType): Promise<SearchQuery>
 }
 
 export type Observer<B extends object, M extends object> = (event: ChangeEvent<B, M>) => void|Promise<void>
 
-export interface Changelog<B extends object, M extends object> extends EventLog<ChangeEvent<B, M>>, Service {}
+export interface Changelog<M extends object> extends Service {
+  observe(handler: <B extends object>(event: ChangeEvent<B, M>) => void|Promise<void>): void
+  write<B extends object>(message: ChangeEvent<B, M>): Promise<void>
+  readAll(): Promise<void>
+}
 
-export interface State<B extends object, M extends object> extends Service {
+export interface State<M extends object> extends Service {
   has(id: string): Promise<boolean>
-  put(document: CanonicalEntity<B, M>): Promise<void>
-  get(id: string): Promise<CanonicalEntity<B, M>>
+  put<B extends object>(document: CanonicalEntity<B, M>): Promise<void>
+  get<B extends object>(id: string): Promise<CanonicalEntity<B, M>>
   delete(id: string): Promise<void>
   stats(): Promise<object>
 }
@@ -84,9 +88,9 @@ export type SearchOptions = {
   sort?: string|Array<string>
 }
 
-export interface SearchIndex<B extends object, M extends object> extends Service {
-  update(action: ActionType, document: CanonicalEntity<B, M>, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
-  find(query: SearchQuery, options: SearchOptions): Promise<Array<CanonicalEntity<B, M>>>
+export interface SearchIndex<M extends object> extends Service {
+  update<B extends object>(action: ActionType, document: CanonicalEntity<B, M>, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
+  find<B extends object>(query: SearchQuery, options: SearchOptions): Promise<Array<CanonicalEntity<B, M>>>
   count(query: SearchQuery): Promise<number>
   isClean(): Promise<boolean>
 }

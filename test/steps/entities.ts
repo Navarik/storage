@@ -3,9 +3,9 @@ import { EntityPatch, Storage, SearchQuery, CanonicalEntity, UUID, EntityData } 
 import { expectSameEntity } from './checks'
 
 export class EntitySteps {
-  private storage: Storage<any, any>
+  private storage: Storage<any>
 
-  constructor(storage: Storage<any, any>) {
+  constructor(storage: Storage<any>) {
     this.storage = storage
   }
 
@@ -61,6 +61,15 @@ export class EntitySteps {
     expect(response).to.be.an('array')
     expect(response).to.have.length(1)
     expectSameEntity(response[0], entity)
+  }
+
+  async cannotGet(id: string, user: UUID|undefined = undefined) {
+    try {
+      await this.storage.get(id, user)
+      expect(true).to.equal(false, "Expected error didn't happen")
+    } catch (err) {
+      expect(true).to.equal(true)
+    }
   }
 
   async cannotFind(entity: Partial<CanonicalEntity<any, any>>, user: UUID|undefined = undefined) {

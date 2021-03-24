@@ -9,7 +9,7 @@ type FactoryConfig = {
   metaType: string
 }
 
-export class EntityFactory<B extends object, M extends object> {
+export class EntityFactory<M extends object> {
   private ddl: SchemaRegistry
   private metaDdl: SchemaRegistry
   private metaType: string
@@ -20,7 +20,7 @@ export class EntityFactory<B extends object, M extends object> {
     this.metaType = metaType
   }
 
-  create({ id, type, body, meta }: EntityData<B, M>, user: UUID): CanonicalEntity<B, M> {
+  create<B extends object>({ id, type, body, meta }: EntityData<B, M>, user: UUID): CanonicalEntity<B, M> {
     const { isValid, message } = this.ddl.validate(type, body)
     if (!isValid) {
       throw new ValidationError(`[Storage] Validation failed for ${type}. ${message}`)
@@ -49,7 +49,7 @@ export class EntityFactory<B extends object, M extends object> {
     return canonical
   }
 
-  merge(oldEntity: CanonicalEntity<Partial<B>, Partial<M>>, patch: EntityPatch<B, M>, user: UUID): CanonicalEntity<B, M> {
+  merge<B extends object>(oldEntity: CanonicalEntity<Partial<B>, Partial<M>>, patch: EntityPatch<B, M>, user: UUID): CanonicalEntity<B, M> {
     // check if update is not based on an outdated entity
     if (!patch.version_id) {
       throw new ConflictError(`[Storage] Update unsuccessful due to missing version_id`)

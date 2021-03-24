@@ -9,12 +9,14 @@ const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity<any, any>> = require('./fixtures/data/events.json')
 const fixturesJobs: Array<CanonicalEntity<any, any>> = require('./fixtures/data/job-orders.json')
 
-const reader = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-const writer = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+const reader   = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+const writer   = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+const searcher = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
 
 const acl = new PermissionsBasedAccessControl()
 acl.grant(reader, "read")
 acl.grant(writer, "write")
+acl.grant(searcher, "search")
 
 const fixtureData = [
   ...fixturesEvents,
@@ -30,12 +32,13 @@ const storage = new Storage({
 const steps = new EntitySteps(storage)
 const createdIds: Array<string> = []
 
-describe('Enforcing read and write permissions based on ACL', () => {
+describe('Enforcing permissions based on ACL', () => {
   before(async () => { await storage.up() })
   after(() => storage.down())
 
-  it("read permission doesn't allow writes", async () => {
+  it("read/search permission doesn't allow writes", async () => {
     await Promise.all(fixtureData.map(entity => steps.cannotCreate(entity, reader)))
+    await Promise.all(fixtureData.map(entity => steps.cannotCreate(entity, searcher)))
 
     await Promise.all(fixtureData.map(async (entity) => {
       const created = await storage.create(entity, "AAAA", writer)
@@ -44,11 +47,18 @@ describe('Enforcing read and write permissions based on ACL', () => {
     }))
   })
 
-  it("write permission doesn't allow reads", async () => {
+  it("write permission doesn't allow reads/searches", async () => {
     await Promise.all(createdIds.map(async (id) => {
       expect(await storage.has(id)).to.be.true
-      expect(await storage.get(id, writer)).to.be.undefined
+      await steps.cannotGet(id, writer)
+      await steps.cannotGet(id, searcher)
       expect(await storage.get(id, reader)).to.be.an("object")
     }))
+  })
+
+  it("search permission doesn't allow writes/id-based reads", async () => {
+    expect(await storage.find({}, {}, writer)).to.have.lengthOf(0)
+    expect(await storage.find({}, {}, reader)).to.have.lengthOf(0)
+    expect(await storage.find({}, { limit: 100 }, searcher)).to.have.lengthOf(createdIds.length)
   })
 })
