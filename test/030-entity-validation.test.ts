@@ -36,24 +36,24 @@ describe('Entity validation', () => {
   after(() => storage.down())
 
   it("can recognize valid entities", async () => {
-    const response = await storage.isValid(validData)
-    expect(response).to.be.equal(true)
+    const response = await storage.validate(validData)
+    expect(response.isValid).to.be.equal(true)
   })
 
   it("can recognize invalid entities", async () => {
-    let response = await storage.isValid({ type: 'profile.user', body: {} })
-    expect(response).to.be.equal(false)
+    let response = await storage.validate({ type: 'profile.user', body: {} })
+    expect(response.isValid).to.be.equal(false)
 
-    response = await storage.isValid(invalidData)
-    expect(response).to.be.equal(false)
+    response = await storage.validate(invalidData)
+    expect(response.isValid).to.be.equal(false)
   })
 
   it("considers entities of unknown type invalid", async () => {
-    let response = await storage.isValid({ type: 'wow.doge', body: {} })
-    expect(response).to.be.equal(false)
+    let response = await storage.validate({ type: 'wow.doge', body: {} })
+    expect(response.isValid).to.be.equal(false)
 
-    response = await storage.isValid({ type: 'wow.doge', body: invalidData.body })
-    expect(response).to.be.equal(false)
+    response = await storage.validate({ type: 'wow.doge', body: invalidData.body })
+    expect(response.isValid).to.be.equal(false)
   })
 
   it("can tell what is wrong with invalid entities", async () => {

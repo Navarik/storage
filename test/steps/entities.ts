@@ -9,7 +9,7 @@ export class EntitySteps {
     this.storage = storage
   }
 
-  async cannotCreate(entity: EntityData<any, any>, user: UUID|undefined = undefined) {
+  async cannotCreate(entity: EntityData<any, any>, user?: UUID) {
     try {
       await this.storage.create(entity, "AAA", user)
       expect(true).to.equal(false, "Expected error didn't happen")
@@ -18,7 +18,7 @@ export class EntitySteps {
     }
   }
 
-  async canCreate(entity: EntityData<any, any>, user: UUID|undefined = undefined) {
+  async canCreate(entity: EntityData<any, any>, user?: UUID) {
     // Create entity
     const created = await this.storage.create(entity, "AAAA", user)
     expectSameEntity(created, entity)
@@ -39,7 +39,7 @@ export class EntitySteps {
     return response
   }
 
-  async canFind(entity: Partial<CanonicalEntity<any, any>>, user: UUID|undefined = undefined) {
+  async canFind(entity: Partial<CanonicalEntity<any, any>>, user?: UUID) {
     let response
 
     // Find using fields in a query
@@ -63,7 +63,7 @@ export class EntitySteps {
     expectSameEntity(response[0], entity)
   }
 
-  async cannotGet(id: string, user: UUID|undefined = undefined) {
+  async cannotGet(id: string, user?: UUID) {
     try {
       await this.storage.get(id, user)
       expect(true).to.equal(false, "Expected error didn't happen")
@@ -72,7 +72,16 @@ export class EntitySteps {
     }
   }
 
-  async cannotFind(entity: Partial<CanonicalEntity<any, any>>, user: UUID|undefined = undefined) {
+  async cannotDelete(id: string, user?: UUID) {
+    try {
+      await this.storage.delete(id, "Ohno!", user)
+      expect(true).to.equal(false, "Expected error didn't happen")
+    } catch (err) {
+      expect(true).to.equal(true)
+    }
+  }
+
+  async cannotFind(entity: Partial<CanonicalEntity<any, any>>, user?: UUID) {
     let response
 
     // Find using fields in a query

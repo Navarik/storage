@@ -228,14 +228,6 @@ export class Storage<MetaType extends object> {
     return this.ddl.validate(entity.type, entity.body)
   }
 
-  isValid<BodyType extends object>(entity: EntityData<BodyType, MetaType>): boolean {
-    if (!entity.type) {
-      return false
-    }
-
-    return this.ddl.validate(entity.type, entity.body).isValid
-  }
-
   async has(id: UUID): Promise<boolean> {
     const entityExists = await this.currentState.has(id)
 

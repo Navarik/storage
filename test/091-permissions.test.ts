@@ -61,4 +61,13 @@ describe('Enforcing permissions based on ACL', () => {
     expect(await storage.find({}, {}, reader)).to.have.lengthOf(0)
     expect(await storage.find({}, { limit: 100 }, searcher)).to.have.lengthOf(createdIds.length)
   })
+
+  it("write permission allows deletes", async () => {
+    await Promise.all(createdIds.map(async (id) => {
+      expect(await storage.has(id)).to.be.true
+      await steps.cannotDelete(id, reader)
+      await steps.cannotDelete(id, searcher)
+      expect(await storage.delete(id, "Ohno!", writer)).to.be.an("object")
+    }))
+  })
 })
