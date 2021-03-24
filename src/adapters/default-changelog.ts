@@ -4,7 +4,7 @@ export class DefaultChangelogAdapter<M extends object> implements ChangelogAdapt
   private observer?: Observer<any, M>
   private log: Array<ChangeEvent<any, M>>
 
-  constructor(log: Array<ChangeEvent<any, M>>) {
+  constructor(log: Array<ChangeEvent<any, M>> = []) {
     this.observer = undefined
     this.log = log
   }
