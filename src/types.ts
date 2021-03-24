@@ -73,14 +73,6 @@ export interface ChangelogAdapter<M extends object> extends Service {
   readAll(): Promise<void>
 }
 
-export interface State<M extends object> extends Service {
-  has(id: string): Promise<boolean>
-  put<B extends object>(document: CanonicalEntity<B, M>): Promise<void>
-  get<B extends object>(id: string): Promise<CanonicalEntity<B, M>>
-  delete(id: string): Promise<void>
-  stats(): Promise<object>
-}
-
 export type SearchQuery = Dictionary<string|object|number|boolean>
 export type SearchOptions = {
   limit?: number

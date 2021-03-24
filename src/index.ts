@@ -1,10 +1,10 @@
 import { Dictionary, Map, Logger } from '@navarik/types'
 import { CoreDdl, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
-import { AccessControlAdapter, ChangelogAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, EntityPatch, State, EntityData, SchemaRegistry } from './types'
+import { AccessControlAdapter, ChangelogAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, EntityPatch, EntityData, SchemaRegistry } from './types'
 import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
 import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelogAdapter } from './adapters/default-changelog'
-import { LocalState } from './adapters/local-state'
+import { State } from './state'
 import { ChangeEventFactory } from './change-event-factory'
 import { EntityFactory } from "./entity-factory"
 import { Changelog } from "./changelog"
@@ -17,7 +17,6 @@ export * from './types'
 interface StorageConfig<M extends object> {
   // Adapters - override when changing underlying technology
   changelog?: ChangelogAdapter<M>
-  state?: State<M>
   index?: SearchIndex<M>
 
   // Extensions - override when adding new rules/capacities
@@ -57,7 +56,7 @@ export class Storage<MetaType extends object> {
   }
 
   constructor(config: StorageConfig<MetaType> = {}) {
-    const { accessControl, changelog, index, state, schemaRegistry, meta = {}, schema = [], data = [], logger } = config
+    const { accessControl, changelog, index, schemaRegistry, meta = {}, schema = [], data = [], logger } = config
 
     this.logger = logger || defaultLogger
     this.logger.info({ component: "Storage" }, "Initializing storage")
@@ -73,8 +72,9 @@ export class Storage<MetaType extends object> {
 
     this.accessControl = accessControl || new DefaultAccessControl()
     this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
-    this.currentState = state || new LocalState({
-      size: config.cacheSize || 5000000,
+
+    this.currentState = new State({
+      cacheSize: config.cacheSize || 5000000,
       searchIndex: this.searchIndex
     })
 

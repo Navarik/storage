@@ -1,21 +1,21 @@
 import LRU from "lru-cache"
-import { State, CanonicalEntity, SearchIndex, UUID } from "../types"
+import { CanonicalEntity, SearchIndex, UUID } from "./types"
 
-interface LocalStateConfig<M extends object> {
-  size: number
+interface StateConfig<M extends object> {
+  cacheSize: number
   searchIndex: SearchIndex<M>
 }
 
-export class LocalState<M extends object> implements State<M> {
-  private maxSize: number
+export class State<M extends object> {
+  private cacheSize: number
   private cache: LRU<string, CanonicalEntity<any, M>>
   private searchIndex: SearchIndex<M>
 
-  constructor({ size, searchIndex }: LocalStateConfig<M>) {
-    this.maxSize = size
+  constructor({ cacheSize, searchIndex }: StateConfig<M>) {
+    this.cacheSize = cacheSize
     this.searchIndex = searchIndex
     this.cache = new LRU({
-      max: size,
+      max: cacheSize,
       length: (document) => JSON.stringify(document).length
     })
   }
@@ -36,13 +36,13 @@ export class LocalState<M extends object> implements State<M> {
     return exists
   }
 
-  async get(id: UUID) {
+  async get<B extends object>(id: UUID) {
     const cachedDocument = this.cache.get(id)
     if (cachedDocument) {
       return cachedDocument
     }
 
-    const [foundDocument] = await this.searchIndex.find({ id }, {})
+    const [foundDocument] = await this.searchIndex.find<B>({ id }, {})
     if (foundDocument) {
       this.put(foundDocument)
     }
@@ -62,7 +62,7 @@ export class LocalState<M extends object> implements State<M> {
 
   async stats() {
     return {
-      cacheSize: this.maxSize,
+      cacheSize: this.cacheSize,
       cacheUsed: this.cache.length
     }
   }
