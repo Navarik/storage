@@ -59,9 +59,9 @@ export type AccessControlDecision = {
   explanation: string
 }
 
-export interface AccessControlAdapter {
-  check<B extends object, M extends object>(subject: UUID, action: AccessType, object: CanonicalEntity<B, M>): Promise<AccessControlDecision>
-  attachTerms<B extends object, M extends object>(entity: CanonicalEntity<B, M>): Promise<CanonicalEntity<B, M>>
+export interface AccessControlAdapter<M extends object> {
+  check<B extends object>(subject: UUID, action: AccessType, object: CanonicalEntity<B, M>): Promise<AccessControlDecision>
+  attachTerms<B extends object>(entity: CanonicalEntity<B, M>): Promise<CanonicalEntity<B, M>>
   getQuery(subject: UUID, access: AccessType): Promise<SearchQuery>
 }
 

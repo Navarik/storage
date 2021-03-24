@@ -21,7 +21,7 @@ interface StorageConfig<M extends object> {
 
   // Extensions - override when adding new rules/capacities
   schemaRegistry?: SchemaRegistry
-  accessControl?: AccessControlAdapter
+  accessControl?: AccessControlAdapter<M>
   logger?: Logger
 
   // Built-in schemas for entity body and metadata
@@ -41,7 +41,7 @@ export class Storage<MetaType extends object> {
   private staticData: Array<ChangeEvent<any, MetaType>>
   private ddl: SchemaRegistry
   private metaDdl: SchemaRegistry
-  private accessControl: AccessControlAdapter
+  private accessControl: AccessControlAdapter<MetaType>
   private currentState: State<MetaType>
   private searchIndex: SearchIndex<MetaType>
   private changelog: Changelog<MetaType>
