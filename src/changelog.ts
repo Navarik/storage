@@ -7,13 +7,13 @@ interface ChangelogConfig<M extends object> {
   adapter: ChangelogAdapter<M>
   logger: Logger
   observer: (change: ChangeEvent<any, M>) => Promise<void>
-  accessControl: AccessControlAdapter
+  accessControl: AccessControlAdapter<M>
 }
 
 export class Changelog<MetaType extends object> {
   private adapter: ChangelogAdapter<MetaType>
   private observer: (change: ChangeEvent<any, MetaType>) => Promise<void>
-  private accessControl: AccessControlAdapter
+  private accessControl: AccessControlAdapter<MetaType>
   private transactionManager: TransactionManager<CanonicalEntity<any, MetaType>>
   private logger: Logger
   private healthStats = {
