@@ -117,7 +117,10 @@ export class Storage<MetaType extends object> {
     await this.searchIndex.update(event.action, entityWithAcl, event.schema, this.metaDdl.describe('metadata'))
   }
 
-  private notifyObservers(event: ChangeEvent<any, MetaType>) {
+  private async onChange<B extends object>(event: ChangeEvent<B, MetaType>) {
+    await this.updateState(event)
+
+    this.logger.debug({ component: "Storage" }, `Processed change event for entity ${event.entity.id}. Notifying observers.`)
     this.observers.forEach(async (observer) => {
       try {
         await observer(event)
@@ -125,13 +128,6 @@ export class Storage<MetaType extends object> {
         this.logger.error({ component: "Storage", stack: error.stack }, `Error notifying observer of change event: ${error.message}`)
       }
     })
-  }
-
-  private async onChange<B extends object>(event: ChangeEvent<B, MetaType>) {
-    await this.updateState(event)
-
-    this.logger.debug({ component: "Storage" }, `Processed change event for entity ${event.entity.id}. Notifying observers.`)
-    this.notifyObservers(event)
   }
 
   async up() {
