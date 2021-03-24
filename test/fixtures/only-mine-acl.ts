@@ -1,6 +1,6 @@
 import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, AccessType, SearchQuery } from '../../src/types'
 
-export class OnlyMineAccessControl implements AccessControlAdapter {
+export class OnlyMineAccessControl implements AccessControlAdapter<any> {
   async check(subject: UUID, action: AccessType, object: CanonicalEntity<any, any>): Promise<AccessControlDecision> {
     if (object && (object.modified_by === subject)) {
       return {

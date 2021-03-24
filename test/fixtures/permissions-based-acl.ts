@@ -7,7 +7,7 @@ interface Permissions {
   search?: boolean
 }
 
-export class PermissionsBasedAccessControl implements AccessControlAdapter {
+export class PermissionsBasedAccessControl implements AccessControlAdapter<any> {
   private acl: Dictionary<Permissions> = {}
 
   private isGranted(subject: string, permission: AccessType) {
