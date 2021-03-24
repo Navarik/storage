@@ -67,7 +67,7 @@ export interface AccessControlAdapter {
 
 export type Observer<B extends object, M extends object> = (event: ChangeEvent<B, M>) => void|Promise<void>
 
-export interface Changelog<M extends object> extends Service {
+export interface ChangelogAdapter<M extends object> extends Service {
   observe(handler: <B extends object>(event: ChangeEvent<B, M>) => void|Promise<void>): void
   write<B extends object>(message: ChangeEvent<B, M>): Promise<void>
   readAll(): Promise<void>
