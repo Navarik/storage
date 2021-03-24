@@ -3,7 +3,7 @@ import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
 import { EntitySteps } from './steps/entities'
 import { nullLogger } from "./fixtures/null-logger"
 import { expectEntity } from './steps/checks'
-import { OnlyMineAccessControl } from "./fixtures/only-mine-control"
+import { OnlyMineAccessControl } from "./fixtures/only-mine-acl"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity<any, any>> = require('./fixtures/data/events.json')

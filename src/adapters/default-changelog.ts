@@ -1,19 +1,20 @@
-import { Changelog, Observer, ChangeEvent } from '../types'
+import { ChangelogAdapter, Observer, ChangeEvent } from '../types'
 
-export class DefaultChangelog<B extends object, M extends object> implements Changelog<B, M> {
-  private observer?: Observer<B, M>
-  private log: Array<ChangeEvent<B, M>>
+export class DefaultChangelogAdapter<M extends object> implements ChangelogAdapter<M> {
+  private observer?: Observer<any, M>
+  private log: Array<ChangeEvent<any, M>>
 
-  constructor(staticLog: Array<ChangeEvent<B, M>> = []) {
+  constructor() {
     this.observer = undefined
-    this.log = [...staticLog]
+    this.log = []
   }
 
-  observe(handler: Observer<B, M>) {
+  observe<B extends object>(handler: Observer<B, M>) {
     this.observer = handler
   }
 
-  async write(message: ChangeEvent<B, M>) {
+  async write<B extends object>(message: ChangeEvent<B, M>) {
+    this.log.push(message)
     if (this.observer) {
       await this.observer(message)
     }

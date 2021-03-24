@@ -3,24 +3,24 @@ import { EntityPatch, Storage, SearchQuery, CanonicalEntity, UUID, EntityData } 
 import { expectSameEntity } from './checks'
 
 export class EntitySteps {
-  private storage: Storage<any, any>
+  private storage: Storage<any>
 
-  constructor(storage: Storage<any, any>) {
+  constructor(storage: Storage<any>) {
     this.storage = storage
   }
 
-  async cannotCreate(entity: EntityData<any, any>) {
+  async cannotCreate(entity: EntityData<any, any>, user?: UUID) {
     try {
-      await this.storage.create(entity)
+      await this.storage.create(entity, "AAA", user)
       expect(true).to.equal(false, "Expected error didn't happen")
     } catch (err) {
       expect(true).to.equal(true)
     }
   }
 
-  async canCreate(entity: EntityData<any, any>) {
+  async canCreate(entity: EntityData<any, any>, user?: UUID) {
     // Create entity
-    const created = await this.storage.create(entity)
+    const created = await this.storage.create(entity, "AAAA", user)
     expectSameEntity(created, entity)
 
     // Try to read it back by ID
@@ -39,7 +39,7 @@ export class EntitySteps {
     return response
   }
 
-  async canFind(entity: Partial<CanonicalEntity<any, any>>, user: UUID|undefined = undefined) {
+  async canFind(entity: Partial<CanonicalEntity<any, any>>, user?: UUID) {
     let response
 
     // Find using fields in a query
@@ -63,7 +63,25 @@ export class EntitySteps {
     expectSameEntity(response[0], entity)
   }
 
-  async cannotFind(entity: Partial<CanonicalEntity<any, any>>, user: UUID|undefined = undefined) {
+  async cannotGet(id: string, user?: UUID) {
+    try {
+      await this.storage.get(id, user)
+      expect(true).to.equal(false, "Expected error didn't happen")
+    } catch (err) {
+      expect(true).to.equal(true)
+    }
+  }
+
+  async cannotDelete(id: string, user?: UUID) {
+    try {
+      await this.storage.delete(id, "Ohno!", user)
+      expect(true).to.equal(false, "Expected error didn't happen")
+    } catch (err) {
+      expect(true).to.equal(true)
+    }
+  }
+
+  async cannotFind(entity: Partial<CanonicalEntity<any, any>>, user?: UUID) {
     let response
 
     // Find using fields in a query

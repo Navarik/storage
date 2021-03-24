@@ -1,6 +1,7 @@
 import { expect } from "chai"
 import { Storage, CanonicalSchema, CanonicalEntity, ChangeEvent } from '../src'
 import { nullLogger } from "./fixtures/null-logger"
+import { EntitySteps } from "./steps/entities"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity<any, any>> = require('./fixtures/data/events.json')
@@ -10,6 +11,8 @@ const storage = new Storage({
   schema: fixtureSchemata,
   logger: nullLogger
 })
+
+const steps = new EntitySteps(storage)
 
 describe('Observing changes', () => {
   before(() => storage.up())
@@ -32,5 +35,15 @@ describe('Observing changes', () => {
 
     expect(results).to.be.an('array')
     expect(results).to.have.length(fixturesJobs.length + fixturesEvents.length)
+  })
+
+  it("ignores errors thrown in observers", async () => {
+    storage.observe(() => { throw new Error("Onoz!!!!") })
+
+    for (const entity of fixturesJobs) {
+      await steps.canCreate(entity)
+    }
+
+    expect(await storage.count({})).to.eql(fixturesJobs.length + fixturesJobs.length + fixturesEvents.length)
   })
 })
