@@ -1,6 +1,6 @@
 import { Dictionary, Map, Logger } from '@navarik/types'
-import { CoreDdl, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
-import { AccessControlAdapter, ChangelogAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, EntityPatch, EntityData, SchemaRegistry } from './types'
+import { CoreDdl, CanonicalSchema, SchemaField, ValidationResponse, SchemaRegistryAdapter } from '@navarik/core-ddl'
+import { AccessControlAdapter, ChangelogAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, EntityPatch, EntityData } from './types'
 import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
 import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelogAdapter } from './adapters/default-changelog'
@@ -20,7 +20,7 @@ interface StorageConfig<M extends object> {
   index?: SearchIndex<M>
 
   // Extensions - override when adding new rules/capacities
-  schemaRegistry?: SchemaRegistry
+  schemaRegistry?: SchemaRegistryAdapter
   accessControl?: AccessControlAdapter<M>
   logger?: Logger
 
@@ -39,8 +39,8 @@ const nobody = '00000000-0000-0000-0000-000000000000'
 
 export class Storage<MetaType extends object> {
   private staticData: Array<ChangeEvent<any, MetaType>>
-  private ddl: SchemaRegistry
-  private metaDdl: SchemaRegistry
+  private ddl: CoreDdl
+  private metaDdl: CoreDdl
   private accessControl: AccessControlAdapter<MetaType>
   private currentState: State<MetaType>
   private searchIndex: SearchIndex<MetaType>
@@ -62,7 +62,9 @@ export class Storage<MetaType extends object> {
     this.logger.info({ component: "Storage" }, "Initializing storage")
 
     this.observers = []
-    this.ddl = schemaRegistry || new CoreDdl({})
+    this.ddl = new CoreDdl({
+      registry: schemaRegistry
+    })
     this.metaDdl = new CoreDdl({
       schema: [{
         type: 'metadata',

@@ -1,12 +1,13 @@
-import { CanonicalEntity, ChangeEvent, ActionType, SchemaRegistry } from './types'
+import { CanonicalEntity, ChangeEvent, ActionType } from './types'
 import { v4 as uuidv4 } from "uuid"
+import { CoreDdl } from '@navarik/core-ddl'
 
 interface FactoryConfig {
-  ddl: SchemaRegistry
+  ddl: CoreDdl
 }
 
 export class ChangeEventFactory<M extends object> {
-  private ddl: SchemaRegistry
+  private ddl: CoreDdl
 
   constructor({ ddl }: FactoryConfig) {
     this.ddl = ddl
