@@ -1,5 +1,5 @@
 import { Dictionary } from '@navarik/types'
-import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, AccessType, SearchQuery } from '../../src/types'
+import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, AccessType, SearchQuery } from '../../types'
 
 interface Permissions {
   read?: boolean

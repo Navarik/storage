@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { CanonicalEntity } from '../../src'
+import { CanonicalEntity } from '../..'
 
 export const expectEntity = (given: Partial<CanonicalEntity<any, any>>|undefined) => {
   expect(given).to.be.an('object')

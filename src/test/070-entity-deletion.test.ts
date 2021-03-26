@@ -1,4 +1,4 @@
-import { Storage, CanonicalSchema } from '../src'
+import { Storage, CanonicalSchema } from '..'
 import { nullLogger } from "./fixtures/null-logger"
 import { EntitySteps } from './steps/entities'
 

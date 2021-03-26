@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
+import { Storage, CanonicalSchema, CanonicalEntity } from '..'
 import { EntitySteps } from './steps/entities'
 import { nullLogger } from "./fixtures/null-logger"
 import { expectEntity } from './steps/checks'

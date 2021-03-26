@@ -4,8 +4,9 @@
   "version": "16.0.0",
   "scripts": {
     "build": "rimraf dist && tsc -d",
+    "postbuild": "cpy --cwd=src --parents '**/*.json' ../dist/",
     "prepublishOnly": "npm run build",
-    "test": "mocha -r ts-node/register test/**/*.test.ts"
+    "test": "mocha -r ts-node/register src/test/**/*.test.ts"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -35,6 +36,7 @@
     "@types/node": "^14.14.35",
     "@types/uuid": "^8.3.0",
     "chai": "^4.3.4",
+    "cpy-cli": "^3.1.1",
     "mocha": "^8.3.2",
     "rimraf": "^3.0.2",
     "ts-node": "^9.1.1",

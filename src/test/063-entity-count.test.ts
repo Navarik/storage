@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
+import { Storage, CanonicalSchema, CanonicalEntity } from '..'
 import { nullLogger } from "./fixtures/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('./fixtures/schemata')

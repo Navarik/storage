@@ -1,6 +1,6 @@
 import { expect } from "chai"
 import { nullLogger } from "./fixtures/null-logger"
-import { Storage } from '../src'
+import { Storage } from '..'
 
 const storage = new Storage({ logger: nullLogger })
 

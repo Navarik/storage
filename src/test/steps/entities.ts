@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { EntityPatch, Storage, SearchQuery, CanonicalEntity, UUID, EntityData } from '../../src'
+import { EntityPatch, Storage, SearchQuery, CanonicalEntity, UUID, EntityData } from '../..'
 import { expectSameEntity } from './checks'
 
 export class EntitySteps {

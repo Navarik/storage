@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { Storage } from '../src'
+import { Storage } from '..'
 import { nullLogger } from "./fixtures/null-logger"
 
 const catId = "9913a4d3-4f64-45ca-8ef9-4e5d1f3ad4b3"

@@ -1,5 +1,4 @@
-import { Storage, CanonicalSchema, CanonicalEntity } from '../src'
-import { expectSameEntity } from './steps/checks'
+import { Storage, CanonicalSchema, CanonicalEntity } from '..'
 import { EntitySteps } from './steps/entities'
 import { nullLogger } from "./fixtures/null-logger"
 
@@ -14,18 +13,15 @@ const storage = new Storage({
 const steps = new EntitySteps(storage)
 let id: string
 let version_id: string
+let outdatedVersionId: string
 
-describe('Entity versioning', () => {
+describe('Prevent entity data loss', () => {
   before(() => storage.up())
   after(() => storage.down())
 
 
-  it("can't update nonexistent entity", async () => {
-    await steps.cannotUpdate({ id: 'wow-such-much-doge', body: { a: 100, b: 500 }, version_id: 'wow-such-much-doge' })
-  })
-
-  it("can create and update entity after it's created", async () => {
-    const [firstVersion, ...versions] = fixtures
+  it("can create but can't update without version id provided", async () => {
+    const firstVersion = fixtures[0]
     const entity = await steps.canCreate(firstVersion)
     if (undefined === entity) {
       throw new Error('No entity created')
@@ -33,20 +29,22 @@ describe('Entity versioning', () => {
 
     id = entity.id
     version_id = entity.version_id
+    outdatedVersionId = entity.version_id
 
+    const secondVersion = fixtures[1]
+    await steps.cannotUpdate({ id, body: secondVersion.body, version_id: "AAAAAAAAAAAAAAAAAAAAAA" })
+  })
+
+  it("can update with up-to-date version id", async () => {
+    const versions = fixtures.slice(1, fixtures.length - 1)
     for (const version of versions) {
       const entity = await steps.canUpdate({ id, version_id, body: version.body })
       version_id = entity.version_id
     }
   })
 
-  it('only the latest version is directly available', async () => {
+  it('cannot update with an outdated version id', async () => {
     const lastVersion = fixtures[fixtures.length - 1]
-    let response
-
-    response = await storage.get(id)
-    expectSameEntity(response, lastVersion)
-
-    await steps.canFind(lastVersion)
+    await steps.cannotUpdate({ id, version_id: outdatedVersionId, body: lastVersion.body })
   })
 })
