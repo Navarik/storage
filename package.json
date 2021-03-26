@@ -1,7 +1,7 @@
 {
   "name": "@navarik/storage",
   "description": "Document storage with schemas and versions",
-  "version": "16.0.0",
+  "version": "16.1.0",
   "scripts": {
     "build": "rimraf dist && tsc -d",
     "postbuild": "cpy --cwd=src --parents '**/*.json' ../dist/",
