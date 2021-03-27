@@ -14,5 +14,5 @@
     "lib": ["ES2018"],
     "types": ["node", "mocha"]
   },
-  "include": ["./src/**/*"]
+  "include": ["./src/**/*", "./test/setup/types.ts"]
 }

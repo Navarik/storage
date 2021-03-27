@@ -14,7 +14,7 @@ import { AccessError } from './errors/access-error'
 
 export * from './types'
 
-interface StorageConfig<M extends object> {
+export interface StorageConfig<M extends object> {
   // Adapters - override when changing underlying technology
   changelog?: ChangelogAdapter<M>
   index?: SearchIndex<M>

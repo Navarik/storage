@@ -1,8 +1,7 @@
 import { expect } from "chai"
 import { nullLogger } from "./fixtures/null-logger"
-import { Storage } from '../src'
 
-const storage = new Storage({ logger: nullLogger })
+const storage = createStorage({ logger: nullLogger })
 
 describe('Empty state', () => {
   before(() => storage.up())
