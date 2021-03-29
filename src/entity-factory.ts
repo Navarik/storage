@@ -43,7 +43,7 @@ export class EntityFactory<M extends object> {
       modified_at: now.toISOString(),
       type: formatted.schema.type,
       body: <B>formatted.body,
-      meta: <M>formattedMeta.body || {},
+      meta: <M>formattedMeta.body || <M>{},
       schema: formatted.schemaId
     }
 
@@ -74,7 +74,7 @@ export class EntityFactory<M extends object> {
       modified_at: now.toISOString(),
       type,
       body: <B>formatted.body,
-      meta: <M>formattedMeta.body || {},
+      meta: <M>formattedMeta.body || <M>{},
       schema: formatted.schemaId
     }
   }
