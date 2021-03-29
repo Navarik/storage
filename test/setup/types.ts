@@ -1,5 +1,5 @@
 import { Storage, StorageConfig } from '../../src'
 
 declare global {
-  function createStorage<T extends object, M extends object>(config: StorageConfig<M>) : Storage<T>;
+  function createStorage<MetaType extends object>(config: StorageConfig<MetaType>) : Storage<MetaType>;
 }
