@@ -1,6 +1,6 @@
 import { Map, Logger } from '@navarik/types'
 import { CoreDdl, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
-import { AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, EntityPatch, EntityData, StorageConfig } from './types'
+import { StorageInterface, AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, EntityPatch, EntityData, StorageConfig } from './types'
 import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
 import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelogAdapter } from './adapters/default-changelog'
@@ -16,7 +16,7 @@ export * from './types'
 
 const nobody = '00000000-0000-0000-0000-000000000000'
 
-export class Storage<MetaType extends object> {
+export class Storage<MetaType extends object> implements StorageInterface<MetaType> {
   private staticData: Array<ChangeEvent<any, MetaType>>
   private ddl: CoreDdl
   private metaDdl: CoreDdl

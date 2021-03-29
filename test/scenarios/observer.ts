@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { Storage, CanonicalSchema, CanonicalEntity, ChangeEvent, StorageConfig } from '../../src'
+import { StorageInterface, CanonicalSchema, CanonicalEntity, ChangeEvent, StorageConfig } from '../../src'
 import { nullLogger } from "../fixtures/null-logger"
 import { EntitySteps } from "../steps/entities"
 
@@ -7,7 +7,7 @@ const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events.json')
 const fixturesJobs: Array<CanonicalEntity<any, any>> = require('../fixtures/data/job-orders.json')
 
-export const observer = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => Storage<T>) => {
+export const observer = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
     logger: nullLogger
