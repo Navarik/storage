@@ -1,6 +1,6 @@
-import { Dictionary, Map, Logger } from '@navarik/types'
-import { CoreDdl, CanonicalSchema, SchemaField, ValidationResponse, SchemaRegistryAdapter } from '@navarik/core-ddl'
-import { AccessControlAdapter, ChangelogAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, EntityPatch, EntityData } from './types'
+import { Map, Logger } from '@navarik/types'
+import { CoreDdl, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
+import { AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, EntityPatch, EntityData, StorageConfig } from './types'
 import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
 import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelogAdapter } from './adapters/default-changelog'
@@ -13,27 +13,6 @@ import { ConflictError } from './errors/conflict-error'
 import { AccessError } from './errors/access-error'
 
 export * from './types'
-
-interface StorageConfig<M extends object> {
-  // Adapters - override when changing underlying technology
-  changelog?: ChangelogAdapter<M>
-  index?: SearchIndex<M>
-
-  // Extensions - override when adding new rules/capacities
-  schemaRegistry?: SchemaRegistryAdapter
-  accessControl?: AccessControlAdapter<M>
-  logger?: Logger
-
-  // Built-in schemas for entity body and metadata
-  meta?: Dictionary<SchemaField>
-  schema?: Array<CanonicalSchema>
-
-  // Built-in entities if any
-  data?: Array<EntityData<any, M>>
-
-  // Configuration
-  cacheSize?: number
-}
 
 const nobody = '00000000-0000-0000-0000-000000000000'
 

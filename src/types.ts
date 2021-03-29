@@ -1,5 +1,5 @@
-import { Dictionary, Service } from '@navarik/types'
-import { CanonicalSchema, ValidationResponse, FormattedEntity, SchemaRegistryAdapter } from '@navarik/core-ddl'
+import { Dictionary, Logger, Service } from '@navarik/types'
+import { CanonicalSchema, ValidationResponse, FormattedEntity, SchemaRegistryAdapter, SchemaField } from '@navarik/core-ddl'
 
 export type Timestamp = string
 export type UUID = string
@@ -85,6 +85,27 @@ export interface SearchIndex<M extends object> extends Service {
   find<B extends object>(query: SearchQuery, options: SearchOptions): Promise<Array<CanonicalEntity<B, M>>>
   count(query: SearchQuery): Promise<number>
   isClean(): Promise<boolean>
+}
+
+export interface StorageConfig<M extends object> {
+  // Adapters - override when changing underlying technology
+  changelog?: ChangelogAdapter<M>
+  index?: SearchIndex<M>
+
+  // Extensions - override when adding new rules/capacities
+  schemaRegistry?: SchemaRegistryAdapter
+  accessControl?: AccessControlAdapter<M>
+  logger?: Logger
+
+  // Built-in schemas for entity body and metadata
+  meta?: Dictionary<SchemaField>
+  schema?: Array<CanonicalSchema>
+
+  // Built-in entities if any
+  data?: Array<EntityData<any, M>>
+
+  // Configuration
+  cacheSize?: number
 }
 
 export { CanonicalSchema, ValidationResponse, FormattedEntity, SchemaRegistryAdapter }
