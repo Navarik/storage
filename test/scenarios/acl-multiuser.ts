@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { Storage, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
+import { CanonicalSchema, CanonicalEntity, StorageConfig, StorageInterface } from '../../src'
 import { EntitySteps } from '../steps/entities'
 import { nullLogger } from "../fixtures/null-logger"
 import { expectEntity } from '../steps/checks'
@@ -24,7 +24,7 @@ const fixtureDataB = [
   ...fixturesMessages
 ]
 
-export const aclMultiuser = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => Storage<T>) => {
+export const aclMultiuser = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
     logger: nullLogger,

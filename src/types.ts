@@ -108,4 +108,20 @@ export interface StorageConfig<M extends object> {
   cacheSize?: number
 }
 
+export interface StorageInterface<MetaType extends object> extends Service {
+  stats(): Promise<object>
+  types(): Array<string>
+  describe(type: string): CanonicalSchema|undefined
+  define(schema: CanonicalSchema): void
+  has(id: UUID): Promise<boolean>
+  get<BodyType extends object>(id: UUID, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
+  find<BodyType extends object>(query?: SearchQuery, options?: SearchOptions, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
+  count(query?: SearchQuery, user?: UUID): Promise<number>
+  validate<BodyType extends object>(entity: EntityData<BodyType, MetaType>): ValidationResponse
+  create<BodyType extends object>(data: EntityData<BodyType, MetaType>, commitMessage?: string, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType>>
+  update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, commitMessage?: string , user?: UUID): Promise<CanonicalEntity<BodyType, MetaType>>
+  delete<BodyType extends object>(id: UUID, commitMessage?: string, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
+  observe<BodyType extends object>(handler: Observer<BodyType, MetaType>): void
+}
+
 export { CanonicalSchema, ValidationResponse, FormattedEntity, SchemaRegistryAdapter }

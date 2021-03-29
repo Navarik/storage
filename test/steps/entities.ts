@@ -1,11 +1,11 @@
 import { expect } from "chai"
-import { EntityPatch, Storage, SearchQuery, CanonicalEntity, UUID, EntityData } from '../../src'
+import { EntityPatch, StorageInterface, SearchQuery, CanonicalEntity, UUID, EntityData } from '../../src'
 import { expectSameEntity } from './checks'
 
 export class EntitySteps {
-  private storage: Storage<any>
+  private storage: StorageInterface<any>
 
-  constructor(storage: Storage<any>) {
+  constructor(storage: StorageInterface<any>) {
     this.storage = storage
   }
 
