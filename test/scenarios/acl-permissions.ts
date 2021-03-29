@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { Storage, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
+import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
 import { EntitySteps } from '../steps/entities'
 import { expectSameEntity } from '../steps/checks'
 import { nullLogger } from "../fixtures/null-logger"
@@ -23,7 +23,7 @@ const fixtureData = [
   ...fixturesJobs
 ]
 
-export const aclPermissions = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => Storage<T>) => {
+export const aclPermissions = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
     logger: nullLogger,

@@ -1,10 +1,10 @@
 import { expect } from "chai"
 import { nullLogger } from "../fixtures/null-logger"
-import { Storage, CanonicalSchema, StorageConfig } from '../../src'
+import { StorageInterface, CanonicalSchema, StorageConfig } from '../../src'
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
 
-export const entityValidation = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => Storage<T>) => {
+export const entityValidation = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
 
   const storage = createStorage({
     schema: fixtureSchemata,

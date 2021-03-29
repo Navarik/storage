@@ -1,8 +1,8 @@
 import { expect } from "chai"
 import { nullLogger } from "../fixtures/null-logger"
-import { Storage, StorageConfig } from '../../src'
+import { StorageInterface, StorageConfig } from '../../src'
 
-export const emptyState = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => Storage<T>) => {
+export const emptyState = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({ logger: nullLogger })
 
   describe('Empty state', () => {

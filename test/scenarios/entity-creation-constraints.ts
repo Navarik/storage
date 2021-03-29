@@ -1,10 +1,9 @@
-import { Storage, CanonicalSchema, StorageConfig } from '../../src'
+import { StorageInterface, StorageConfig } from '../../src'
 import { nullLogger } from "../fixtures/null-logger"
 import { EntitySteps } from '../steps/entities'
+import fixtureSchemata from '../fixtures/schemata.json'
 
-const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
-
-export const entityCreationConstraints = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => Storage<T>) => {
+export const entityCreationConstraints = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
 
   const storage = createStorage({
     schema: fixtureSchemata,
