@@ -172,6 +172,9 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.healthStats.totalIdLookups++
 
     const entity = await this.currentState.get<BodyType>(id)
+    if (!entity) {
+      return undefined
+    }
 
     const access = await this.accessControl.check(user, 'read', entity)
     if (!access.granted) {
