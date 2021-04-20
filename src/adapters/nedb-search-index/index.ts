@@ -86,7 +86,7 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
     }
     let sortParams
     if (sort) {
-      sortParams = this.queryParser.parseSortQuery(sort instanceof Array ? sort : [sort])
+      sortParams = this.queryParser.parseSort(sort instanceof Array ? sort : [sort])
       query.sort(sortParams)
     }
 

@@ -1,5 +1,6 @@
+import { Dictionary } from "@navarik/types"
 import { expect } from "chai"
-import { EntityPatch, StorageInterface, SearchQuery, CanonicalEntity, UUID, EntityData } from '../../src'
+import { EntityPatch, StorageInterface, CanonicalEntity, UUID, EntityData } from '../../src'
 import { expectSameEntity } from './checks'
 
 export class EntitySteps {
@@ -43,7 +44,7 @@ export class EntitySteps {
     let response
 
     // Find using fields in a query
-    const query: SearchQuery = {}
+    const query: Dictionary<any> = {}
     if (entity.id) query.id = entity.id
     if (entity.type) query.type = entity.type
     if (entity.body) {
@@ -85,7 +86,7 @@ export class EntitySteps {
     let response
 
     // Find using fields in a query
-    const query: SearchQuery = {}
+    const query: Dictionary<any> = {}
     if (entity.id) query.id = entity.id
     if (entity.type) query.type = entity.type
     if (entity.body) {
