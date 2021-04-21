@@ -1,7 +1,7 @@
 import { Map, Logger } from '@navarik/types'
 import { CoreDdl, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
-import { StorageInterface, AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, SearchQuery, ChangeEvent, EntityPatch, EntityData, StorageConfig } from './types'
-import { NeDbSearchIndex } from './adapters/nedb/ne-db-search-index'
+import { StorageInterface, AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig } from './types'
+import { NeDbSearchIndex } from './adapters/nedb-search-index/index'
 import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelogAdapter } from './adapters/default-changelog'
 import { State } from './state'
@@ -11,6 +11,7 @@ import { Changelog } from "./changelog"
 import { defaultLogger } from "./adapters/default-logger"
 import { ConflictError } from './errors/conflict-error'
 import { AccessError } from './errors/access-error'
+import { QueryParser } from './query-parser'
 
 export * from './types'
 
@@ -20,6 +21,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   private staticData: Array<ChangeEvent<any, MetaType>>
   private ddl: CoreDdl
   private metaDdl: CoreDdl
+  private queryParser: QueryParser
   private accessControl: AccessControlAdapter<MetaType>
   private currentState: State<MetaType>
   private searchIndex: SearchIndex<MetaType>
@@ -50,6 +52,8 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
         fields: <Map<SchemaField>>meta
       }]
     })
+
+    this.queryParser = new QueryParser()
 
     this.accessControl = accessControl || new DefaultAccessControl()
     this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
@@ -184,18 +188,20 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     return entity
   }
 
-  async find<BodyType extends object>(query: SearchQuery = {}, options: SearchOptions = {}, user: UUID = nobody): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
+  async find<BodyType extends object>(query: object, options: SearchOptions = {}, user: UUID = nobody): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
     this.healthStats.totalSearchQueries++
 
     const aclTerms = await this.accessControl.getQuery(user, 'search')
-    const collection = await this.searchIndex.find<BodyType>({ ...query, ...aclTerms }, options)
+    const queryTerms = this.queryParser.parse({ ...query, ...aclTerms })
+    const collection = await this.searchIndex.find<BodyType>(queryTerms, options)
 
     return collection
   }
 
-  async count(query: SearchQuery = {}, user: UUID = nobody): Promise<number> {
+  async count(query: object, user: UUID = nobody): Promise<number> {
     const aclTerms = await this.accessControl.getQuery(user, 'search')
-    const count = this.searchIndex.count({ ...query, ...aclTerms })
+    const queryTerms = this.queryParser.parse({ ...query, ...aclTerms })
+    const count = this.searchIndex.count(queryTerms)
 
     return count
   }

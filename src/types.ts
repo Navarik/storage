@@ -62,7 +62,7 @@ export type AccessControlDecision = {
 export interface AccessControlAdapter<M extends object> {
   check<B extends object>(subject: UUID, action: AccessType, object: CanonicalEntity<B, M>): Promise<AccessControlDecision>
   attachTerms<B extends object>(entity: CanonicalEntity<B, M>): Promise<CanonicalEntity<B, M>>
-  getQuery(subject: UUID, access: AccessType): Promise<SearchQuery>
+  getQuery(subject: UUID, access: AccessType): Promise<Dictionary<any>>
 }
 
 export type Observer<B extends object, M extends object> = (event: ChangeEvent<B, M>) => void|Promise<void>
@@ -73,7 +73,12 @@ export interface ChangelogAdapter<M extends object> extends Service {
   readAll(): Promise<void>
 }
 
-export type SearchQuery = Dictionary<string|object|number|boolean>
+export type SearchOperator = "and"|"or"|"eq"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"|"literal"
+export type SearchQuery = {
+  operator: SearchOperator
+  args: Array<any>
+}
+
 export type SearchOptions = {
   limit?: number
   offset?: number
@@ -115,8 +120,8 @@ export interface StorageInterface<MetaType extends object> extends Service {
   define(schema: CanonicalSchema): void
   has(id: UUID): Promise<boolean>
   get<BodyType extends object>(id: UUID, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
-  find<BodyType extends object>(query?: SearchQuery, options?: SearchOptions, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
-  count(query?: SearchQuery, user?: UUID): Promise<number>
+  find<BodyType extends object>(query?: Dictionary<any>, options?: SearchOptions, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
+  count(query?: Dictionary<any>, user?: UUID): Promise<number>
   validate<BodyType extends object>(entity: EntityData<BodyType, MetaType>): ValidationResponse
   create<BodyType extends object>(data: EntityData<BodyType, MetaType>, commitMessage?: string, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType>>
   update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, commitMessage?: string , user?: UUID): Promise<CanonicalEntity<BodyType, MetaType>>

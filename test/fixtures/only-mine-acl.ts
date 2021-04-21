@@ -1,4 +1,5 @@
-import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, AccessType, SearchQuery } from '../../src/types'
+import { Dictionary } from '@navarik/types'
+import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, AccessType } from '../../src/types'
 
 export class OnlyMineAccessControl implements AccessControlAdapter<any> {
   async check(subject: UUID, action: AccessType, object: CanonicalEntity<any, any>): Promise<AccessControlDecision> {
@@ -19,7 +20,7 @@ export class OnlyMineAccessControl implements AccessControlAdapter<any> {
     return entity
   }
 
-  async getQuery(subject: UUID, access: AccessType): Promise<SearchQuery> {
+  async getQuery(subject: UUID, access: AccessType): Promise<Dictionary<any>> {
     return {
       modified_by: subject
     }

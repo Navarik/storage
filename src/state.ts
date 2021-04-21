@@ -30,7 +30,9 @@ export class State<M extends object> {
       return true
     }
 
-    const count = await this.searchIndex.count({ id })
+    const count = await this.searchIndex.count(
+      { operator: "eq", args: ["id", id] }
+    )
     const exists = count > 0
 
     return exists
@@ -42,7 +44,10 @@ export class State<M extends object> {
       return cachedDocument
     }
 
-    const [foundDocument] = await this.searchIndex.find<B>({ id }, {})
+    const [foundDocument] = await this.searchIndex.find<B>(
+      { operator: "eq", args: ["id", id] },
+      { limit: 1 }
+    )
     if (foundDocument) {
       this.put(foundDocument)
     }
