@@ -1,5 +1,5 @@
 import { Dictionary, Logger } from '@navarik/types'
-import Database from 'nedb'
+import Database from '@navarik/nedb'
 import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, ActionType } from '../../types'
 import { NeDbQueryParser } from './ne-db-query-parser'
 
