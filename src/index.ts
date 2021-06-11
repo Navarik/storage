@@ -94,7 +94,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   private async updateState<B extends object>(event: ChangeEvent<B, MetaType>) {
-    this.logger.debug({ component: "Storage" }, `Processin '${event.action}' change event event for entity ${event.entity.id}`)
+    this.logger.debug({ component: "Storage" }, `Processing '${event.action}' change event event for entity ${event.entity.id}`)
 
     if (event.action === 'delete') {
       await this.currentState.delete(event.entity.id)
