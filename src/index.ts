@@ -35,12 +35,14 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     totalIdLookups: 0,
     totalSearchQueries: 0
   }
+  private isUp: boolean
 
   constructor(config: StorageConfig<MetaType> = {}) {
-    const { accessControl, changelog, index, schemaRegistry, meta = {}, schema = [], data = [], logger } = config
+    const { accessControl, changelog, index, schemaRegistry, meta = {}, schema = [], data = [], cacheSize = 5000000, logger } = config
 
+    this.isUp = false
     this.logger = logger || defaultLogger
-    this.logger.info({ component: "Storage" }, "Initializing storage")
+    this.logger.debug({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}, static data: ${data.length})`)
 
     this.observers = []
     this.ddl = new CoreDdl({
@@ -59,7 +61,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
 
     this.currentState = new State({
-      cacheSize: config.cacheSize || 5000000,
+      cacheSize,
       searchIndex: this.searchIndex
     })
 
@@ -92,6 +94,8 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   private async updateState<B extends object>(event: ChangeEvent<B, MetaType>) {
+    this.logger.debug({ component: "Storage" }, `Processing '${event.action}' change event event for entity ${event.entity.id}`)
+
     if (event.action === 'delete') {
       await this.currentState.delete(event.entity.id)
     } else {
@@ -105,14 +109,16 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   private async onChange<B extends object>(event: ChangeEvent<B, MetaType>) {
     await this.updateState(event)
 
-    this.logger.debug({ component: "Storage" }, `Processed change event for entity ${event.entity.id}. Notifying observers.`)
-    this.observers.forEach(async (observer) => {
-      try {
-        await observer(event)
-      } catch (error) {
-        this.logger.error({ component: "Storage", stack: error.stack }, `Error notifying observer of change event: ${error.message}`)
-      }
-    })
+    if (this.isUp) {
+      this.logger.debug({ component: "Storage" }, `Notifying observers on change event for entity ${event.entity.id}`)
+      this.observers.forEach(async (observer) => {
+        try {
+          await observer(event)
+        } catch (error) {
+          this.logger.error({ component: "Storage", stack: error.stack }, `Error notifying observer of change event: ${error.message}`)
+        }
+      })
+    }
   }
 
   async up() {
@@ -126,14 +132,22 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     } else {
       await this.changelog.up()
     }
+
+    this.isUp = true
   }
 
   async down() {
     await this.changelog.down()
     await this.searchIndex.down()
+
+    this.isUp = false
   }
 
   async isHealthy() {
+    if (!this.isUp) {
+      return false
+    }
+
     const [changelogHealth, indexHealth, stateHealth] = await Promise.all([
       this.changelog.isHealthy(),
       this.searchIndex.isHealthy(),

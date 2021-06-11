@@ -21,7 +21,7 @@ export class DefaultChangelogAdapter<M extends object> implements ChangelogAdapt
 
   async readAll() {
     for (const event of this.log) {
-      this.write(event)
+      await this.write(event)
     }
   }
 
