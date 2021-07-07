@@ -14,10 +14,7 @@ const castType = (value, type) => {
     return value
   }
   const castFunction = dataTypes[type.split(' ')[0]]
-  if (!castFunction) {
-    return value  
-  }
-  return castFunction(value)
+  return castFunction ? castFunction(value) : value
 }
 
 export class QueryParser {
