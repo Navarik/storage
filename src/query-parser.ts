@@ -1,19 +1,33 @@
 import { Dictionary } from "@navarik/types"
 import { SearchQuery } from "./types"
 
+const dataTypes = {
+  double: (value) => Number(value),
+  int: (value) => Number(value),
+  float: (value) => Number(value),
+  long: (value) => Number(value),
+  boolean: (value) => Boolean(value)
+}
+
 const castType = (value, type) => {
-  if (!type){return value}
-  if (type.includes('int') || type.includes('long')) {
-    return Number(value)
+  if (!type) {
+    return value
   }
-  else if (type.includes('boolean')) {
-    return Boolean(value)
+  const castFunction = dataTypes[type.split(' ')[0]]
+  if (!castFunction) {
+    return value  
   }
-  else return value
+  return castFunction(value)
 }
 
 export class QueryParser {
-  parse(searchParams: Dictionary<any>, schemas: object): SearchQuery {
+  private schemas: object
+
+  constructor(schemas) {
+    this.schemas = schemas
+  }
+
+  parse(searchParams: Dictionary<any>): SearchQuery {
 
     if (searchParams.operator && searchParams.args) {
       return <SearchQuery>searchParams
@@ -21,11 +35,11 @@ export class QueryParser {
 
     const args: Array<any> = []
     for (const field in searchParams) {
-      const typeLookUp = field =="type" ? null: schemas[field]
-      const value = searchParams[field]
+      const typeLookUp = field == "type" ? null : this.schemas[field]
+      const value = castType(searchParams[field], typeLookUp)
       const term = value.operator
-        ? castType(value, typeLookUp)
-        : { operator: "literal", args: [castType(value, typeLookUp)] }
+        ? value
+        : { operator: "literal", args: [value] }
 
       args.push({
         operator: "eq",
@@ -37,7 +51,7 @@ export class QueryParser {
       operator: "and",
       args
     }
-    
+
     return query
   }
 }

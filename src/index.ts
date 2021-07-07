@@ -59,8 +59,6 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       }]
     })
 
-    this.queryParser = new QueryParser()
-
     this.accessControl = accessControl || new DefaultAccessControl()
     this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
 
@@ -95,6 +93,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     
     this.schemas = flatten({body: {...this.schemas}}, { safe: true })
 
+    this.queryParser = new QueryParser(this.schemas)
 
     // Static data is used primarily for automated tests
     this.staticData = data.map(document => this.changeEventFactory.create(
@@ -217,7 +216,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.healthStats.totalSearchQueries++
 
     const aclTerms = await this.accessControl.getQuery(user, 'search')
-    const queryTerms = this.queryParser.parse({ ...query, ...aclTerms }, this.schemas)
+    const queryTerms = this.queryParser.parse({ ...query, ...aclTerms })
     const collection = await this.searchIndex.find<BodyType>(queryTerms, options)
 
     return collection
@@ -225,7 +224,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
   async count(query: object, user: UUID = nobody): Promise<number> {
     const aclTerms = await this.accessControl.getQuery(user, 'search')
-    const queryTerms = this.queryParser.parse({ ...query, ...aclTerms }, this.schemas)
+    const queryTerms = this.queryParser.parse({ ...query, ...aclTerms })
     const count = this.searchIndex.count(queryTerms)
 
     return count
