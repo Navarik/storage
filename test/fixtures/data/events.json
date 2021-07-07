@@ -5,7 +5,7 @@
       "event_type": "vessel_arrived",
       "sender": 2,
       "job_order": 13,
-      "timestamp": 1526501947125
+      "timestamp": "2018 Jan 22 12:29"
     }
   },
   {
@@ -14,7 +14,7 @@
       "event_type": "nor_tendered",
       "sender": 1,
       "job_order": 13,
-      "timestamp": 1526502063074
+      "timestamp": "2018 Jan 22 21:30"
     }
   },
   {
@@ -23,7 +23,7 @@
       "event_type": "nor_accepted",
       "sender": 2,
       "job_order": 13,
-      "timestamp": 1526502089487
+      "timestamp": "2018 Jan 22 23:29"
     }
   },
   {
@@ -32,7 +32,7 @@
       "event_type": "hoses_connected",
       "sender": 3,
       "job_order": 13,
-      "timestamp": 1526502107790
+      "timestamp": "2018 Jan 22 21:29"
     }
   },
   {
@@ -41,7 +41,7 @@
       "event_type": "commenced_loading",
       "sender": 1,
       "job_order": 13,
-      "timestamp": 1526502119224
+      "timestamp": "2018 Jan 22 22:29"
     }
   }
 ]

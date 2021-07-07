@@ -79,8 +79,8 @@ export const entitySearch = (createStorage: <T extends object = {}>(config: Stor
         args: [
           { operator: "eq", args: ["type", "timelog.timelog_event"] },
           { operator: "or", args: [
-            { operator: "eq", args: ["body.sender", "1"] },
-            { operator: "eq", args: ["body.sender", "3"] }
+            { operator: "eq", args: ["body.sender", 1] },
+            { operator: "eq", args: ["body.sender", 3] }
           ]}
         ]
       })
@@ -97,36 +97,36 @@ export const entitySearch = (createStorage: <T extends object = {}>(config: Stor
         operator: "and",
         args: [
           { operator: "eq", args: ["type", "timelog.timelog_event"] },
-          { operator: "gt", args: ["body.sender", "1"] }
+          { operator: "gt", args: ["body.sender", 1] }
         ]
       })).to.equal(3)
       expect(await storage.count({
         operator: "and",
         args: [
           { operator: "eq", args: ["type", "timelog.timelog_event"] },
-          { operator: "lt", args: ["body.sender", "2"] }
+          { operator: "lt", args: ["body.sender", 2] }
         ]
       })).to.equal(2)
       expect(await storage.count({
         operator: "and",
         args: [
           { operator: "eq", args: ["type", "timelog.timelog_event"] },
-          { operator: "gte", args: ["body.sender", "1"] }
+          { operator: "gte", args: ["body.sender", 1] }
         ]
       })).to.equal(5)
       expect(await storage.count({
         operator: "and",
         args: [
           { operator: "eq", args: ["type", "timelog.timelog_event"] },
-          { operator: "lte", args: ["body.sender", "2"] }
+          { operator: "lte", args: ["body.sender", 2] }
         ]
       })).to.equal(4)
       expect(await storage.count({
         operator: "and",
         args: [
           { operator: "eq", args: ["type", "timelog.timelog_event"] },
-          { operator: "neq", args: ["body.sender", "1"] },
-          { operator: "neq", args: ["body.sender", "2"] }
+          { operator: "neq", args: ["body.sender", 1] },
+          { operator: "neq", args: ["body.sender", 2] }
         ]
       })).to.equal(1)
     })

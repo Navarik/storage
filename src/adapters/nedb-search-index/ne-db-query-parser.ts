@@ -16,7 +16,7 @@ const operators: Dictionary<OperatorFactory> = {
   like: ([field, regex, options]: Array<any>) => ({ [field]: { $regex: new RegExp(regex, options) } }),
   literal: (args: Array<any>) => {
     const value = parseTerm(args[0])
-    return value instanceof Array ? { $in: value } : `${value}`
+    return value instanceof Array ? { $in: value } : value
   }
 }
 

@@ -49,7 +49,7 @@ export class EntitySteps {
     if (entity.type) query.type = entity.type
     if (entity.body) {
       for (const field in entity.body) {
-        query[`body.${field}`] = String(entity.body[field])
+        query[`body.${field}`] = entity.body[field]
       }
     }
     if (entity.meta) {

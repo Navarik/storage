@@ -1,36 +1,11 @@
-import { Dictionary, Logger } from '@navarik/types'
+import { Logger } from '@navarik/types'
 import Database from '@navarik/nedb'
 import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, ActionType } from '../../types'
 import { NeDbQueryParser } from './ne-db-query-parser'
 
-interface Searchable<B extends object, M extends object> {
-  ___document: CanonicalEntity<B, M>
-  _id?: any
-}
 
 type Config = {
   logger: Logger
-}
-
-const stringifyProperties = (data: any): any => {
-  if (!data) return ''
-
-  if (data instanceof Array) {
-    return data.map(stringifyProperties)
-  }
-
-  if (typeof data ==='object') {
-    const stringified: Dictionary<any> = {}
-    for (const field in data) {
-      if (typeof data[field] !== 'function') {
-        stringified[field] = stringifyProperties(data[field])
-      }
-    }
-
-    return stringified
-  }
-
-  return `${data}`
 }
 
 const databaseError = (err: Error) => {
@@ -47,30 +22,6 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
     this.client = new Database()
     this.queryParser = new NeDbQueryParser()
     this.client.ensureIndex({ fieldName: 'id', unique: true })
-  }
-
-  private async convertToSearchable<B extends object, M extends object>(document: CanonicalEntity<B, M>): Promise<Searchable<B, M>> {
-    // Removing ACL and other additional terms
-    const originalDocument = {
-      id: document.id,
-      version_id: document.version_id,
-      previous_version_id: document.previous_version_id,
-      created_by: document.created_by,
-      created_at: document.created_at,
-      modified_by: document.modified_by,
-      modified_at: document.modified_at,
-      type: document.type,
-      body: document.body,
-      meta: document.meta,
-      schema: document.schema
-    }
-
-    const searchable = {
-      ___document: originalDocument,
-      ...stringifyProperties(document)
-    }
-
-    return searchable
   }
 
   async find<B extends object, M extends object>(searchParams: SearchQuery, options: SearchOptions = {}): Promise<Array<CanonicalEntity<B, M>>> {
@@ -92,14 +43,14 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
 
     this.logger.trace({ component: 'Storage.NeDbSearchIndex', filter, limit, offset, sort: sortParams }, `Performing find operation`)
 
-    const collection: Array<Searchable<B, M>> = await new Promise((resolve, reject) => {
+    const collection: Array<CanonicalEntity<B, M>> = await new Promise((resolve, reject) => {
       query.exec((err, res) => {
         if (err) reject(databaseError(err))
-        else resolve((res || []) as Array<Searchable<B, M>>)
+        else resolve((res || []) as Array<CanonicalEntity<B, M>>)
       })
     })
 
-    return collection.map(x => x.___document)
+    return collection
   }
 
   async count(searchParams: SearchQuery): Promise<number> {
@@ -115,13 +66,12 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
   }
 
   async index<B extends object, M extends object>(document: CanonicalEntity<B, M>): Promise<void> {
-    const data = await this.convertToSearchable(document)
-    this.logger.trace({ component: 'Storage.NeDbSearchIndex', data }, `Indexing document`)
+    this.logger.trace({ component: 'Storage.NeDbSearchIndex', document }, `Indexing document`)
 
     return new Promise((resolve, reject) =>
       this.client.update(
         { id: document.id },
-        data,
+        document,
         { upsert: true, multi: true },
         (err) => {
           if (err) reject(databaseError(err))

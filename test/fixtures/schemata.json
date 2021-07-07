@@ -50,7 +50,7 @@
     "fields": {
       "event_type": "string",
       "sender": "int",
-      "timestamp": "long",
+      "timestamp": "string",
       "job_order": "int"
     }
   },

@@ -1,3 +1,4 @@
+import { flatten } from 'flat'
 import { Map, Logger } from '@navarik/types'
 import { CoreDdl, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
 import { StorageInterface, AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig } from './types'
@@ -36,6 +37,8 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     totalSearchQueries: 0
   }
   private isUp: boolean
+  private schemas: object
+
 
   constructor(config: StorageConfig<MetaType> = {}) {
     const { accessControl, changelog, index, schemaRegistry, meta = {}, schema = [], data = [], cacheSize = 5000000, logger } = config
@@ -44,6 +47,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.logger = logger || defaultLogger
     this.logger.debug({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}, static data: ${data.length})`)
 
+    this.schemas = {}
     this.observers = []
     this.ddl = new CoreDdl({
       registry: schemaRegistry
@@ -83,7 +87,15 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     })
 
     // Static schema definitions if there is any
-    schema.forEach(s => this.ddl.define(s))
+
+    schema.forEach(s => {
+      this.schemas = { ...this.schemas, ...s.fields }
+      this.ddl.define(s)
+    })
+    
+    this.schemas = flatten({body: {...this.schemas}}, { safe: true })
+    console.log(this.schemas)
+
 
     // Static data is used primarily for automated tests
     this.staticData = data.map(document => this.changeEventFactory.create(
@@ -206,7 +218,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.healthStats.totalSearchQueries++
 
     const aclTerms = await this.accessControl.getQuery(user, 'search')
-    const queryTerms = this.queryParser.parse({ ...query, ...aclTerms })
+    const queryTerms = this.queryParser.parse({ ...query, ...aclTerms }, this.schemas)
     const collection = await this.searchIndex.find<BodyType>(queryTerms, options)
 
     return collection
@@ -214,7 +226,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
   async count(query: object, user: UUID = nobody): Promise<number> {
     const aclTerms = await this.accessControl.getQuery(user, 'search')
-    const queryTerms = this.queryParser.parse({ ...query, ...aclTerms })
+    const queryTerms = this.queryParser.parse({ ...query, ...aclTerms }, this.schemas)
     const count = this.searchIndex.count(queryTerms)
 
     return count
