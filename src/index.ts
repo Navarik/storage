@@ -94,7 +94,6 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     })
     
     this.schemas = flatten({body: {...this.schemas}}, { safe: true })
-    console.log(this.schemas)
 
 
     // Static data is used primarily for automated tests
