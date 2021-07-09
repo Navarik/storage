@@ -13,7 +13,7 @@ const castType = (value, type) => {
   if (!type) {
     return value
   }
-  const castFunction = dataTypes[type.split(' ')[0]]
+  const castFunction = dataTypes[type.split(',')[0]]
   return castFunction ? castFunction(value) : value
 }
 
@@ -32,7 +32,7 @@ export class QueryParser {
 
     const args: Array<any> = []
     for (const field in searchParams) {
-      const typeLookUp = field == "type" ? null : this.schemas[field]
+      const typeLookUp = !(field in this.schemas) ? null : this.schemas[field]
       const value = castType(searchParams[field], typeLookUp)
       const term = value.operator
         ? value
