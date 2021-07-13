@@ -50,21 +50,21 @@ export const entitySearch = (createStorage: <T extends object = {}>(config: Stor
     })
 
     it("can find entities by one field", async () => {
-      const response = await storage.find({ 'body.sender': '1' })
+      const response = await storage.find({ 'body.sender': 1 })
       expect(response).to.be.an('array')
       expect(response).to.have.length(6)
       response.forEach(expectEntity)
     })
 
     it("can find entities by combination of fields", async () => {
-      let response = await storage.find({ 'body.sender': '1', 'body.job_order': '13' })
+      let response = await storage.find({ 'body.sender': 1, 'body.job_order': 13 })
       expect(response).to.be.an('array')
       expect(response).to.have.length(5)
       response.forEach(expectEntity)
     })
 
     it("can find entities by type and combination of fields", async () => {
-      let response = await storage.find({ 'body.sender': '1', 'body.job_order': '13', 'type': 'timelog.timelog_event' })
+      let response = await storage.find({ 'body.sender': 1, 'body.job_order': 13, 'type': 'timelog.timelog_event' })
       expect(response).to.be.an('array')
       expect(response).to.have.length(2)
       response.forEach(entity => {

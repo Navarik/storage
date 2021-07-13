@@ -1,4 +1,3 @@
-import { flatten } from 'flat'
 import { Map, Logger } from '@navarik/types'
 import { CoreDdl, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
 import { StorageInterface, AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig } from './types'
@@ -37,7 +36,6 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     totalSearchQueries: 0
   }
   private isUp: boolean
-  private schemas: object
 
 
   constructor(config: StorageConfig<MetaType> = {}) {
@@ -47,7 +45,6 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.logger = logger || defaultLogger
     this.logger.debug({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}, static data: ${data.length})`)
 
-    this.schemas = {}
     this.observers = []
     this.ddl = new CoreDdl({
       registry: schemaRegistry
@@ -58,6 +55,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
         fields: <Map<SchemaField>>meta
       }]
     })
+    this.queryParser = new QueryParser()
 
     this.accessControl = accessControl || new DefaultAccessControl()
     this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
@@ -86,15 +84,8 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
     // Static schema definitions if there is any
 
-    schema.forEach(s => {
-      this.schemas = { ...this.schemas, ...s.fields }
-      this.ddl.define(s)
-    })
+    schema.forEach(s => this.ddl.define(s))
     
-    this.schemas = flatten({body: {...this.schemas}}, { safe: true })
-
-    this.queryParser = new QueryParser(this.schemas)
-
     // Static data is used primarily for automated tests
     this.staticData = data.map(document => this.changeEventFactory.create(
       "create",

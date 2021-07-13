@@ -58,7 +58,7 @@ export const aclMultiuser = (createStorage: <T extends object = {}>(config: Stor
     })
 
     it("can find entities by user and one field", async () => {
-      const response = await storage.find({ 'body.sender': '1' }, {}, userA)
+      const response = await storage.find({ 'body.sender': 1 }, {}, userA)
       expect(response).to.be.an('array')
       expect(response).to.have.length(2)
       response.forEach(expectEntity)

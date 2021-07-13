@@ -66,7 +66,7 @@
       "chat_group": 1,
       "text": "Good Morning.  Please see the updated time log events. We will update with more information as it becomes available. Sorry for the inconvenience.",
       "job_order": 13,
-      "timestamp": "2018 Jan 19 10:03"
+      "timestamp": "2021-06-20T20:16:44.667Z"
     }
   },
   {
@@ -76,7 +76,7 @@
       "chat_group": 1,
       "text": "Good morning, please confirm your immediate acceptance and attendance for the movement nomination.",
       "job_order": 14,
-      "timestamp": "2018 Jan 22 21:29"
+      "timestamp": "2021-08-23T22:16:44.667Z"
     }
   },
   {
@@ -86,7 +86,7 @@
       "chat_group": 11,
       "text": "Search term rhubarb rhubarb rhubarb",
       "job_order": 77,
-      "timestamp": "2019 Jan 22 21:29"
+      "timestamp": "2021-07-23T20:16:44.667Z"
     }
   },
   {
@@ -96,7 +96,7 @@
       "chat_group": 11,
       "text": "Rhubarb search term rhubarb rhubarb",
       "job_order": 77,
-      "timestamp": "2019 Jan 22 21:29"
+      "timestamp": "2021-07-03T20:16:44.667Z"
     }
   },
   {
@@ -106,7 +106,7 @@
       "chat_group": 11,
       "text": "Rhubarb rhubarb different search.term rhubarb",
       "job_order": 77,
-      "timestamp": "2019 Jan 22 21:29"
+      "timestamp": "2021-12-25T21:15:14.667Z"
     }
   },
   {
@@ -116,7 +116,7 @@
       "chat_group": 11,
       "text": "Rhubarb rhubarb rhubarb search term",
       "job_order": 77,
-      "timestamp": "2019 Jan 22 21:29"
+      "timestamp": "2021-12-25T22:16:44.667Z"
     }
   }
 ]
