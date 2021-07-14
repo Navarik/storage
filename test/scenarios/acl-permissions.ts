@@ -6,8 +6,8 @@ import { nullLogger } from "../fixtures/null-logger"
 import { PermissionsBasedAccessControl } from "../fixtures/permissions-based-acl"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
-const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events.json')
-const fixturesJobs: Array<CanonicalEntity<any, any>> = require('../fixtures/data/job-orders.json')
+const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events').default
+const fixturesJobs: Array<CanonicalEntity<any, any>> = require('../fixtures/data/job-orders').default
 
 const reader   = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 const writer   = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
@@ -17,6 +17,7 @@ const acl = new PermissionsBasedAccessControl()
 acl.grant(reader, "read")
 acl.grant(writer, "write")
 acl.grant(searcher, "search")
+
 
 const fixtureData = [
   ...fixturesEvents,

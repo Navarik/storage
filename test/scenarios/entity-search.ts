@@ -5,10 +5,10 @@ import { EntitySteps } from '../steps/entities'
 import { nullLogger } from "../fixtures/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
-const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events.json')
-const fixturesJobs: Array<CanonicalEntity<any, any>> = require('../fixtures/data/job-orders.json')
-const fixturesUsers: Array<CanonicalEntity<any, any>> = require('../fixtures/data/users.json')
-const fixturesMessages: Array<CanonicalEntity<any, any>> = require('../fixtures/data/messages.json')
+const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events').default
+const fixturesJobs: Array<CanonicalEntity<any, any>> = require('../fixtures/data/job-orders').default
+const fixturesUsers: Array<CanonicalEntity<any, any>> = require('../fixtures/data/users').default
+const fixturesMessages: Array<CanonicalEntity<any, any>> = require('../fixtures/data/messages').default
 
 const fixtureData = [
   ...fixturesEvents,

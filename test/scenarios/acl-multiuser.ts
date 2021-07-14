@@ -6,10 +6,10 @@ import { expectEntity } from '../steps/checks'
 import { OnlyMineAccessControl } from "../fixtures/only-mine-acl"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
-const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events.json')
-const fixturesJobs: Array<CanonicalEntity<any, any>> = require('../fixtures/data/job-orders.json')
-const fixturesUsers: Array<CanonicalEntity<any, any>> = require('../fixtures/data/users.json')
-const fixturesMessages: Array<CanonicalEntity<any, any>> = require('../fixtures/data/messages.json')
+const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events').default
+const fixturesJobs: Array<CanonicalEntity<any, any>> = require('../fixtures/data/job-orders').default
+const fixturesUsers: Array<CanonicalEntity<any, any>> = require('../fixtures/data/users').default
+const fixturesMessages: Array<CanonicalEntity<any, any>> = require('../fixtures/data/messages').default
 
 const userA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 const userB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
