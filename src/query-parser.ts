@@ -1,8 +1,9 @@
 import { Dictionary } from "@navarik/types"
 import { SearchQuery } from "./types"
-
 export class QueryParser {
+
   parse(searchParams: Dictionary<any>): SearchQuery {
+
     if (searchParams.operator && searchParams.args) {
       return <SearchQuery>searchParams
     }

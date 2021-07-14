@@ -4,7 +4,7 @@ import { EntitySteps } from '../steps/entities'
 import { nullLogger } from "../fixtures/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
-const fixtures: Array<CanonicalEntity<any, any>> = require('../fixtures/data/versions.json')
+const fixtures: Array<CanonicalEntity<any, any>> = require('../fixtures/data/versions').default
 
 export const entityVersioning = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({

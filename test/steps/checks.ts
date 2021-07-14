@@ -33,6 +33,6 @@ export const expectSameEntity = (given: Partial<CanonicalEntity<any, any>>|undef
   }
 
   for (const field in expected.body) {
-    expect(given.body[field]).to.eq(expected.body[field])
+    expect(given.body[field]).to.deep.eq(expected.body[field])
   }
 }

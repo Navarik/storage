@@ -1,4 +1,4 @@
-[
+export default  [
   {
     "type": "dataEntry.task",
     "body": {
@@ -16,7 +16,7 @@
         "vefInspReportIdStr": "1",
         "niWorksheetId": null,
         "assignedUserId": null,
-        "createdAt": "2018-05-14T18:52:09.000Z",
+        "createdAt": new Date("2018-05-14T18:52:09.000Z"),
         "status": "new",
         "producedBy": "ZAP!",
         "clients": [
@@ -65,7 +65,7 @@
         "vefInspReportId": 4,
         "vefInspReportIdStr": "4",
         "assignedUserId": null,
-        "createdAt": "2018-08-01T06:58:13.000Z",
+        "createdAt": new Date("2018-08-01T06:58:13.000Z"),
         "status": "new",
         "producedBy": null,
         "clients": [],
@@ -115,7 +115,7 @@
         "vefInspReportId": 5,
         "vefInspReportIdStr": "5",
         "assignedUserId": "mtwain",
-        "createdAt": "2018-08-10T19:18:06.000Z",
+        "createdAt": new Date("2018-08-10T19:18:06.000Z"),
         "status": "inprocess",
         "producedBy": "CCCI",
         "clients": [
@@ -168,7 +168,7 @@
         "vefInspReportId": 6,
         "vefInspReportIdStr": "6",
         "assignedUserId": "cbukowski",
-        "createdAt": "2018-07-31T19:28:04.000Z",
+        "createdAt": new Date("2018-07-31T19:28:04.000Z"),
         "status": "new",
         "producedBy": "CCCI",
         "clients": [],

@@ -37,6 +37,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
   private isUp: boolean
 
+
   constructor(config: StorageConfig<MetaType> = {}) {
     const { accessControl, changelog, index, schemaRegistry, meta = {}, schema = [], data = [], cacheSize = 5000000, logger } = config
 
@@ -54,7 +55,6 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
         fields: <Map<SchemaField>>meta
       }]
     })
-
     this.queryParser = new QueryParser()
 
     this.accessControl = accessControl || new DefaultAccessControl()
@@ -83,8 +83,9 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     })
 
     // Static schema definitions if there is any
-    schema.forEach(s => this.ddl.define(s))
 
+    schema.forEach(s => this.ddl.define(s))
+    
     // Static data is used primarily for automated tests
     this.staticData = data.map(document => this.changeEventFactory.create(
       "create",

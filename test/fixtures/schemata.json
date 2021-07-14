@@ -20,7 +20,7 @@
       "grade": "string",
       "quantity": "int",
       "uom": "string",
-      "eta": "string",
+      "eta": "datetime",
       "location": "string",
       "terminal": "string"
     }
@@ -29,7 +29,7 @@
     "type": "chat.text_message",
     "fields": {
       "sender": "int",
-      "timestamp": "string",
+      "timestamp": "datetime",
       "job_order": "int",
       "chat_group": "int",
       "text": "string"
@@ -50,7 +50,7 @@
     "fields": {
       "event_type": "string",
       "sender": "int",
-      "timestamp": "long",
+      "timestamp": "datetime",
       "job_order": "int"
     }
   },
@@ -71,7 +71,7 @@
         "vefInspReportIdStr": "string",
         "niWorksheetId": "string",
         "assignedUserId": "string",
-        "createdAt": "string",
+        "createdAt": "datetime",
         "status": "string",
         "producedBy": "string",
         "clients": ["string"],
