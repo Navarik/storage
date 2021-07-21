@@ -111,6 +111,9 @@ export interface StorageConfig<M extends object> {
 
   // Configuration
   cacheSize?: number
+
+  // Rebuild
+  rebuild?: boolean
 }
 
 export interface StorageInterface<MetaType extends object> extends Service {

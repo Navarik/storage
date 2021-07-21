@@ -12,7 +12,8 @@ export const observer = (createStorage: <T extends object = {}>(config: StorageC
   const storage = createStorage({
     schema: fixtureSchemata,
     changelog: new PersistentInMemoryChangelog(),
-    logger: nullLogger
+    logger: nullLogger,
+    rebuild: true
   })
 
   const steps = new EntitySteps(storage)
@@ -60,7 +61,7 @@ export const observer = (createStorage: <T extends object = {}>(config: StorageC
       await storage.down()
     })
 
-    it("doesn't observe previously recorder events when restarted", async () => {
+    it("doesn't observe previously recorded events when restarted", async () => {
       await storage.up()
 
       for (const entity of fixturesJobs) {
