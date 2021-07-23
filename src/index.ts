@@ -85,7 +85,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     // Static schema definitions if there is any
 
     schema.forEach(s => this.ddl.define(s))
-    
+
     // Static data is used primarily for automated tests
     this.staticData = data.map(document => this.changeEventFactory.create(
       "create",
@@ -255,8 +255,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       return undefined
     }
 
-    // Deleted entity doesn't change
-    const entity = this.entityFactory.merge<BodyType>(previous, previous, user)
+    const entity = this.entityFactory.remove<BodyType>(previous, user)
     const changeEvent = this.changeEventFactory.create<BodyType>("delete", entity, commitMessage)
 
     return this.changelog.requestChange(changeEvent)

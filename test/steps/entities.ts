@@ -62,6 +62,8 @@ export class EntitySteps {
     expect(response).to.be.an('array')
     expect(response).to.have.length(1)
     expectSameEntity(response[0], entity)
+
+    return response[0]
   }
 
   async cannotGet(id: string, user?: UUID) {
