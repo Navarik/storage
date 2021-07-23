@@ -78,4 +78,14 @@ export class EntityFactory<M extends object> {
       schema: formatted.schemaId
     }
   }
+
+  remove<B extends object>(entity: CanonicalEntity<B, M>, user: UUID): CanonicalEntity<B, M> {
+    const now = new Date()
+
+    return {
+      ...entity,
+      modified_by: user,
+      modified_at: now.toISOString()
+    }
+  }
 }
