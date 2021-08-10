@@ -1,6 +1,9 @@
 import { Dictionary } from "@navarik/types"
 import { SearchQuery } from "./types"
+
 export class QueryParser {
+  private
+
 
   parse(searchParams: Dictionary<any>): SearchQuery {
 
@@ -11,7 +14,8 @@ export class QueryParser {
     const args: Array<any> = []
     for (const field in searchParams) {
       const value = searchParams[field]
-      const term = value.operator
+
+      const term = (typeof value === "object") && value && value.operator
         ? value
         : { operator: "literal", args: [value] }
 
