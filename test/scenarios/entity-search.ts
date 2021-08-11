@@ -131,6 +131,23 @@ export const entitySearch = (createStorage: <T extends object = {}>(config: Stor
       })).to.equal(1)
     })
 
+    it("can use in() operator to search for one value from an array of values", async () => {
+      expect(await storage.count({
+        operator: "and",
+        args: [
+          { operator: "eq", args: ["type", "timelog.timelog_event"] },
+          { operator: "in", args: ["body.sender", [1, 3]] }
+        ]
+      })).to.equal(3)
+      expect(await storage.count({
+        operator: "and",
+        args: [
+          { operator: "eq", args: ["type", "timelog.timelog_event"] },
+          { operator: "in", args: ["body.sender", [1, 2, 3]] }
+        ]
+      })).to.equal(5)
+    })
+
     it("can use regex to find entities", async () => {
       expect(await storage.count(
         { operator: "like", args: ["body.mot_name", "9230084"] }

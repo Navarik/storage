@@ -73,7 +73,7 @@ export interface ChangelogAdapter<M extends object> extends Service {
   readAll(): Promise<void>
 }
 
-export type SearchOperator = "and"|"or"|"eq"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"|"literal"
+export type SearchOperator = "and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"
 export type SearchQuery = {
   operator: SearchOperator
   args: Array<any>
