@@ -7,17 +7,14 @@ const operators: Dictionary<OperatorFactory> = {
   and: (args: Array<any>) => ({ $and: args.map(parseTerm) }),
   or: (args: Array<any>) => ({ $or: args.map(parseTerm) }),
   eq: ([field, value]: Array<any>) => ({ [field]: parseTerm(value) }),
+  in: ([field, value]: Array<any>) => ({ [field]: { $in: parseTerm(value) } }),
   neq: (args: Array<any>) => ({ $not: parseTerm({ operator: "eq", args }) }),
   gt: ([field, value]: Array<any>) => ({ [field]: { $gt: parseTerm(value) } }),
   lt: ([field, value]: Array<any>) => ({ [field]: { $lt: parseTerm(value) } }),
   gte: ([field, value]: Array<any>) => ({ [field]: { $gte: parseTerm(value) } }),
   lte: ([field, value]: Array<any>) => ({ [field]: { $lte: parseTerm(value) } }),
   not: (args: Array<any>) => ({ $not: parseTerm(args[0]) }),
-  like: ([field, regex, options]: Array<any>) => ({ [field]: { $regex: new RegExp(regex, options) } }),
-  literal: (args: Array<any>) => {
-    const value = parseTerm(args[0])
-    return value instanceof Array ? { $in: value } : value
-  }
+  like: ([field, regex, options]: Array<any>) => ({ [field]: { $regex: new RegExp(regex, options) } })
 }
 
 const parseTerm = (term: SearchQuery) => {

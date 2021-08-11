@@ -2,10 +2,10 @@ import { Dictionary } from "@navarik/types"
 import { SearchQuery } from "./types"
 
 export class QueryParser {
-  private createValueTerm(value) {
+  private createTerm(field, value) {
     const term = (typeof value === "object") && value && value.operator
       ? value
-      : { operator: "literal", args: [value] }
+      : { operator: "eq", args: [field, value] }
 
     return term
   }
@@ -19,12 +19,7 @@ export class QueryParser {
     const args: Array<any> = []
     for (const field in searchParams) {
       const value = searchParams[field]
-      const term = this.createValueTerm(value)
-
-      args.push({
-        operator: "eq",
-        args: [field, term]
-      })
+      args.push(this.createTerm(field, value))
     }
 
     const query: SearchQuery = {
