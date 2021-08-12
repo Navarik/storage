@@ -207,16 +207,20 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.healthStats.totalSearchQueries++
 
     const aclTerms = await this.accessControl.getQuery(user, 'search')
-    const queryTerms = this.queryParser.parse({ ...query, ...aclTerms })
-    const collection = await this.searchIndex.find<BodyType>(queryTerms, options)
+    const queryTerms = this.queryParser.parse(query)
+    const combinedQuery = this.queryParser.merge("and", [aclTerms, queryTerms])
+
+    const collection = await this.searchIndex.find<BodyType>(combinedQuery, options)
 
     return collection
   }
 
   async count(query: object, user: UUID = nobody): Promise<number> {
     const aclTerms = await this.accessControl.getQuery(user, 'search')
-    const queryTerms = this.queryParser.parse({ ...query, ...aclTerms })
-    const count = this.searchIndex.count(queryTerms)
+    const queryTerms = this.queryParser.parse(query)
+    const combinedQuery = this.queryParser.merge("and", [aclTerms, queryTerms])
+
+    const count = this.searchIndex.count(combinedQuery)
 
     return count
   }

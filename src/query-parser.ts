@@ -1,5 +1,5 @@
 import { Dictionary } from "@navarik/types"
-import { SearchQuery } from "./types"
+import { SearchOperator, SearchQuery } from "./types"
 
 export class QueryParser {
   private createTerm(field, value) {
@@ -11,7 +11,11 @@ export class QueryParser {
   }
 
 
-  parse(searchParams: Dictionary<any>): SearchQuery {
+  parse(searchParams: Dictionary<any>): SearchQuery|undefined {
+    if (!searchParams) {
+      return undefined
+    }
+
     if (searchParams.operator && searchParams.args) {
       return <SearchQuery>searchParams
     }
@@ -28,5 +32,19 @@ export class QueryParser {
     }
 
     return query
+  }
+
+  merge(operator: SearchOperator, queries: Array<SearchQuery|undefined>): SearchQuery|{} {
+    const cleanSet = queries.filter(x => x !== undefined)
+    if (cleanSet.length === 0) {
+      return {}
+    } else if (cleanSet.length === 1) {
+      return cleanSet[0]
+    } else {
+      return {
+        operator,
+        args: cleanSet
+      }
+    }
   }
 }

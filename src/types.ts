@@ -59,10 +59,16 @@ export type AccessControlDecision = {
   explanation: string
 }
 
+export type SearchOperator = "and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"
+export type SearchQuery = {
+  operator: SearchOperator
+  args: Array<any>
+}
+
 export interface AccessControlAdapter<M extends object> {
   check<B extends object>(subject: UUID, action: AccessType, object: CanonicalEntity<B, M>): Promise<AccessControlDecision>
   attachTerms<B extends object>(entity: CanonicalEntity<B, M>): Promise<CanonicalEntity<B, M>>
-  getQuery(subject: UUID, access: AccessType): Promise<Dictionary<any>>
+  getQuery(subject: UUID, access: AccessType): Promise<SearchQuery|undefined>
 }
 
 export type Observer<B extends object, M extends object> = (event: ChangeEvent<B, M>) => void|Promise<void>
@@ -73,12 +79,6 @@ export interface ChangelogAdapter<M extends object> extends Service {
   readAll(): Promise<void>
 }
 
-export type SearchOperator = "and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"
-export type SearchQuery = {
-  operator: SearchOperator
-  args: Array<any>
-}
-
 export type SearchOptions = {
   limit?: number
   offset?: number
@@ -87,8 +87,8 @@ export type SearchOptions = {
 
 export interface SearchIndex<M extends object> extends Service {
   update<B extends object>(action: ActionType, document: CanonicalEntity<B, M>, schema?: CanonicalSchema, metaSchema?: CanonicalSchema): Promise<void>
-  find<B extends object>(query: SearchQuery, options: SearchOptions): Promise<Array<CanonicalEntity<B, M>>>
-  count(query: SearchQuery): Promise<number>
+  find<B extends object>(query: SearchQuery|{}, options: SearchOptions): Promise<Array<CanonicalEntity<B, M>>>
+  count(query: SearchQuery|{}): Promise<number>
   isClean(): Promise<boolean>
 }
 
