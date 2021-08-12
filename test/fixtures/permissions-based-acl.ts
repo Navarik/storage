@@ -1,5 +1,5 @@
 import { Dictionary } from '@navarik/types'
-import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, AccessType } from '../../src/types'
+import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, AccessType, SearchQuery } from '../../src/types'
 
 interface Permissions {
   read?: boolean
@@ -42,12 +42,15 @@ export class PermissionsBasedAccessControl implements AccessControlAdapter<any> 
     return entity
   }
 
-  async getQuery(subject: UUID, access: AccessType): Promise<Dictionary<any>> {
+  async getQuery(subject: UUID, access: AccessType): Promise<SearchQuery> {
     if (this.isGranted(subject, access)) {
-      return {}
+      return undefined
     }
 
     // this is always false for the purpose of these tests so that the query yields nothing
-    return { true: false }
+    return {
+      operator: "eq",
+      args: [true, false]
+    }
   }
 }
