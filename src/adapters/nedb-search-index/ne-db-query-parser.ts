@@ -18,7 +18,7 @@ const operators: Dictionary<OperatorFactory> = {
 }
 
 const parseTerm = (term: SearchQuery) => {
-  if (!term.operator) {
+  if (typeof term !== "object" || term === null || !term.operator) {
     return term
   }
 
