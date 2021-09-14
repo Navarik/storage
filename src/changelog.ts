@@ -41,7 +41,7 @@ export class Changelog<MetaType extends object> {
       if (!this.transactionManager.commit(event.id, event.entity)) {
         this.logger.debug({ component: "Storage" }, `Can't find transaction ${event.id}`)
       }
-    } catch (error) {
+    } catch (error: any) {
       this.healthStats.totalProcessingErrors++
       this.logger.error({ component: "Storage", stack: error.stack }, `Error processing change event: ${error.message}`)
 

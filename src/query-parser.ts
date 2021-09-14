@@ -38,13 +38,15 @@ export class QueryParser {
     const cleanSet = queries.filter(x => x !== undefined)
     if (cleanSet.length === 0) {
       return {}
-    } else if (cleanSet.length === 1) {
+    }
+
+    if (cleanSet.length === 1) {
       return cleanSet[0]
-    } else {
-      return {
-        operator,
-        args: cleanSet
-      }
+    }
+
+    return {
+      operator,
+      args: cleanSet
     }
   }
 }

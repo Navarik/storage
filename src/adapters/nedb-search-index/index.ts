@@ -44,9 +44,9 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
     this.logger.trace({ component: 'Storage.NeDbSearchIndex', filter, limit, offset, sort: sortParams }, `Performing find operation`)
 
     const collection: Array<CanonicalEntity<B, M>> = await new Promise((resolve, reject) => {
-      query.exec((err, res) => {
+      query.exec((err: Error, res: Array<CanonicalEntity<B, M>>) => {
         if (err) reject(databaseError(err))
-        else resolve((res || []) as Array<CanonicalEntity<B, M>>)
+        else resolve((res || []))
       })
     })
 
@@ -58,7 +58,7 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
     this.logger.trace({ component: 'Storage.NeDbSearchIndex', filter }, `Performing find operation`)
 
     return new Promise((resolve, reject) => {
-      this.client.count(filter, (err, res) => {
+      this.client.count(filter, (err: Error, res: number) => {
         if (err) reject(databaseError(err))
         else resolve(res)
       })
@@ -73,7 +73,7 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
         { id: document.id },
         document,
         { upsert: true, multi: true },
-        (err) => {
+        (err: Error) => {
           if (err) reject(databaseError(err))
           else resolve()
         }
@@ -98,7 +98,7 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
       this.client.remove(
         { id: document.id },
         {},
-        (err) => {
+        (err: Error) => {
           if (err) reject(databaseError(err))
           else resolve()
         }

@@ -60,7 +60,8 @@ export class EntityFactory<M extends object> {
     }
 
     const type = patch.type || oldEntity.type
-    const formatted = this.ddl.format(type, <B>{ ...oldEntity.body, ...(patch.body || {}) })
+    const body = patch.body ? patch.body : {}
+    const formatted = this.ddl.format(type, <B>{ ...oldEntity.body, ...body })
     const formattedMeta = this.metaDdl.format(this.metaType, <M>{ ...oldEntity.meta, ...(patch.meta || {}) })
     const now = new Date()
 

@@ -12,7 +12,7 @@ export class DefaultAccessControl<M extends object> implements AccessControlAdap
     return entity
   }
 
-  async getQuery(subject: UUID, access: AccessType): Promise<SearchQuery> {
+  async getQuery(subject: UUID, access: AccessType): Promise<SearchQuery|undefined> {
     return undefined
   }
 }

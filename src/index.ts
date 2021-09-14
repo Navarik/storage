@@ -115,7 +115,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       this.observers.forEach(async (observer) => {
         try {
           await observer(event)
-        } catch (error) {
+        } catch (error: any) {
           this.logger.error({ component: "Storage", stack: error.stack }, `Error notifying observer of change event: ${error.message}`)
         }
       })
