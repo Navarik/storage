@@ -1,6 +1,6 @@
 import { Map, Logger } from '@navarik/types'
 import { CoreDdl, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
-import { StorageInterface, AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig } from './types'
+import { SchemaRegistry, StorageInterface, AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig } from './types'
 import { NeDbSearchIndex } from './adapters/nedb-search-index/index'
 import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelogAdapter } from './adapters/default-changelog'
@@ -19,8 +19,8 @@ const nobody = '00000000-0000-0000-0000-000000000000'
 
 export class Storage<MetaType extends object> implements StorageInterface<MetaType> {
   private staticData: Array<ChangeEvent<any, MetaType>>
-  private ddl: CoreDdl
-  private metaDdl: CoreDdl
+  private schema: SchemaRegistry
+  private metaDdl: SchemaRegistry
   private queryParser: QueryParser
   private accessControl: AccessControlAdapter<MetaType>
   private currentState: State<MetaType>
@@ -37,7 +37,6 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
   private isUp: boolean
 
-
   constructor(config: StorageConfig<MetaType> = {}) {
     const { accessControl, changelog, index, schemaRegistry, meta = {}, schema = [], data = [], cacheSize = 5000000, logger } = config
 
@@ -46,9 +45,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.logger.debug({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}, static data: ${data.length})`)
 
     this.observers = []
-    this.ddl = new CoreDdl({
-      registry: schemaRegistry
-    })
+    this.schema = schemaRegistry || new CoreDdl({})
     this.metaDdl = new CoreDdl({
       schema: [{
         type: 'metadata',
@@ -73,18 +70,18 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     })
 
     this.entityFactory = new EntityFactory({
-      ddl: this.ddl,
+      ddl: this.schema,
       metaDdl: this.metaDdl,
       metaType: 'metadata'
     })
 
     this.changeEventFactory = new ChangeEventFactory({
-      ddl: this.ddl
+      ddl: this.schema
     })
 
     // Static schema definitions if there is any
 
-    schema.forEach(s => this.ddl.define(s))
+    schema.forEach(s => this.schema.define(s))
 
     // Static data is used primarily for automated tests
     this.staticData = data.map(document => this.changeEventFactory.create(
@@ -170,15 +167,15 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   types() {
-    return this.ddl.types()
+    return this.schema.types()
   }
 
   describe(type: string) {
-    return this.ddl.describe(type)
+    return this.schema.describe(type)
   }
 
   define(schema: CanonicalSchema) {
-    return this.ddl.define(schema)
+    return this.schema.define(schema)
   }
 
   async has(id: UUID): Promise<boolean> {
@@ -230,7 +227,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       return { isValid: false, message: "Type must be provided" }
     }
 
-    return this.ddl.validate(entity.type, entity.body)
+    return this.schema.validate(entity.type, entity.body)
   }
 
   async create<BodyType extends object>(data: EntityData<BodyType, MetaType>, commitMessage: string = "", user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {

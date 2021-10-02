@@ -1,8 +1,14 @@
-import { Dictionary, Logger, Service } from '@navarik/types'
-import { CanonicalSchema, ValidationResponse, FormattedEntity, SchemaRegistryAdapter, SchemaField } from '@navarik/core-ddl'
+import { Dictionary, Logger, Map, Service } from '@navarik/types'
 
 export type Timestamp = string
 export type UUID = string
+
+export type SchemaField = string | Array<string> | Map<SchemaField> | Array<Map<SchemaField>>
+
+export interface CanonicalSchema {
+  type: string;
+  fields: Dictionary<SchemaField>
+}
 
 export interface CanonicalEntity<B extends object, M extends object> {
   id: UUID
@@ -73,6 +79,25 @@ export interface AccessControlAdapter<M extends object> {
 
 export type Observer<B extends object, M extends object> = (event: ChangeEvent<B, M>) => void|Promise<void>
 
+export interface FormattedEntity<T> {
+  body: T
+  schema: CanonicalSchema
+  schemaId: string
+}
+
+export interface ValidationResponse {
+  isValid: boolean
+  message: string
+}
+
+export interface SchemaRegistry {
+  types(): Array<string>
+  define(schema: CanonicalSchema): void
+  describe(key: string): CanonicalSchema|undefined
+  validate<T>(key: string, body: T): ValidationResponse
+  format<T>(key: string, body: T): FormattedEntity<T>
+}
+
 export interface ChangelogAdapter<M extends object> extends Service {
   observe(handler: <B extends object>(event: ChangeEvent<B, M>) => void|Promise<void>): void
   write<B extends object>(message: ChangeEvent<B, M>): Promise<void>
@@ -98,7 +123,7 @@ export interface StorageConfig<M extends object> {
   index?: SearchIndex<M>
 
   // Extensions - override when adding new rules/capacities
-  schemaRegistry?: SchemaRegistryAdapter
+  schemaRegistry?: SchemaRegistry
   accessControl?: AccessControlAdapter<M>
   logger?: Logger
 
@@ -128,5 +153,3 @@ export interface StorageInterface<MetaType extends object> extends Service {
   delete<BodyType extends object>(id: UUID, commitMessage?: string, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
   observe<BodyType extends object>(handler: Observer<BodyType, MetaType>): void
 }
-
-export { CanonicalSchema, ValidationResponse, FormattedEntity, SchemaRegistryAdapter }
