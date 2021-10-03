@@ -15,7 +15,6 @@
     "url": "git@github.com:TICitHub/storage.git"
   },
   "dependencies": {
-    "@navarik/core-ddl": "^3.0.0",
     "@navarik/nedb": "^1.0.1",
     "@navarik/transaction-manager": "^1.2.4",
     "lru-cache": "^6.0.0",

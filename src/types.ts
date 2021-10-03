@@ -1,13 +1,19 @@
-import { Dictionary, Logger, Map, Service } from '@navarik/types'
+import { Dictionary, Logger, Service } from '@navarik/types'
 
 export type Timestamp = string
 export type UUID = string
 
-export type SchemaField = string | Array<string> | Map<SchemaField> | Array<Map<SchemaField>>
+export interface SchemaField<P = Dictionary<any>> {
+  name: string
+  type: string
+  params: P
+  required: boolean
+  default?: any
+}
 
 export interface CanonicalSchema {
-  type: string;
-  fields: Dictionary<SchemaField>
+  name: string;
+  fields: Array<SchemaField>
 }
 
 export interface CanonicalEntity<B extends object, M extends object> {
@@ -90,12 +96,14 @@ export interface ValidationResponse {
   message: string
 }
 
+export interface SchemaEngine {
+  validate<T>(schema: CanonicalSchema, body: T): ValidationResponse
+  format<T>(schema: CanonicalSchema, body: T): T
+}
+
 export interface SchemaRegistry {
-  types(): Array<string>
-  define(schema: CanonicalSchema): void
-  describe(key: string): CanonicalSchema|undefined
-  validate<T>(key: string, body: T): ValidationResponse
-  format<T>(key: string, body: T): FormattedEntity<T>
+  set(key: string, schema: CanonicalSchema): void
+  get(key: string): { schema: CanonicalSchema, id: UUID }|undefined
 }
 
 export interface ChangelogAdapter<M extends object> extends Service {
@@ -121,6 +129,7 @@ export interface StorageConfig<M extends object> {
   // Adapters - override when changing underlying technology
   changelog?: ChangelogAdapter<M>
   index?: SearchIndex<M>
+  schemaEngine?: SchemaEngine
 
   // Extensions - override when adding new rules/capacities
   schemaRegistry?: SchemaRegistry
@@ -128,7 +137,7 @@ export interface StorageConfig<M extends object> {
   logger?: Logger
 
   // Built-in schemas for entity body and metadata
-  meta?: Dictionary<SchemaField>
+  meta?: Array<SchemaField>
   schema?: Array<CanonicalSchema>
 
   // Built-in entities if any

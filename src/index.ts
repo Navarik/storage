@@ -1,17 +1,18 @@
-import { Map, Logger } from '@navarik/types'
-import { CoreDdl, CanonicalSchema, SchemaField, ValidationResponse } from '@navarik/core-ddl'
-import { SchemaRegistry, StorageInterface, AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig } from './types'
+import { Logger } from '@navarik/types'
+import { CanonicalSchema, ValidationResponse, StorageInterface, AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig } from './types'
+import { v4 as uuidv4 } from "uuid"
+import { ConflictError } from './errors/conflict-error'
+import { AccessError } from './errors/access-error'
+import { State } from './state'
+import { EntityFactory } from "./entity-factory"
+import { Changelog } from "./changelog"
+import { QueryParser } from './query-parser'
+import { Schema } from "./schema"
+
 import { NeDbSearchIndex } from './adapters/nedb-search-index/index'
 import { DefaultAccessControl } from './adapters/default-access-control'
 import { DefaultChangelogAdapter } from './adapters/default-changelog'
-import { State } from './state'
-import { ChangeEventFactory } from './change-event-factory'
-import { EntityFactory } from "./entity-factory"
-import { Changelog } from "./changelog"
 import { defaultLogger } from "./adapters/default-logger"
-import { ConflictError } from './errors/conflict-error'
-import { AccessError } from './errors/access-error'
-import { QueryParser } from './query-parser'
 
 export * from './types'
 
@@ -19,8 +20,7 @@ const nobody = '00000000-0000-0000-0000-000000000000'
 
 export class Storage<MetaType extends object> implements StorageInterface<MetaType> {
   private staticData: Array<ChangeEvent<any, MetaType>>
-  private schema: SchemaRegistry
-  private metaDdl: SchemaRegistry
+  private schema: Schema<MetaType>
   private queryParser: QueryParser
   private accessControl: AccessControlAdapter<MetaType>
   private currentState: State<MetaType>
@@ -28,7 +28,6 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   private changelog: Changelog<MetaType>
   private observers: Array<Observer<any, MetaType>>
   private entityFactory: EntityFactory<MetaType>
-  private changeEventFactory: ChangeEventFactory<MetaType>
   private logger: Logger
   private healthStats = {
     upSince: new Date(),
@@ -38,20 +37,22 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   private isUp: boolean
 
   constructor(config: StorageConfig<MetaType> = {}) {
-    const { accessControl, changelog, index, schemaRegistry, meta = {}, schema = [], data = [], cacheSize = 5000000, logger } = config
+    const { accessControl, changelog, index, schemaRegistry, schemaEngine, meta = [], schema = [], data = [], cacheSize = 5000000, logger } = config
 
     this.isUp = false
     this.logger = logger || defaultLogger
     this.logger.debug({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}, static data: ${data.length})`)
 
     this.observers = []
-    this.schema = schemaRegistry || new CoreDdl({})
-    this.metaDdl = new CoreDdl({
-      schema: [{
-        type: 'metadata',
-        fields: <Map<SchemaField>>meta
-      }]
+    this.schema = new Schema({
+      schemaEngine,
+      schemaRegistry,
+      metaSchema: {
+        name: "metadata",
+        fields: meta
+      }
     })
+
     this.queryParser = new QueryParser()
 
     this.accessControl = accessControl || new DefaultAccessControl()
@@ -70,25 +71,28 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     })
 
     this.entityFactory = new EntityFactory({
-      ddl: this.schema,
-      metaDdl: this.metaDdl,
-      metaType: 'metadata'
-    })
-
-    this.changeEventFactory = new ChangeEventFactory({
-      ddl: this.schema
+      schema: this.schema
     })
 
     // Static schema definitions if there is any
-
     schema.forEach(s => this.schema.define(s))
 
     // Static data is used primarily for automated tests
-    this.staticData = data.map(document => this.changeEventFactory.create(
-      "create",
-      this.entityFactory.create(document, nobody),
-      "Static data loaded"
-    ))
+    this.staticData = data.map(document => {
+      const entity = this.entityFactory.create(document, nobody)
+      const changeEvent: ChangeEvent<any, MetaType> = {
+        id: uuidv4(),
+        action: "create",
+        user: entity.created_by,
+        message: "Static data loaded",
+        entity: entity,
+        schema: this.schema.describe(document.type),
+        parent: undefined,
+        timestamp: entity.created_at
+      }
+
+      return changeEvent
+    })
   }
 
   private async updateState<B extends object>(event: ChangeEvent<B, MetaType>) {
@@ -101,7 +105,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     const entityWithAcl = await this.accessControl.attachTerms(event.entity)
-    await this.searchIndex.update(event.action, entityWithAcl, event.schema, this.metaDdl.describe('metadata'))
+    await this.searchIndex.update(event.action, entityWithAcl, event.schema, this.schema.metaSchema)
   }
 
   private async onChange<B extends object>(event: ChangeEvent<B, MetaType>) {
@@ -223,17 +227,23 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   validate<BodyType extends object>(entity: EntityData<BodyType, MetaType>): ValidationResponse {
-    if (!entity.type) {
-      return { isValid: false, message: "Type must be provided" }
-    }
-
-    return this.schema.validate(entity.type, entity.body)
+    return this.schema.validate(entity.type, entity.body, entity.meta)
   }
 
   async create<BodyType extends object>(data: EntityData<BodyType, MetaType>, commitMessage: string = "", user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
     const entity = this.entityFactory.create(data, user)
+    const schema = this.schema.describeEntity(entity)
 
-    const changeEvent = this.changeEventFactory.create("create", entity, commitMessage)
+    const changeEvent: ChangeEvent<BodyType, MetaType> = {
+      id: uuidv4(),
+      action: "create",
+      user: entity.created_by,
+      message: commitMessage,
+      entity: entity,
+      schema: schema,
+      parent: undefined,
+      timestamp: entity.created_at
+    }
 
     return this.changelog.requestChange(changeEvent)
   }
@@ -241,11 +251,22 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   async update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, commitMessage: string = "", user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
     const previous = await this.currentState.get(data.id)
     if (!previous) {
-      throw new ConflictError(`[Storage] Update failed: can't find entity ${data.id}`)
+      throw new ConflictError(`Update failed: can't find entity ${data.id}`)
     }
 
     const entity = this.entityFactory.merge(previous, data, user)
-    const changeEvent = this.changeEventFactory.create("update", entity, commitMessage)
+    const schema = this.schema.describeEntity(entity)
+
+    const changeEvent: ChangeEvent<BodyType, MetaType> = {
+      id: uuidv4(),
+      action: "update",
+      user: entity.modified_by,
+      message: commitMessage,
+      entity: entity,
+      schema: schema,
+      parent: undefined,
+      timestamp: entity.modified_at
+    }
 
     return this.changelog.requestChange(changeEvent)
   }
@@ -257,7 +278,18 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     const entity = this.entityFactory.remove<BodyType>(previous, user)
-    const changeEvent = this.changeEventFactory.create<BodyType>("delete", entity, commitMessage)
+    const schema = this.schema.describeEntity(entity)
+
+    const changeEvent: ChangeEvent<BodyType, MetaType> = {
+      id: uuidv4(),
+      action: "delete",
+      user: entity.modified_by,
+      message: commitMessage,
+      entity: entity,
+      schema: schema,
+      parent: undefined,
+      timestamp: entity.modified_at
+    }
 
     return this.changelog.requestChange(changeEvent)
   }

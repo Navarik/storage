@@ -1,33 +1,21 @@
 import { v5 as uuidv5, v4 as uuidv4 } from 'uuid'
-import { CanonicalEntity, EntityData, EntityPatch, UUID, SchemaRegistry } from './types'
-import { ValidationError } from "./errors/validation-error"
+import { CanonicalEntity, EntityData, EntityPatch, UUID } from './types'
 import { ConflictError } from './errors/conflict-error'
+import { Schema } from "./schema"
 
 interface FactoryConfig {
-  ddl: SchemaRegistry
-  metaDdl: SchemaRegistry
-  metaType: string
+  schema: Schema<any>
 }
 
 export class EntityFactory<M extends object> {
-  private ddl: SchemaRegistry
-  private metaDdl: SchemaRegistry
-  private metaType: string
+  private schema: Schema<any>
 
-  constructor({  ddl, metaDdl, metaType }: FactoryConfig) {
-    this.ddl = ddl
-    this.metaDdl = metaDdl
-    this.metaType = metaType
+  constructor({ schema }: FactoryConfig) {
+    this.schema = schema
   }
 
   create<B extends object>({ id, type, body, meta }: EntityData<B, M>, user: UUID): CanonicalEntity<B, M> {
-    const { isValid, message } = this.ddl.validate(type, body)
-    if (!isValid) {
-      throw new ValidationError(`[Storage] Validation failed for ${type}. ${message}`)
-    }
-
-    const formatted = this.ddl.format(type, body)
-    const formattedMeta = this.metaDdl.format(this.metaType, meta || {})
+    const formatted = this.schema.format(type, body, meta || {})
 
     const newId = id || uuidv4()
     const now = new Date()
@@ -40,9 +28,9 @@ export class EntityFactory<M extends object> {
       created_at: now.toISOString(),
       modified_by: user,
       modified_at: now.toISOString(),
-      type: formatted.schema.type,
+      type: formatted.schema.name,
       body: <B>formatted.body,
-      meta: <M>formattedMeta.body || <M>{},
+      meta: <M>formatted.meta || <M>{},
       schema: formatted.schemaId
     }
 
@@ -52,16 +40,18 @@ export class EntityFactory<M extends object> {
   merge<B extends object>(oldEntity: CanonicalEntity<Partial<B>, Partial<M>>, patch: EntityPatch<B, M>, user: UUID): CanonicalEntity<B, M> {
     // check if update is not based on an outdated entity
     if (!patch.version_id) {
-      throw new ConflictError(`[Storage] Update unsuccessful due to missing version_id`)
+      throw new ConflictError(`Update unsuccessful due to missing version_id`)
     }
     if (oldEntity.version_id != patch.version_id) {
-      throw new ConflictError(`[Storage] ${patch.version_id} is not the latest version id for entity ${patch.id}`)
+      throw new ConflictError(`${patch.version_id} is not the latest version id for entity ${patch.id}`)
     }
 
     const type = patch.type || oldEntity.type
     const body = patch.body ? patch.body : {}
-    const formatted = this.ddl.format(type, <B>{ ...oldEntity.body, ...body })
-    const formattedMeta = this.metaDdl.format(this.metaType, <M>{ ...oldEntity.meta, ...(patch.meta || {}) })
+    const newBody = { ...oldEntity.body, ...body }
+    const newMeta = { ...oldEntity.meta, ...(patch.meta || {}) }
+
+    const formatted = this.schema.format(type, newBody, newMeta)
     const now = new Date()
 
     return {
@@ -74,7 +64,7 @@ export class EntityFactory<M extends object> {
       modified_at: now.toISOString(),
       type,
       body: <B>formatted.body,
-      meta: <M>formattedMeta.body || <M>{},
+      meta: <M>formatted.meta,
       schema: formatted.schemaId
     }
   }
