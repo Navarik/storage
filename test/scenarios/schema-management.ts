@@ -45,18 +45,18 @@ export const schemaManagement = (createStorage: <T extends object = {}>(config: 
       expect(response).to.have.length(fixtureSchemata.length)
 
       fixtureSchemata.forEach(schema => {
-        expect(response).to.contain(schema.type)
-        expect(storage.describe(schema.type)).to.equal(schema)
+        expect(response).to.contain(schema.name)
+        expect(storage.describe(schema.name)).to.equal(schema)
       })
     })
 
     it("allows defining new types", async () => {
       const schema = {
-        type: "doge",
-        fields: {
-          "such": "string",
-          "much": "string"
-        }
+        name: "doge",
+        fields: [
+          { name: "such", type: "string" },
+          { name: "much", type: "string" }
+        ]
       }
 
       storage.define(schema)
@@ -75,11 +75,11 @@ export const schemaManagement = (createStorage: <T extends object = {}>(config: 
 
     it("allows updating types", async () => {
       const newSchema = {
-        type: "doge",
-        fields: {
-          "very": "int",
-          "much": "int"
-        }
+        name: "doge",
+        fields: [
+          { name: "very", type: "int" },
+          { name: "much", type: "int" }
+        ]
       }
 
       storage.define(newSchema)

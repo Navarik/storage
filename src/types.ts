@@ -6,8 +6,8 @@ export type UUID = string
 export interface SchemaField<P = Dictionary<any>> {
   name: string
   type: string
-  params: P
-  required: boolean
+  parameters?: P
+  required?: boolean
   default?: any
 }
 
