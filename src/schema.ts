@@ -40,23 +40,23 @@ export class Schema<M extends object> {
   describe(type: string): CanonicalSchema|undefined {
     // Provided type can be either the type name or its ID
     const schemaId = this.knownTypes[type] || type
-    const found = this.schemaRegistry.get(schemaId)
+    const schema = this.schemaRegistry.get(schemaId)
 
-    if (!found) {
+    if (!schema) {
       return undefined
     }
 
-    return found.schema
+    return schema
   }
 
   describeEntity<B extends object>(entity: CanonicalEntity<B, M>): CanonicalSchema|undefined {
     // If can't find this particular version of the schema, fallback to the latest version
-    const found = this.schemaRegistry.get(entity.schema) || this.schemaRegistry.get(entity.type)
-    if (!found) {
+    const schema = this.schemaRegistry.get(entity.schema) || this.schemaRegistry.get(entity.type)
+    if (!schema) {
       throw new ValidationError(`Cannot find schema for ${entity.type} (schema version: ${entity.schema})`)
     }
 
-    return found.schema
+    return schema
   }
 
   validate<T = any>(type: string, body: T, meta: M) {

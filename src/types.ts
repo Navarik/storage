@@ -103,7 +103,7 @@ export interface SchemaEngine {
 
 export interface SchemaRegistry {
   set(key: string, schema: CanonicalSchema): void
-  get(key: string): { schema: CanonicalSchema, id: UUID }|undefined
+  get(key: string): CanonicalSchema|undefined
 }
 
 export interface ChangelogAdapter<M extends object> extends Service {

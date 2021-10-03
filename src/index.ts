@@ -1,22 +1,24 @@
-import { Logger } from '@navarik/types'
-import { CanonicalSchema, ValidationResponse, StorageInterface, AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig } from './types'
+import { Logger } from "@navarik/types"
+import { CanonicalSchema, ValidationResponse, StorageInterface, AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig } from "./types"
 import { v4 as uuidv4 } from "uuid"
-import { ConflictError } from './errors/conflict-error'
-import { AccessError } from './errors/access-error'
-import { State } from './state'
+import { ConflictError } from "./errors/conflict-error"
+import { AccessError } from "./errors/access-error"
+import { State } from "./state"
 import { EntityFactory } from "./entity-factory"
 import { Changelog } from "./changelog"
-import { QueryParser } from './query-parser'
+import { QueryParser } from "./query-parser"
 import { Schema } from "./schema"
 
-import { NeDbSearchIndex } from './adapters/nedb-search-index/index'
-import { DefaultAccessControl } from './adapters/default-access-control'
-import { DefaultChangelogAdapter } from './adapters/default-changelog'
+import { NeDbSearchIndex } from "./adapters/nedb-search-index/index"
+import { DefaultAccessControl } from "./adapters/default-access-control"
+import { DefaultChangelogAdapter } from "./adapters/default-changelog"
+import { InMemorySchemaRegistry } from "./adapters/in-memory-schema-registry"
+import { PermissiveSchemaEngine } from "./adapters/permissive-schema-engine"
 import { defaultLogger } from "./adapters/default-logger"
 
-export * from './types'
+export * from "./types"
 
-const nobody = '00000000-0000-0000-0000-000000000000'
+const nobody = "00000000-0000-0000-0000-000000000000"
 
 export class Storage<MetaType extends object> implements StorageInterface<MetaType> {
   private staticData: Array<ChangeEvent<any, MetaType>>
@@ -45,8 +47,8 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
     this.observers = []
     this.schema = new Schema({
-      schemaEngine,
-      schemaRegistry,
+      schemaEngine: schemaEngine || new PermissiveSchemaEngine(),
+      schemaRegistry: schemaRegistry || new InMemorySchemaRegistry(),
       metaSchema: {
         name: "metadata",
         fields: meta
@@ -96,9 +98,9 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   private async updateState<B extends object>(event: ChangeEvent<B, MetaType>) {
-    this.logger.debug({ component: "Storage" }, `Processing '${event.action}' change event event for entity ${event.entity.id}`)
+    this.logger.debug({ component: "Storage" }, `Processing "${event.action}" change event event for entity ${event.entity.id}`)
 
-    if (event.action === 'delete') {
+    if (event.action === "delete") {
       await this.currentState.delete(event.entity.id)
     } else {
       await this.currentState.put(event.entity)
@@ -196,7 +198,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       return undefined
     }
 
-    const access = await this.accessControl.check(user, 'read', entity)
+    const access = await this.accessControl.check(user, "read", entity)
     if (!access.granted) {
       throw new AccessError(access.explanation)
     }
@@ -207,7 +209,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   async find<BodyType extends object>(query: object, options: SearchOptions = {}, user: UUID = nobody): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
     this.healthStats.totalSearchQueries++
 
-    const aclTerms = await this.accessControl.getQuery(user, 'search')
+    const aclTerms = await this.accessControl.getQuery(user, "search")
     const queryTerms = this.queryParser.parse(query)
     const combinedQuery = this.queryParser.merge("and", [aclTerms, queryTerms])
 
@@ -217,7 +219,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   async count(query: object, user: UUID = nobody): Promise<number> {
-    const aclTerms = await this.accessControl.getQuery(user, 'search')
+    const aclTerms = await this.accessControl.getQuery(user, "search")
     const queryTerms = this.queryParser.parse(query)
     const combinedQuery = this.queryParser.merge("and", [aclTerms, queryTerms])
 
@@ -251,7 +253,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   async update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, commitMessage: string = "", user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
     const previous = await this.currentState.get(data.id)
     if (!previous) {
-      throw new ConflictError(`Update failed: can't find entity ${data.id}`)
+      throw new ConflictError(`Update failed: can"t find entity ${data.id}`)
     }
 
     const entity = this.entityFactory.merge(previous, data, user)
