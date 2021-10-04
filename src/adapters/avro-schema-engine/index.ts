@@ -12,7 +12,7 @@ export class AvroSchemaEngine implements SchemaEngine {
 
   constructor() {
     this.avroTypes = {}
-    this.typeCompiler = new AvroTypeCompiler(builtInTypes)
+    this.typeCompiler = new AvroTypeCompiler({ logicalTypes: builtInTypes })
     this.fieldCompiler = new FieldCompiler({ typeCompiler: this.typeCompiler })
   }
 
@@ -22,6 +22,7 @@ export class AvroSchemaEngine implements SchemaEngine {
         type: "record",
         fields: schema.fields.map(x => this.fieldCompiler.compile(x))
       } as avro.schema.RecordType
+
       this.avroTypes[schema.name] = avro.Type.forSchema(
         avroSchema,
         {

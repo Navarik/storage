@@ -16,7 +16,6 @@ export const entityCreationFlow = (createStorage: <T extends object = {}>(config
 
   describe('Entity creation flow', () => {
     before(() => storage.up())
-    after(() => storage.down())
 
     it("doesn't have entities before they are created", async () => {
       const response = await storage.find()
@@ -41,5 +40,7 @@ export const entityCreationFlow = (createStorage: <T extends object = {}>(config
       expect(response).to.be.an('array')
       expect(response).to.have.length(fixturesEvents.length * 2)
     })
+
+    after(() => storage.down())
   })
 }

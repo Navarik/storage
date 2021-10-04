@@ -25,7 +25,7 @@ export class FieldCompiler implements Compiler<SchemaField, AvroRecordField> {
 
   private getDefaultValue(field: SchemaField) {
     if (!field.required && field.default === undefined) {
-      return "null"
+      return null
     }
 
     const convert = this.dataTypeConverters[field.type] || this.dataTypeConverters.other
@@ -34,9 +34,11 @@ export class FieldCompiler implements Compiler<SchemaField, AvroRecordField> {
   }
 
   compile(field: SchemaField) {
+    const type = this.typeCompiler.compile(field)
+
     return {
       name: field.name,
-      type: this.typeCompiler.compile(field),
+      type: (field.required ? type : ["null", type]) as avro.Schema,
       default: this.getDefaultValue(field)
     }
   }

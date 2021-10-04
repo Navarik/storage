@@ -1,20 +1,16 @@
 import * as avro from 'avsc'
-import { SchemaField, Compiler } from '../../../types'
+import { Compiler } from '../../../types'
 
-export class LogicalTypeCompiler implements Compiler<SchemaField, avro.Schema> {
+export class LogicalTypeCompiler implements Compiler<any, avro.Schema> {
+  private type: string
   private baseType: avro.schema.PrimitiveType
 
-  constructor({ baseType }: { baseType: avro.schema.PrimitiveType }) {
+  constructor({ type, baseType }: { type: string, baseType: avro.schema.PrimitiveType }) {
+    this.type = type
     this.baseType = baseType
   }
 
-  compile(field: SchemaField) {
-    const basicType = { type: this.baseType, logicalType: field.type }
-
-    const type = field.required
-      ? basicType
-      : { type: ["null", basicType] }
-
-    return type as avro.Schema
+  compile() {
+    return { type: this.baseType, logicalType: this.type }
   }
 }

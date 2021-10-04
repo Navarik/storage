@@ -2,7 +2,7 @@
   {
     "name": "profile.user",
     "fields": [
-      { "name": "email", "type": "string, required" },
+      { "name": "email", "type": "string", "required": true },
       { "name": "role", "type": "string" },
       { "name": "company", "type": "string" },
       { "name": "last_name", "type": "string" },
@@ -79,21 +79,29 @@
           { "name": "createdAt", "type": "datetime" },
           { "name": "status", "type": "string" },
           { "name": "producedBy", "type": "string" },
-          { "name": "clients", "type": ["string"] },
-          { "name": "grades", "type": ["string"] },
-          { "name": "locations", "type": ["string"] },
-          { "name": "vessels", "type": ["string"] },
+          { "name": "clients", "type": "array", "parameters": {
+            "items": { "type": "string" }
+          }},
+          { "name": "grades", "type": "array", "parameters": {
+            "items": { "type": "string" }
+          }},
+          { "name": "locations", "type": "array", "parameters": {
+            "items": { "type": "string" }
+          }},
+          { "name": "vessels", "type": "array", "parameters": {
+            "items": { "type": "string" }
+          }},
           { "name": "hasVefLog", "type": "boolean" },
           { "name": "hasPortCall", "type": "boolean" },
           { "name": "isScan", "type": "boolean" },
           { "name": "contract", "type": "object", "parameters": {
             "fields": [
-              { "name": "inspectionCompanies", "type": "array", "parameters": { "items": "string" } },
-              { "name": "clientCompanies", "type": "array", "parameters": { "items": "string" } },
-              { "name": "vessels", "type": "array", "parameters": { "items": "string" } },
-              { "name": "cargos", "type": "array", "parameters": { "items": "string" } },
-              { "name": "ports", "type": "array", "parameters": { "items": "string" } },
-              { "name": "terminals", "type": "array", "parameters": { "items": "string" } }
+              { "name": "inspectionCompanies", "type": "array", "parameters": { "items": { "type": "string" } } },
+              { "name": "clientCompanies", "type": "array", "parameters": { "items": { "type": "string" } } },
+              { "name": "vessels", "type": "array", "parameters": { "items": { "type": "string" } } },
+              { "name": "cargos", "type": "array", "parameters": { "items": { "type": "string" } } },
+              { "name": "ports", "type": "array", "parameters": { "items": { "type": "string" } } },
+              { "name": "terminals", "type": "array", "parameters": { "items": { "type": "string" } } }
             ]
           }}
         ]

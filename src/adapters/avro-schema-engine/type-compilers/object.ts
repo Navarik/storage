@@ -7,7 +7,11 @@ interface AvroRecordField {
   default?: any
 }
 
-export class ObjectTypeCompiler implements Compiler<SchemaField, avro.Schema> {
+interface TypeParameters {
+  fields: Array<SchemaField>
+}
+
+export class ObjectTypeCompiler implements Compiler<TypeParameters, avro.Schema> {
   static counter = 0 // Hack allowing us to ignore Avro's requirement for all records to have unique names
   private fieldCompiler: Compiler<SchemaField, AvroRecordField>
 
@@ -15,11 +19,13 @@ export class ObjectTypeCompiler implements Compiler<SchemaField, avro.Schema> {
     this.fieldCompiler = fieldCompiler
   }
 
-  compile(field: SchemaField<{ fields: Array<SchemaField> }>) {
+  compile({ fields }: TypeParameters) {
+    ObjectTypeCompiler.counter++
+
     return {
       type: "record",
       name: `Record${ObjectTypeCompiler.counter}`,
-      fields: field.parameters.fields.map(x => this.fieldCompiler.compile(x))
+      fields: fields.map(x => this.fieldCompiler.compile(x))
     } as avro.schema.RecordType
   }
 }

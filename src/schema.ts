@@ -80,7 +80,7 @@ export class Schema<M extends object> {
   format<T = any>(type: string, body: T, meta: M) {
     const { isValid, message, schema } = this.validate(type, body, meta)
     if (!isValid) {
-      throw new ValidationError(`Validation failed. ${message}`)
+      throw new ValidationError(message)
     }
 
     return {

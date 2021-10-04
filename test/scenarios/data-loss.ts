@@ -18,8 +18,6 @@ export const dataLoss = (createStorage: <T extends object = {}>(config: StorageC
 
   describe('Prevent entity data loss', () => {
     before(() => storage.up())
-    after(() => storage.down())
-
 
     it("can create but can't update without version id provided", async () => {
       const firstVersion = fixtures[0]
@@ -48,5 +46,7 @@ export const dataLoss = (createStorage: <T extends object = {}>(config: StorageC
       const lastVersion = fixtures[fixtures.length - 1]
       await steps.cannotUpdate({ id, version_id: outdatedVersionId, body: lastVersion.body })
     })
+
+    after(() => storage.down())
   })
 }

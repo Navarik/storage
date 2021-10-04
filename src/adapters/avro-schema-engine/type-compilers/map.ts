@@ -1,17 +1,21 @@
 import * as avro from 'avsc'
 import { SchemaField, Compiler } from '../../../types'
 
-export class MapTypeCompiler implements Compiler<SchemaField, avro.Schema> {
+interface TypeParameters {
+  values: SchemaField
+}
+
+export class MapTypeCompiler implements Compiler<TypeParameters, avro.Schema> {
   private root: Compiler<SchemaField, avro.Schema>
 
   constructor({ root }: { root: Compiler<SchemaField, avro.Schema> }) {
     this.root = root
   }
 
-  compile(field: SchemaField<{ values: Array<SchemaField> }>) {
+  compile({ values }: TypeParameters) {
     return {
       type: 'map',
-      values: field.parameters.values.map(x => this.root.compile(x))
+      values: this.root.compile(values)
     } as avro.schema.MapType
   }
 }

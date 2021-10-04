@@ -39,7 +39,6 @@ export const aclMultiuser = (createStorage: <T extends object = {}>(config: Stor
       await Promise.all(fixtureDataA.map(x => storage.create(x, "AAAAAA", userA)))
       await Promise.all(fixtureDataB.map(x => storage.create(x, "BBBBBB", userB)))
     })
-    after(() => storage.down())
 
     it("can find by user and complete bodies", async () => {
       await Promise.all(fixtureDataA.map(x => steps.canFind(x, userA)))
@@ -63,5 +62,7 @@ export const aclMultiuser = (createStorage: <T extends object = {}>(config: Stor
       expect(response).to.have.length(2)
       response.forEach(expectEntity)
     })
+
+    after(() => storage.down())
   })
 }

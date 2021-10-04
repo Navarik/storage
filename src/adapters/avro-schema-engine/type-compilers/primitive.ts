@@ -1,10 +1,14 @@
 import * as avro from 'avsc'
-import { SchemaField, Compiler } from '../../../types'
+import { Compiler } from '../../../types'
 
-export class PrimitiveTypeCompiler implements Compiler<SchemaField, avro.Schema> {
-  compile(field: SchemaField) {
-    return {
-      type: field.required ? field.type : ["null", field.type]
-    } as avro.Schema
+export class PrimitiveTypeCompiler implements Compiler<any, avro.Schema> {
+  private type: string
+
+  constructor({ type }: { type: string }) {
+    this.type = type
+  }
+
+  compile() {
+    return this.type
   }
 }
