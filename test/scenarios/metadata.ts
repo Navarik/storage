@@ -10,10 +10,10 @@ const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/da
 export const metadata = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage<{ wow: string, very: number }>({
     schema: fixtureSchemata,
-    meta: {
-      'wow': 'string',
-      'very': 'int'
-    },
+    meta: [
+      { name: "wow", type: "string" },
+      { name: "very", type: "int" }
+    ],
     logger: nullLogger
   })
 

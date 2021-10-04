@@ -110,10 +110,12 @@ export class EntitySteps {
   async cannotUpdate(entity: EntityPatch<any, any>) {
     try {
       await this.storage.update(entity)
-      expect(true).to.equal(false, "Expected error didn't happen")
     } catch (err) {
       expect(true).to.equal(true)
+      return
     }
+
+    expect(true).to.equal(false, "Expected error didn't happen")
   }
 
   async canUpdate(entity: EntityPatch<any, any>) {

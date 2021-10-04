@@ -1,96 +1,112 @@
 [
   {
-    "type": "profile.user",
-    "fields": {
-      "email": "string, required",
-      "role": "string",
-      "company": "string",
-      "last_name": "string",
-      "first_name": "string"
-    }
+    "name": "profile.user",
+    "fields": [
+      { "name": "email", "type": "string", "required": true },
+      { "name": "role", "type": "string" },
+      { "name": "company", "type": "string" },
+      { "name": "last_name", "type": "string" },
+      { "name": "first_name", "type": "string" }
+    ]
   },
   {
-    "type": "document.job_order",
-    "fields": {
-      "status": "string",
-      "code": "string",
-      "activity": "string",
-      "activity_type": "string",
-      "mot_name": "string",
-      "grade": "string",
-      "quantity": "int",
-      "uom": "string",
-      "eta": "datetime",
-      "location": "string",
-      "terminal": "string"
-    }
+    "name": "document.job_order",
+    "fields": [
+      { "name": "status", "type": "string" },
+      { "name": "code", "type": "string" },
+      { "name": "activity", "type": "string" },
+      { "name": "activity_type", "type": "string" },
+      { "name": "mot_name", "type": "string" },
+      { "name": "grade", "type": "string" },
+      { "name": "quantity", "type": "int" },
+      { "name": "uom", "type": "string" },
+      { "name": "eta", "type": "datetime" },
+      { "name": "location", "type": "string" },
+      { "name": "terminal", "type": "string" }
+    ]
   },
   {
-    "type": "chat.text_message",
-    "fields": {
-      "sender": "int",
-      "timestamp": "datetime",
-      "job_order": "int",
-      "chat_group": "int",
-      "text": "string"
-    }
+    "name": "chat.text_message",
+    "fields": [
+      { "name": "sender", "type": "int" },
+      { "name": "timestamp", "type": "datetime" },
+      { "name": "job_order", "type": "int" },
+      { "name": "chat_group", "type": "int" },
+      { "name": "text", "type": "string" }
+    ]
   },
   {
-    "type": "chat.chat_group",
-    "fields": {
-      "name": "string",
-      "job_order": "string",
-      "participants": [{
-        "name": "string"
-      }]
-    }
+    "name": "chat.chat_group",
+    "fields": [
+      { "name": "name", "type": "string" },
+      { "name": "job_order", "type": "string" },
+      { "name": "participants", "type": "object", "parameters": {
+        "fields": [
+          { "name": "name", "type": "string" }
+        ]
+      }}
+    ]
   },
   {
-    "type": "timelog.timelog_event",
-    "fields": {
-      "event_type": "string",
-      "sender": "int",
-      "timestamp": "datetime",
-      "job_order": "int"
-    }
+    "name": "timelog.timelog_event",
+    "fields": [
+      { "name": "event_type", "type": "string" },
+      { "name": "sender", "type": "int" },
+      { "name": "timestamp", "type": "datetime" },
+      { "name": "job_order", "type": "int" }
+    ]
   },
   {
-    "type": "dataEntry.task",
-    "fields": {
-      "inspection": {
-        "contract": "string",
-        "vesselQuantity": "string",
-        "terminalQuantity": "string",
-        "timeLog": "string",
-        "vefLog": "string"
-      },
-      "summary": {
-        "fileFormat": "string",
-        "fileName": "string",
-        "vefInspReportId": "int",
-        "vefInspReportIdStr": "string",
-        "niWorksheetId": "string",
-        "assignedUserId": "string",
-        "createdAt": "datetime",
-        "status": "string",
-        "producedBy": "string",
-        "clients": ["string"],
-        "grades": ["string"],
-        "locations": ["string"],
-        "vessels": ["string"],
-        "hasVefLog": "boolean",
-        "hasPortCall": "boolean",
-        "isScan": "boolean",
-        "contract": {
-          "inspectionCompanies": ["string"],
-          "clientCompanies": ["string"],
-          "vessels": ["string"],
-          "cargos": ["string"],
-          "ports": ["string"],
-          "terminals": ["string"]
-        }
-      },
-      "taskIdBeforeMigration": "string"
-    }
+    "name": "dataEntry.task",
+    "fields": [
+      { "name": "inspection", "type": "object", "parameters": {
+        "fields": [
+          { "name": "contract", "type": "string" },
+          { "name": "vesselQuantity", "type": "string" },
+          { "name": "terminalQuantity", "type": "string" },
+          { "name": "timeLog", "type": "string" },
+          { "name": "vefLog", "type": "string" }
+        ]
+      }},
+      { "name": "summary", "type": "object", "parameters": {
+        "fields": [
+          { "name": "fileFormat", "type": "string" },
+          { "name": "fileName", "type": "string" },
+          { "name": "vefInspReportId", "type": "int" },
+          { "name": "vefInspReportIdStr", "type": "string" },
+          { "name": "niWorksheetId", "type": "string" },
+          { "name": "assignedUserId", "type": "string" },
+          { "name": "createdAt", "type": "datetime" },
+          { "name": "status", "type": "string" },
+          { "name": "producedBy", "type": "string" },
+          { "name": "clients", "type": "array", "parameters": {
+            "items": { "type": "string" }
+          }},
+          { "name": "grades", "type": "array", "parameters": {
+            "items": { "type": "string" }
+          }},
+          { "name": "locations", "type": "array", "parameters": {
+            "items": { "type": "string" }
+          }},
+          { "name": "vessels", "type": "array", "parameters": {
+            "items": { "type": "string" }
+          }},
+          { "name": "hasVefLog", "type": "boolean" },
+          { "name": "hasPortCall", "type": "boolean" },
+          { "name": "isScan", "type": "boolean" },
+          { "name": "contract", "type": "object", "parameters": {
+            "fields": [
+              { "name": "inspectionCompanies", "type": "array", "parameters": { "items": { "type": "string" } } },
+              { "name": "clientCompanies", "type": "array", "parameters": { "items": { "type": "string" } } },
+              { "name": "vessels", "type": "array", "parameters": { "items": { "type": "string" } } },
+              { "name": "cargos", "type": "array", "parameters": { "items": { "type": "string" } } },
+              { "name": "ports", "type": "array", "parameters": { "items": { "type": "string" } } },
+              { "name": "terminals", "type": "array", "parameters": { "items": { "type": "string" } } }
+            ]
+          }}
+        ]
+      }},
+      { "name": "taskIdBeforeMigration", "type": "string" }
+    ]
   }
 ]

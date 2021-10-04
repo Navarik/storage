@@ -21,10 +21,10 @@ async main() {
   await storage.up()
 
   storage.define({
-    "type": "cat",
-    "fields": {
-      "meow": "boolean"
-    }
+    name: "cat",
+    fields: [
+      { name: "meow", type: "boolean" }
+    ]
   })
 
   const cat = await storage.create({ type: "cat", body: { meow: true } })

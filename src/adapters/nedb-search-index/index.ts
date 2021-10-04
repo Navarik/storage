@@ -87,7 +87,7 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
     } else if (action === "delete")  {
       await this.delete(document)
     } else {
-      throw new Error(`[Storage] Unknown action: ${action}`)
+      throw new Error(`Unknown action: ${action}`)
     }
   }
 

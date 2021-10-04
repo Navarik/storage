@@ -1,8 +1,24 @@
 import { Dictionary, Logger, Service } from '@navarik/types'
-import { CanonicalSchema, ValidationResponse, FormattedEntity, SchemaRegistryAdapter, SchemaField } from '@navarik/core-ddl'
 
 export type Timestamp = string
 export type UUID = string
+
+export interface Compiler<FromType, ToType> {
+  compile(field: FromType): ToType
+}
+
+export interface SchemaField<P = Dictionary<any>> {
+  name: string
+  type: string
+  parameters?: P
+  required?: boolean
+  default?: any
+}
+
+export interface CanonicalSchema {
+  name: string;
+  fields: Array<SchemaField>
+}
 
 export interface CanonicalEntity<B extends object, M extends object> {
   id: UUID
@@ -73,6 +89,29 @@ export interface AccessControlAdapter<M extends object> {
 
 export type Observer<B extends object, M extends object> = (event: ChangeEvent<B, M>) => void|Promise<void>
 
+export interface FormattedEntity<T> {
+  body: T
+  schema: CanonicalSchema
+  schemaId: string
+}
+
+export interface ValidationResponse {
+  isValid: boolean
+  message: string
+}
+
+export interface SchemaEngine {
+  register(type: string, schema: CanonicalSchema): void
+  validate<T>(type: string, body: T): ValidationResponse
+  format<T>(type: string, body: T): T
+}
+
+export interface SchemaRegistry {
+  set(key: string, schema: CanonicalSchema): void
+  get(key: string): CanonicalSchema|undefined
+  observe(observer: (key: string, schema: CanonicalSchema) => void): void
+}
+
 export interface ChangelogAdapter<M extends object> extends Service {
   observe(handler: <B extends object>(event: ChangeEvent<B, M>) => void|Promise<void>): void
   write<B extends object>(message: ChangeEvent<B, M>): Promise<void>
@@ -96,14 +135,15 @@ export interface StorageConfig<M extends object> {
   // Adapters - override when changing underlying technology
   changelog?: ChangelogAdapter<M>
   index?: SearchIndex<M>
+  schemaEngine?: SchemaEngine
 
   // Extensions - override when adding new rules/capacities
-  schemaRegistry?: SchemaRegistryAdapter
+  schemaRegistry?: SchemaRegistry
   accessControl?: AccessControlAdapter<M>
   logger?: Logger
 
   // Built-in schemas for entity body and metadata
-  meta?: Dictionary<SchemaField>
+  meta?: Array<SchemaField>
   schema?: Array<CanonicalSchema>
 
   // Built-in entities if any
@@ -128,5 +168,3 @@ export interface StorageInterface<MetaType extends object> extends Service {
   delete<BodyType extends object>(id: UUID, commitMessage?: string, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
   observe<BodyType extends object>(handler: Observer<BodyType, MetaType>): void
 }
-
-export { CanonicalSchema, ValidationResponse, FormattedEntity, SchemaRegistryAdapter }

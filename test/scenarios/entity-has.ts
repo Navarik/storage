@@ -8,16 +8,16 @@ const dogeId = "17c43a4a-b8ee-49fc-b760-8060ac6877c0"
 export const entityHas = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: [{
-      "type": "cat",
-      "fields": {
-        "meow": "boolean"
-      }
+      name: "cat",
+      fields: [
+        { name: "meow", type: "boolean" }
+      ]
     }],
     data: [{
-      "id": catId,
-      "type": "cat",
-      "body": {
-        "meow": true
+      id: catId,
+      type: "cat",
+      body: {
+        meow: true
       }
     }],
     logger: nullLogger

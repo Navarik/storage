@@ -1,7 +1,7 @@
 {
   "name": "@navarik/storage",
   "description": "Document storage with schemas and versions",
-  "version": "19.0.3",
+  "version": "20.0.0",
   "scripts": {
     "build": "rimraf dist && tsc -d",
     "prepublishOnly": "npm run build",
@@ -15,7 +15,7 @@
     "url": "git@github.com:TICitHub/storage.git"
   },
   "dependencies": {
-    "@navarik/core-ddl": "^3.0.0",
+    "@navarik/avro-schema-engine": "^1.0.0",
     "@navarik/nedb": "^1.0.1",
     "@navarik/transaction-manager": "^1.2.4",
     "lru-cache": "^6.0.0",

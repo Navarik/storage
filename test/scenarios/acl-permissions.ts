@@ -36,7 +36,6 @@ export const aclPermissions = (createStorage: <T extends object = {}>(config: St
 
   describe('Enforcing permissions based on ACL', () => {
     before(async () => { await storage.up() })
-    after(() => storage.down())
 
     it("read/search permission doesn't allow writes", async () => {
       await Promise.all(fixtureData.map(entity => steps.cannotCreate(entity, reader)))
@@ -72,5 +71,7 @@ export const aclPermissions = (createStorage: <T extends object = {}>(config: St
         expect(await storage.delete(id, "Ohno!", writer)).to.be.an("object")
       }))
     })
+
+    after(() => storage.down())
   })
 }

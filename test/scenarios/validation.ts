@@ -4,7 +4,7 @@ import { StorageInterface, CanonicalSchema, StorageConfig } from '../../src'
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
 
-export const entityValidation = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
+export const validation = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
 
   const storage = createStorage({
     schema: fixtureSchemata,
@@ -35,7 +35,6 @@ export const entityValidation = (createStorage: <T extends object = {}>(config: 
 
   describe('Entity validation', () => {
     before(() => storage.up())
-    after(() => storage.down())
 
     it("can recognize valid entities", async () => {
       const response = await storage.validate(validData)
@@ -65,16 +64,18 @@ export const entityValidation = (createStorage: <T extends object = {}>(config: 
 
       response = await storage.validate({ type: 'wow.doge', body: invalidData.body })
       expect(response.isValid).to.equal(false)
-      expect(response.message).to.be.equal('Unknown schema: wow.doge')
+      expect(response.message).to.be.contain("wow.doge")
     })
 
     it("doesn't allow saving invalid entities", () => Promise.all([
       storage.create({ id: "NOOO", type: 'profile.user', body: {} })
-        .then(() => expect(true).to.equal(false, "Expected error didn't happen"))
-        .catch((error) => expect(error.message).to.include("Validation failed")),
+      .then(() => expect(true).to.equal(false, "Expected error didn't happen"))
+      .catch((error) => expect(error.message).to.include("Invalid value provided")),
       storage.update({ id: "NOOO", type: 'profile.user', body: {}, version_id: "AAAAAAAAAAAAAAAAAAAAA" })
-        .then(() => expect(true).to.equal(false, "Expected error didn't happen"))
-        .catch((error) => expect(error.message).to.include("NOOO"))
+      .then(() => expect(true).to.equal(false, "Expected error didn't happen"))
+      .catch((error) => expect(error.message).to.include("NOOO"))
     ]))
+
+    after(() => storage.down())
   })
 }
