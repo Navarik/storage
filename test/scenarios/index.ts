@@ -1,6 +1,7 @@
 export { emptyState } from "./empty-state"
 export { schemaManagement } from "./schema-management"
 export { entityValidation } from "./entity-validation"
+export { entityValidationStrings } from "./entity-validation-strings"
 export { entityCreationConstraints } from "./entity-creation-constraints"
 export { entityCreationFlow } from "./entity-creation-flow"
 export { entityVersioning } from "./entity-versioning"

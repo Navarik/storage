@@ -101,8 +101,9 @@ export interface ValidationResponse {
 }
 
 export interface SchemaEngine {
-  validate<T>(schema: CanonicalSchema, body: T): ValidationResponse
-  format<T>(schema: CanonicalSchema, body: T): T
+  register(type: string, schema: CanonicalSchema): void
+  validate<T>(type: string, body: T): ValidationResponse
+  format<T>(type: string, body: T): T
 }
 
 export interface SchemaRegistry {

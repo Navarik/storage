@@ -13,6 +13,7 @@ const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
 
 export class Schema<M extends object> {
   public metaSchema: CanonicalSchema
+  private metaSchemaId: string
   private schemaRegistry: SchemaRegistry
   private schemaEngine: SchemaEngine
   private knownTypes: Dictionary<string> = {}
@@ -21,6 +22,8 @@ export class Schema<M extends object> {
     this.schemaRegistry = schemaRegistry
     this.schemaEngine = schemaEngine
     this.metaSchema = metaSchema
+    this.metaSchemaId = this.generateId(this.metaSchema)
+    this.schemaEngine.register(this.metaSchemaId, this.metaSchema)
   }
 
   private generateId(schema: CanonicalSchema) {
@@ -34,6 +37,7 @@ export class Schema<M extends object> {
   define(schema: CanonicalSchema): void {
     const schemaId = this.generateId(schema)
     this.schemaRegistry.set(schemaId, schema)
+    this.schemaEngine.register(schemaId, schema)
     this.knownTypes[schema.name] = schemaId
   }
 
@@ -66,15 +70,17 @@ export class Schema<M extends object> {
 
     const schema = this.describe(type)
     if (!schema) {
-      return { isValid: false, message: `Type "${type} not found.`, schema: null }
+      return { isValid: false, message: `Type "${type}" not found.`, schema: null }
     }
 
-    const metaValidationResult = this.schemaEngine.validate(this.metaSchema, meta)
+    const metaValidationResult = this.schemaEngine.validate(this.metaSchemaId, meta || {})
     if (!metaValidationResult.isValid) {
       return { ...metaValidationResult, schema }
     }
 
-    return { ...this.schemaEngine.validate(schema, body), schema }
+    const schemaId = this.generateId(schema)
+
+    return { ...this.schemaEngine.validate(schemaId, body), schema }
   }
 
   format<T = any>(type: string, body: T, meta: M) {
@@ -83,11 +89,13 @@ export class Schema<M extends object> {
       throw new ValidationError(message)
     }
 
+    const schemaId = this.generateId(schema)
+
     return {
       schema,
-      schemaId: this.generateId(schema),
-      body: this.schemaEngine.format(schema, body),
-      meta: this.schemaEngine.format(this.metaSchema, meta || {})
+      schemaId,
+      body: this.schemaEngine.format(schemaId, body),
+      meta: this.schemaEngine.format(this.metaSchemaId, meta || {})
     }
   }
 }

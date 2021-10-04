@@ -16,32 +16,39 @@ export class AvroSchemaEngine implements SchemaEngine {
     this.fieldCompiler = new FieldCompiler({ typeCompiler: this.typeCompiler })
   }
 
-  private compile(schema: CanonicalSchema) {
-    if (!this.avroTypes[schema.name]) {
-      const avroSchema = {
-        type: "record",
-        fields: schema.fields.map(x => this.fieldCompiler.compile(x))
-      } as avro.schema.RecordType
-
-      this.avroTypes[schema.name] = avro.Type.forSchema(
-        avroSchema,
-        {
-          logicalTypes: builtInTypes,
-          registry: this.avroTypes
-        }
-      )
+  private getAvroType(type: string) {
+    const avroType = this.avroTypes[type]
+    if (!avroType) {
+      throw new Error(`Schema not found for type "${type}".`)
     }
 
-    return this.avroTypes[schema.name]
+    return avroType
   }
 
-  validate(schema: CanonicalSchema, data: Document): ValidationResponse {
-    const avroType = this.compile(schema)
+  register(type: string, schema: CanonicalSchema) {
+    const avroSchema = {
+      type: "record",
+      fields: schema.fields.map(x => this.fieldCompiler.compile(x))
+    } as avro.schema.RecordType
+
+    this.avroTypes[type] = avro.Type.forSchema(
+      avroSchema,
+      {
+        logicalTypes: builtInTypes,
+        registry: this.avroTypes
+      }
+    )
+  }
+
+  validate(type: string, data: Document): ValidationResponse {
+    const avroType = this.getAvroType(type)
     const errors: Array<string> = []
     avroType.isValid(
       data,
       {
-        errorHook: (path: Array<string>) => { errors.push(path.join()) }
+        errorHook: (path: Array<string>) => {
+          errors.push(path.join())
+        }
       }
     )
 
@@ -58,13 +65,13 @@ export class AvroSchemaEngine implements SchemaEngine {
     }
   }
 
-  format<T = Document>(schema: CanonicalSchema, data: T): T {
-    const { isValid, message } = this.validate(schema, data)
+  format<T = Document>(type: string, data: T): T {
+    const { isValid, message } = this.validate(type, data)
     if (!isValid) {
       throw new Error(message)
     }
 
-    const avroType = this.compile(schema)
+    const avroType = this.getAvroType(type)
     const response = { ...avroType.fromBuffer(avroType.toBuffer(data)) }
 
     return response
