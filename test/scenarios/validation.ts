@@ -4,7 +4,7 @@ import { StorageInterface, CanonicalSchema, StorageConfig } from '../../src'
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
 
-export const entityValidation = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
+export const validation = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
 
   const storage = createStorage({
     schema: fixtureSchemata,

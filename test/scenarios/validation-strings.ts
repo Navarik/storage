@@ -2,7 +2,7 @@ import { StorageInterface, StorageConfig } from '../../src'
 import { nullLogger } from "../fixtures/null-logger"
 import { createSteps } from "../steps/validation"
 
-export const entityValidationStrings = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
+export const validationStrings = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
 
   const storage = createStorage({
     schema: [
