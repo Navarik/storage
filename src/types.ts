@@ -109,6 +109,7 @@ export interface SchemaEngine {
 export interface SchemaRegistry {
   set(key: string, schema: CanonicalSchema): void
   get(key: string): CanonicalSchema|undefined
+  observe(observer: (key: string, schema: CanonicalSchema) => void): void
 }
 
 export interface ChangelogAdapter<M extends object> extends Service {

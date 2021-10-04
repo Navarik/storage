@@ -24,6 +24,13 @@ export class Schema<M extends object> {
     this.metaSchema = metaSchema
     this.metaSchemaId = this.generateId(this.metaSchema)
     this.schemaEngine.register(this.metaSchemaId, this.metaSchema)
+
+    this.schemaRegistry.observe(this.onRegistryUpdate.bind(this))
+  }
+
+  private onRegistryUpdate(schemaId: string, schema: CanonicalSchema) {
+    this.schemaEngine.register(schemaId, schema)
+    this.knownTypes[schema.name] = schemaId
   }
 
   private generateId(schema: CanonicalSchema) {
@@ -37,8 +44,6 @@ export class Schema<M extends object> {
   define(schema: CanonicalSchema): void {
     const schemaId = this.generateId(schema)
     this.schemaRegistry.set(schemaId, schema)
-    this.schemaEngine.register(schemaId, schema)
-    this.knownTypes[schema.name] = schemaId
   }
 
   describe(type: string): CanonicalSchema|undefined {
