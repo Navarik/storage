@@ -13,7 +13,7 @@ import { NeDbSearchIndex } from "./adapters/nedb-search-index/index"
 import { DefaultAccessControl } from "./adapters/default-access-control"
 import { DefaultChangelogAdapter } from "./adapters/default-changelog"
 import { InMemorySchemaRegistry } from "./adapters/in-memory-schema-registry"
-import { PermissiveSchemaEngine } from "./adapters/permissive-schema-engine"
+import { AvroSchemaEngine } from "./adapters/avro-schema-engine"
 import { defaultLogger } from "./adapters/default-logger"
 
 export * from "./types"
@@ -47,7 +47,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
     this.observers = []
     this.schema = new Schema({
-      schemaEngine: schemaEngine || new PermissiveSchemaEngine(),
+      schemaEngine: schemaEngine || new AvroSchemaEngine(),
       schemaRegistry: schemaRegistry || new InMemorySchemaRegistry(),
       metaSchema: {
         name: "metadata",

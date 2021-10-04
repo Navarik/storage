@@ -3,6 +3,10 @@ import { Dictionary, Logger, Service } from '@navarik/types'
 export type Timestamp = string
 export type UUID = string
 
+export interface Compiler<FromType, ToType> {
+  compile(field: FromType): ToType
+}
+
 export interface SchemaField<P = Dictionary<any>> {
   name: string
   type: string

@@ -17,6 +17,8 @@
   "dependencies": {
     "@navarik/nedb": "^1.0.1",
     "@navarik/transaction-manager": "^1.2.4",
+    "avsc": "^5.7.3",
+    "is-uuid": "^1.0.2",
     "lru-cache": "^6.0.0",
     "uuid": "^8.3.2"
   },
