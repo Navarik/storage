@@ -1,14 +1,16 @@
 import { Logger } from "@navarik/types"
 import { CanonicalSchema, ValidationResponse, StorageInterface, AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig } from "./types"
-import { v4 as uuidv4 } from "uuid"
 import { AvroSchemaEngine } from "@navarik/avro-schema-engine"
 import { ConflictError } from "./errors/conflict-error"
 import { AccessError } from "./errors/access-error"
 import { State } from "./state"
-import { EntityFactory } from "./entity-factory"
 import { Changelog } from "./changelog"
 import { QueryParser } from "./query-parser"
 import { Schema } from "./schema"
+
+import { CreateAction } from "./actions/create-action"
+import { UpdateAction } from "./actions/update-action"
+import { DeleteAction } from "./actions/delete-action"
 
 import { NeDbSearchIndex } from "./adapters/nedb-search-index/index"
 import { DefaultAccessControl } from "./adapters/default-access-control"
@@ -29,14 +31,24 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   private searchIndex: SearchIndex<MetaType>
   private changelog: Changelog<MetaType>
   private observers: Array<Observer<any, MetaType>>
-  private entityFactory: EntityFactory<MetaType>
   private logger: Logger
   private healthStats = {
     upSince: new Date(),
     totalIdLookups: 0,
-    totalSearchQueries: 0
+    totalSearchQueries: 0,
+    totalCountQueries: 0,
+    totalCreateRequests: 0,
+    totalUpdateRequests: 0,
+    totalDeleteRequests: 0
   }
   private isUp: boolean
+
+  // Change event factories
+  private actions: {
+    create: CreateAction<MetaType>
+    update: UpdateAction<MetaType>
+    delete: DeleteAction<MetaType>
+  }
 
   constructor(config: StorageConfig<MetaType> = {}) {
     const { accessControl, changelog, index, schemaRegistry, schemaEngine, meta = [], schema = [], data = [], cacheSize = 5000000, logger } = config
@@ -72,29 +84,19 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       observer: this.onChange.bind(this)
     })
 
-    this.entityFactory = new EntityFactory({
-      schema: this.schema
-    })
+    this.actions = {
+      create: new CreateAction({ schema: this.schema }),
+      update: new UpdateAction({ schema: this.schema }),
+      delete: new DeleteAction({ schema: this.schema })
+    }
 
     // Static schema definitions if there is any
     schema.forEach(s => this.schema.define(s))
 
     // Static data is used primarily for automated tests
-    this.staticData = data.map(document => {
-      const entity = this.entityFactory.create(document, nobody)
-      const changeEvent: ChangeEvent<any, MetaType> = {
-        id: uuidv4(),
-        action: "create",
-        user: entity.created_by,
-        message: "Static data loaded",
-        entity: entity,
-        schema: this.schema.describe(document.type),
-        parent: undefined,
-        timestamp: entity.created_at
-      }
-
-      return changeEvent
-    })
+    this.staticData = data.map(document =>
+      this.actions.create.request(document, "Static data loaded", nobody)
+    )
   }
 
   private async updateState<B extends object>(event: ChangeEvent<B, MetaType>) {
@@ -219,6 +221,8 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   async count(query: object, user: UUID = nobody): Promise<number> {
+    this.healthStats.totalCountQueries++
+
     const aclTerms = await this.accessControl.getQuery(user, "search")
     const queryTerms = this.queryParser.parse(query)
     const combinedQuery = this.queryParser.merge("and", [aclTerms, queryTerms])
@@ -233,67 +237,40 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   async create<BodyType extends object>(data: EntityData<BodyType, MetaType>, commitMessage: string = "", user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
-    const entity = this.entityFactory.create(data, user)
-    const schema = this.schema.describeEntity(entity)
+    this.healthStats.totalCreateRequests++
 
-    const changeEvent: ChangeEvent<BodyType, MetaType> = {
-      id: uuidv4(),
-      action: "create",
-      user: entity.created_by,
-      message: commitMessage,
-      entity: entity,
-      schema: schema,
-      parent: undefined,
-      timestamp: entity.created_at
-    }
+    const changeEvent = this.actions.create.request(data, commitMessage, user)
+    const transaction = this.changelog.requestChange(changeEvent)
 
-    return this.changelog.requestChange(changeEvent)
+    return transaction
   }
 
   async update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, commitMessage: string = "", user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
+    this.healthStats.totalUpdateRequests++
+
     const previous = await this.currentState.get(data.id)
     if (!previous) {
-      throw new ConflictError(`Update failed: can"t find entity ${data.id}`)
+      throw new ConflictError(`Update failed: can't find entity ${data.id}.`)
     }
 
-    const entity = this.entityFactory.merge(previous, data, user)
-    const schema = this.schema.describeEntity(entity)
+    const changeEvent = this.actions.update.request(previous, data, commitMessage, user)
+    const transaction = this.changelog.requestChange(changeEvent)
 
-    const changeEvent: ChangeEvent<BodyType, MetaType> = {
-      id: uuidv4(),
-      action: "update",
-      user: entity.modified_by,
-      message: commitMessage,
-      entity: entity,
-      schema: schema,
-      parent: undefined,
-      timestamp: entity.modified_at
-    }
-
-    return this.changelog.requestChange(changeEvent)
+    return transaction
   }
 
   async delete<BodyType extends object>(id: UUID, commitMessage: string = "", user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
+    this.healthStats.totalDeleteRequests++
+
     const previous = await this.currentState.get<BodyType>(id)
     if (!previous) {
       return undefined
     }
 
-    const entity = this.entityFactory.remove<BodyType>(previous, user)
-    const schema = this.schema.describeEntity(entity)
+    const changeEvent = this.actions.delete.request(previous, commitMessage, user)
+    const transaction = this.changelog.requestChange(changeEvent)
 
-    const changeEvent: ChangeEvent<BodyType, MetaType> = {
-      id: uuidv4(),
-      action: "delete",
-      user: entity.modified_by,
-      message: commitMessage,
-      entity: entity,
-      schema: schema,
-      parent: undefined,
-      timestamp: entity.modified_at
-    }
-
-    return this.changelog.requestChange(changeEvent)
+    return transaction
   }
 
   observe<BodyType extends object>(handler: Observer<BodyType, MetaType>) {
