@@ -12,6 +12,7 @@ import { CreateAction } from "./actions/create-action"
 import { UpdateAction } from "./actions/update-action"
 import { DeleteAction } from "./actions/delete-action"
 
+import { UuidV5IdGenerator } from "./adapters/uuid-v5-id-generator"
 import { NeDbSearchIndex } from "./adapters/nedb-search-index/index"
 import { DefaultAccessControl } from "./adapters/default-access-control"
 import { DefaultChangelogAdapter } from "./adapters/default-changelog"
@@ -21,6 +22,7 @@ import { defaultLogger } from "./adapters/default-logger"
 export * from "./types"
 
 const nobody = "00000000-0000-0000-0000-000000000000"
+const defaultSchemaIdNamespace = '00000000-0000-0000-0000-000000000000'
 
 export class Storage<MetaType extends object> implements StorageInterface<MetaType> {
   private staticData: Array<ChangeEvent<any, MetaType>>
@@ -51,7 +53,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   constructor(config: StorageConfig<MetaType> = {}) {
-    const { accessControl, changelog, index, schemaRegistry, schemaEngine, meta = [], schema = [], data = [], cacheSize = 5000000, logger } = config
+    const { accessControl, changelog, index, schemaRegistry, schemaEngine, schemaIdGenerator, meta = [], schema = [], data = [], cacheSize = 5000000, logger } = config
 
     this.isUp = false
     this.logger = logger || defaultLogger
@@ -61,6 +63,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.schema = new Schema({
       schemaEngine: schemaEngine || new AvroSchemaEngine(),
       schemaRegistry: schemaRegistry || new InMemorySchemaRegistry(),
+      idGenerator: schemaIdGenerator || new UuidV5IdGenerator({ root: defaultSchemaIdNamespace }),
       metaSchema: {
         name: "metadata",
         fields: meta
