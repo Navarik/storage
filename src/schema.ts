@@ -1,28 +1,28 @@
 import { Dictionary } from '@navarik/types'
-import { v5 as uuidv5 } from 'uuid'
-import { SchemaRegistry, SchemaEngine, CanonicalSchema, CanonicalEntity } from './types'
+import { SchemaRegistry, SchemaEngine, CanonicalSchema, CanonicalEntity, IdGenerator } from './types'
 import { ValidationError } from "./errors/validation-error"
 
 interface Config {
   schemaRegistry: SchemaRegistry
   schemaEngine: SchemaEngine
   metaSchema: CanonicalSchema
+  idGenerator: IdGenerator<CanonicalSchema>
 }
-
-const UUID_ROOT = '00000000-0000-0000-0000-000000000000'
 
 export class Schema<M extends object> {
   public metaSchema: CanonicalSchema
+  private idGenerator: IdGenerator<CanonicalSchema>
   private metaSchemaId: string
   private schemaRegistry: SchemaRegistry
   private schemaEngine: SchemaEngine
   private knownTypes: Dictionary<string> = {}
 
-  constructor({ schemaRegistry, schemaEngine, metaSchema }: Config) {
+  constructor({ schemaRegistry, schemaEngine, metaSchema, idGenerator }: Config) {
     this.schemaRegistry = schemaRegistry
     this.schemaEngine = schemaEngine
+    this.idGenerator = idGenerator
     this.metaSchema = metaSchema
-    this.metaSchemaId = this.generateId(this.metaSchema)
+    this.metaSchemaId = this.idGenerator.id(this.metaSchema)
     this.schemaEngine.register(this.metaSchemaId, this.metaSchema)
 
     this.schemaRegistry.observe(this.onRegistryUpdate.bind(this))
@@ -33,16 +33,12 @@ export class Schema<M extends object> {
     this.knownTypes[schema.name] = schemaId
   }
 
-  private generateId(schema: CanonicalSchema) {
-    return uuidv5(JSON.stringify(schema), UUID_ROOT)
-  }
-
   types(): Array<string> {
     return Object.keys(this.knownTypes)
   }
 
   define(schema: CanonicalSchema): void {
-    const schemaId = this.generateId(schema)
+    const schemaId = this.idGenerator.id(schema)
     this.schemaRegistry.set(schemaId, schema)
   }
 
@@ -70,31 +66,29 @@ export class Schema<M extends object> {
 
   validate<T = any>(type: string, body: T, meta: M) {
     if (!type) {
-      return { isValid: false, message: "Type must be provided.", schema: null }
+      return { isValid: false, message: "Type must be provided.", schema: null, schemaId: null }
     }
 
     const schema = this.describe(type)
     if (!schema) {
-      return { isValid: false, message: `Type "${type}" not found.`, schema: null }
+      return { isValid: false, message: `Type "${type}" not found.`, schema: null, schemaId: null }
     }
+
+    const schemaId = this.idGenerator.id(schema)
 
     const metaValidationResult = this.schemaEngine.validate(this.metaSchemaId, meta || {})
     if (!metaValidationResult.isValid) {
-      return { ...metaValidationResult, schema }
+      return { ...metaValidationResult, schema, schemaId }
     }
 
-    const schemaId = this.generateId(schema)
-
-    return { ...this.schemaEngine.validate(schemaId, body), schema }
+    return { ...this.schemaEngine.validate(schemaId, body), schema, schemaId }
   }
 
   format<T = any>(type: string, body: T, meta: M) {
-    const { isValid, message, schema } = this.validate(type, body, meta)
+    const { isValid, message, schema, schemaId } = this.validate(type, body, meta)
     if (!isValid) {
       throw new ValidationError(message)
     }
-
-    const schemaId = this.generateId(schema)
 
     return {
       schema,

@@ -7,6 +7,10 @@ export interface Compiler<FromType, ToType> {
   compile(field: FromType): ToType
 }
 
+export interface IdGenerator<T extends object> {
+  id(body: T): UUID
+}
+
 export interface SchemaField<P = Dictionary<any>> {
   name: string
   type: string
@@ -136,6 +140,7 @@ export interface StorageConfig<M extends object> {
   changelog?: ChangelogAdapter<M>
   index?: SearchIndex<M>
   schemaEngine?: SchemaEngine
+  schemaIdGenerator?: IdGenerator<CanonicalSchema>
 
   // Extensions - override when adding new rules/capacities
   schemaRegistry?: SchemaRegistry
