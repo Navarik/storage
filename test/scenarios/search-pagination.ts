@@ -16,7 +16,7 @@ const fixtureData = [
   ...fixturesMessages
 ]
 
-export const entitySearchPagination = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
+export const searchPagination = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
     data: fixtureData,

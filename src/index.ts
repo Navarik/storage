@@ -7,6 +7,7 @@ import { State } from "./state"
 import { Changelog } from "./changelog"
 import { QueryParser } from "./query-parser"
 import { Schema } from "./schema"
+import { Search } from "./search"
 
 import { CreateAction } from "./actions/create-action"
 import { UpdateAction } from "./actions/update-action"
@@ -27,6 +28,7 @@ const defaultSchemaIdNamespace = '00000000-0000-0000-0000-000000000000'
 export class Storage<MetaType extends object> implements StorageInterface<MetaType> {
   private staticData: Array<ChangeEvent<any, MetaType>>
   private schema: Schema<MetaType>
+  private search: Search<MetaType>
   private queryParser: QueryParser
   private accessControl: AccessControlAdapter<MetaType>
   private currentState: State<MetaType>
@@ -75,6 +77,10 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.accessControl = accessControl || new DefaultAccessControl()
     this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
 
+    this.search = new Search({
+      index: this.searchIndex
+    })
+
     this.currentState = new State({
       cacheSize,
       searchIndex: this.searchIndex
@@ -94,7 +100,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     // Static schema definitions if there is any
-    schema.forEach(s => this.schema.define(s))
+    schema.forEach(this.define.bind(this))
 
     // Static data is used primarily for automated tests
     this.staticData = data.map(document =>
@@ -186,7 +192,8 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   define(schema: CanonicalSchema) {
-    return this.schema.define(schema)
+    this.schema.define(schema)
+    this.search.registerSchema(schema)
   }
 
   async has(id: UUID): Promise<boolean> {
@@ -218,7 +225,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     const queryTerms = this.queryParser.parse(query)
     const combinedQuery = this.queryParser.merge("and", [aclTerms, queryTerms])
 
-    const collection = await this.searchIndex.find<BodyType>(combinedQuery, options)
+    const collection = await this.search.find<BodyType>(combinedQuery, options)
 
     return collection
   }
@@ -230,7 +237,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     const queryTerms = this.queryParser.parse(query)
     const combinedQuery = this.queryParser.merge("and", [aclTerms, queryTerms])
 
-    const count = this.searchIndex.count(combinedQuery)
+    const count = this.search.count(combinedQuery)
 
     return count
   }

@@ -18,7 +18,7 @@ const fixtureData = [
   ...fixturesTasks
 ]
 
-export const entitySearchSort = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
+export const searchSort = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
     data: fixtureData,
@@ -27,7 +27,6 @@ export const entitySearchSort = (createStorage: <T extends object = {}>(config: 
 
   describe('Sorting of search results', () => {
     before(() => storage.up())
-    after(() => storage.down())
 
     it("can perform ascending sorting on top-level field", async () => {
       const response = await storage.find({ type: 'profile.user' }, { sort: 'body.first_name' })
@@ -109,5 +108,7 @@ export const entitySearchSort = (createStorage: <T extends object = {}>(config: 
 
       expect(response.map((x: any) => x.body.summary['vefInspReportId'])).to.eql([ 1, 6, 5, 4 ])
     })
+
+    after(() => storage.down())
   })
 }

@@ -56,7 +56,7 @@ export class Schema<M extends object> {
 
   describeEntity<B extends object>(entity: CanonicalEntity<B, M>): CanonicalSchema|undefined {
     // If can't find this particular version of the schema, fallback to the latest version
-    const schema = this.schemaRegistry.get(entity.schema) || this.schemaRegistry.get(entity.type)
+    const schema = this.describe(entity.schema) || this.describe(entity.type)
     if (!schema) {
       throw new ValidationError(`Cannot find schema for ${entity.type} (schema version: ${entity.schema})`)
     }

@@ -17,7 +17,7 @@ const fixtureData = [
   ...fixturesMessages
 ]
 
-export const entitySearch = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
+export const search = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
     data: fixtureData,
@@ -28,7 +28,6 @@ export const entitySearch = (createStorage: <T extends object = {}>(config: Stor
 
   describe('Entity search', () => {
     before(() => storage.up())
-    after(() => storage.down())
 
     it("can't get non-existing entities", async () => {
       const response = await storage.get('nope')
@@ -175,5 +174,7 @@ export const entitySearch = (createStorage: <T extends object = {}>(config: Stor
       expect(response).to.be.an('array')
       expect(response).to.have.length(0)
     })
+
+    after(() => storage.down())
   })
 }
