@@ -1,3 +1,4 @@
+import util from "util"
 import { FieldExtractor, SearchIndex, CanonicalEntity, SearchOptions, SearchQuery, CanonicalSchema } from "../types"
 import { CompositeFieldExtractor } from "./field-extractor"
 import { FieldRegistry } from "./field-registry"
@@ -31,7 +32,7 @@ export class Search<MetaType extends object> {
   }
 
   async count(query: SearchQuery|{}): Promise<number> {
-    console.log(query["args"])
+    console.log(util.inspect(query, false, 10))
 
     const count = this.searchIndex.count(query)
 

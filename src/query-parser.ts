@@ -5,7 +5,10 @@ export class QueryParser {
   private createTerm(field, value) {
     const term = (typeof value === "object") && value && value.operator
       ? value
-      : { operator: "eq", args: [field, value] }
+      : { operator: "eq", args: [
+          { operator: "field", args: [field] },
+          { operator: "literal", args: [value] }
+        ] }
 
     return term
   }
