@@ -27,7 +27,8 @@ const fixtureSchemata = [
     fields: [
       { name: "channel", type: "reference" },
       { name: "user", type: "reference" },
-      { name: "content", type: "text" }
+      { name: "content", type: "text" },
+      { name: "tags", type: "map", parameters: { values: { type: "string" } } }
     ]
   }
 ]
