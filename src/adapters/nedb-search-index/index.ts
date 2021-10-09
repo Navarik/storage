@@ -20,12 +20,12 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
   constructor({ logger }: Config) {
     this.logger = logger
     this.client = new Database()
-    this.queryParser = new NeDbQueryParser()
+    this.queryParser = new NeDbQueryParser({ db: this })
     this.client.ensureIndex({ fieldName: 'id', unique: true })
   }
 
   async find<B extends object, M extends object>(searchParams: SearchQuery, options: SearchOptions = {}): Promise<Array<CanonicalEntity<B, M>>> {
-    const filter = this.queryParser.parseFilter(searchParams)
+    const filter = await this.queryParser.parseFilter(searchParams)
     const query = this.client.find(filter, { _id: 0 })
     const { offset, limit, sort } = options
 
@@ -54,7 +54,7 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
   }
 
   async count(searchParams: SearchQuery): Promise<number> {
-    const filter = this.queryParser.parseFilter(searchParams)
+    const filter = await this.queryParser.parseFilter(searchParams)
     this.logger.trace({ component: 'Storage.NeDbSearchIndex', filter }, `Performing find operation`)
 
     return new Promise((resolve, reject) => {

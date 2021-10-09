@@ -22,28 +22,35 @@ export class Search<MetaType extends object> {
     this.fields.register(["schema"], { path: "schema", schemaName: "", type: "uuid", parameters: [] })
   }
 
-  private async resolveField(query: SearchQuery) {
-    const [ field, value ] = query.args
+  private findDescriptor(field: string, value: any) {
     const path = field.split(".")
 
-    const descriptor = this.fields.resolve(path).find(x => x.type === "reference" || x.type === typeof value)
+    const descriptors = this.fields.resolve(path)
+    const descriptor = descriptors.find(x => x.type === "reference" || x.type === typeof value)
+
+    return descriptor
+  }
+
+  private resolveField(query: SearchQuery) {
+    const [ field, value ] = query.args
+    const descriptor = this.findDescriptor(field, value)
     if (!descriptor) {
       throw new ValidationError(`Type mismatch for ${field}.`)
     }
 
     if (descriptor.type === "reference") {
       const nestedField = field.replace(`${descriptor.path}.`, "")
-      const subset = await this.searchIndex.find({
-        operator: query.operator,
-        args: [nestedField, value]
-      }, {})
-      const references = subset.map(x => x.id)
-
       return {
         operator: "in",
         args: [
           descriptor.path,
-          references
+          {
+            operator: "subquery",
+            args: [{
+              operator: query.operator,
+              args: [nestedField, value]
+            }]
+          }
         ]
       }
     }
@@ -51,7 +58,7 @@ export class Search<MetaType extends object> {
     return query
   }
 
-  private async processQuery(query: SearchQuery) {
+  private processQuery(query: SearchQuery) {
     if (typeof query !== "object" && query !== null) {
       return query
     }
@@ -62,7 +69,7 @@ export class Search<MetaType extends object> {
 
     return {
       operator: query.operator,
-      args: await Promise.all(query.args.map(x => this.processQuery(x)))
+      args: query.args.map(x => this.processQuery(x))
     }
   }
 
@@ -87,7 +94,7 @@ export class Search<MetaType extends object> {
   }
 
   async count(query: SearchQuery): Promise<number> {
-    const preparedQuery = await this.processQuery(query)
+    const preparedQuery = this.processQuery(query)
 
     console.log(util.inspect(preparedQuery, false, 10, true))
 

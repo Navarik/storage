@@ -1,24 +1,29 @@
 import { Dictionary } from '@navarik/types'
+import { NeDbSearchIndex } from '.'
 import { SearchQuery } from '../../types'
 
-type OperatorFactory = (args: Array<any>) => object|string
+type OperatorFactory = (args: Array<any>, db: NeDbSearchIndex<any>) => Promise<object|string>
 
 const operators: Dictionary<OperatorFactory> = {
-  and: (args: Array<any>) => ({ $and: args.map(parseTerm) }),
-  or: (args: Array<any>) => ({ $or: args.map(parseTerm) }),
-  eq: ([field, value]: Array<any>) => ({ [field]: parseTerm(value) }),
-  in: ([field, value]: Array<any>) => ({ [field]: { $in: parseTerm(value) } }),
-  gt: ([field, value]: Array<any>) => ({ [field]: { $gt: parseTerm(value) } }),
-  lt: ([field, value]: Array<any>) => ({ [field]: { $lt: parseTerm(value) } }),
-  gte: ([field, value]: Array<any>) => ({ [field]: { $gte: parseTerm(value) } }),
-  lte: ([field, value]: Array<any>) => ({ [field]: { $lte: parseTerm(value) } }),
-  neq: (args: Array<any>) => ({ $not: parseTerm({ operator: "eq", args }) }),
-  not: ([arg]: Array<any>) => ({ $not: parseTerm(arg) }),
-  like: ([field, regex, options]: Array<any>) => ({ [field]: { $regex: new RegExp(regex, options) } }),
-  noop: () => ({})
+  and: async (args: Array<any>, db) => ({ $and: await Promise.all(args.map(x => parseTerm(x, db))) }),
+  or: async (args: Array<any>, db) => ({ $or: await Promise.all(args.map(x => parseTerm(x, db))) }),
+  eq: async ([field, value]: Array<any>, db) => ({ [field]: await parseTerm(value, db) }),
+  in: async ([field, value]: Array<any>, db) => ({ [field]: { $in: await parseTerm(value, db) } }),
+  gt: async ([field, value]: Array<any>, db) => ({ [field]: { $gt: await parseTerm(value, db) } }),
+  lt: async ([field, value]: Array<any>, db) => ({ [field]: { $lt: await parseTerm(value, db) } }),
+  gte: async ([field, value]: Array<any>, db) => ({ [field]: { $gte: await parseTerm(value, db) } }),
+  lte: async ([field, value]: Array<any>, db) => ({ [field]: { $lte: await parseTerm(value, db) } }),
+  neq: async (args: Array<any>, db) => ({ $not: await parseTerm({ operator: "eq", args }, db) }),
+  not: async ([arg]: Array<any>, db) => ({ $not: await parseTerm(arg, db) }),
+  like: async ([field, regex, options]: Array<any>, db) => ({ [field]: { $regex: new RegExp(regex, options) } }),
+  subquery: async ([query], db) => {
+    const references = await db.find(query)
+    return references.map(x => x.id)
+  },
+  noop: async () => ({})
 }
 
-const parseTerm = (term: SearchQuery) => {
+const parseTerm = async (term: any, db: NeDbSearchIndex<any>) => {
   if (typeof term !== "object" || term === null || !term.operator) {
     return term
   }
@@ -28,12 +33,18 @@ const parseTerm = (term: SearchQuery) => {
     throw new Error(`[NeDbSearchIndex] Query operator not implemented: "${term.operator}."`)
   }
 
-  return parseOperator(term.args)
+  return await parseOperator(term.args, db)
 }
 
 export class NeDbQueryParser {
-  parseFilter(query: SearchQuery): Dictionary<any> {
-    return <Dictionary<any>>parseTerm(query)
+  private db: NeDbSearchIndex<any>
+
+  constructor({ db }) {
+    this.db = db
+  }
+
+  async parseFilter(query: SearchQuery): Promise<Dictionary<any>> {
+    return <Dictionary<any>>parseTerm(query, this.db)
   }
 
   /**
