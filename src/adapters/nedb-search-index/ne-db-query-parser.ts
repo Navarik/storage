@@ -6,25 +6,16 @@ type OperatorFactory = (args: Array<any>) => object|string
 const operators: Dictionary<OperatorFactory> = {
   and: (args: Array<any>) => ({ $and: args.map(parseTerm) }),
   or: (args: Array<any>) => ({ $or: args.map(parseTerm) }),
-  eq: ([field, value]: Array<any>) => ({ [parseField(field)]: parseTerm(value) }),
-  in: ([field, value]: Array<any>) => ({ [parseField(field)]: { $in: parseTerm(value) } }),
-  gt: ([field, value]: Array<any>) => ({ [parseField(field)]: { $gt: parseTerm(value) } }),
-  lt: ([field, value]: Array<any>) => ({ [parseField(field)]: { $lt: parseTerm(value) } }),
-  gte: ([field, value]: Array<any>) => ({ [parseField(field)]: { $gte: parseTerm(value) } }),
-  lte: ([field, value]: Array<any>) => ({ [parseField(field)]: { $lte: parseTerm(value) } }),
+  eq: ([field, value]: Array<any>) => ({ [field]: parseTerm(value) }),
+  in: ([field, value]: Array<any>) => ({ [field]: { $in: parseTerm(value) } }),
+  gt: ([field, value]: Array<any>) => ({ [field]: { $gt: parseTerm(value) } }),
+  lt: ([field, value]: Array<any>) => ({ [field]: { $lt: parseTerm(value) } }),
+  gte: ([field, value]: Array<any>) => ({ [field]: { $gte: parseTerm(value) } }),
+  lte: ([field, value]: Array<any>) => ({ [field]: { $lte: parseTerm(value) } }),
   neq: (args: Array<any>) => ({ $not: parseTerm({ operator: "eq", args }) }),
   not: ([arg]: Array<any>) => ({ $not: parseTerm(arg) }),
-  like: ([field, regex, options]: Array<any>) => ({ [parseField(field)]: { $regex: new RegExp(regex, options) } }),
-  field: ([value]: Array<any>) => value,
-  literal: ([value]: Array<any>) => value
-}
-
-const parseField = (term: SearchQuery) => {
-  if (typeof term !== "object" || term === null || !term.operator) {
-    return term
-  }
-
-  return term.args[0]
+  like: ([field, regex, options]: Array<any>) => ({ [field]: { $regex: new RegExp(regex, options) } }),
+  noop: () => ({})
 }
 
 const parseTerm = (term: SearchQuery) => {

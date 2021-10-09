@@ -49,8 +49,8 @@ const fixtureData = [
   { type: "message", body: { content: "very", group: "418f1fe9-5796-46f7-859c-9c99ea679d61", channel: "583f2224-1b9d-4266-962a-2b1b7b0509bb" } },
   { type: "message", body: { content: "amaze", group: "65c0ad72-9f84-4789-a331-e4fc14dffab1", channel: "583f2224-1b9d-4266-962a-2b1b7b0509bb" } },
 
-  { type: "message", body: { content: "is this a pegeon?", user: "418f1fe9-5796-46f7-859c-9c99ea679d61", channel: "583f2224-1b9d-4266-962a-2b1b7b0509bb" } },
-  { type: "message", body: { content: "always has been", group: "418f1fe9-5796-46f7-859c-9c99ea679d61", channel: "583f2224-1b9d-4266-962a-2b1b7b0509bb" } },
+  { type: "message", body: { content: "is this a pegeon?", user: "418f1fe9-5796-46f7-859c-9c99ea679d61", channel: "22956b03-1f99-49b0-830a-1e3c7d4beeef" } },
+  { type: "message", body: { content: "always has been", group: "418f1fe9-5796-46f7-859c-9c99ea679d61", channel: "22956b03-1f99-49b0-830a-1e3c7d4beeef" } },
 ]
 
 export const searchDeep = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {

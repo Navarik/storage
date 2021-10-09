@@ -80,6 +80,7 @@ export type AccessControlDecision = {
 }
 
 export interface SearchableField {
+  path: string
   schemaName: string
   type: string
   parameters: any
@@ -89,7 +90,7 @@ export interface FieldExtractor {
   extract(field: SchemaField, rootPath: Array<string>): Array<{ path: Array<string>, field: SchemaField }>
 }
 
-export type SearchOperator = "and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"|"field"|"literal"
+export type SearchOperator = "noop"|"and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"|"subquery"
 export interface SearchQuery {
   operator: SearchOperator
   args: Array<any>
