@@ -80,20 +80,19 @@ export type AccessControlDecision = {
 }
 
 export interface SearchableField {
-  path: string
-  schemaName: string
-  type: string
-  parameters: any
+  chain(field: SchemaField): void
+  merge(field: SchemaField): void
+  resolve(path: Array<string>, query: SearchQuery): false|SearchQuery
 }
 
-export interface FieldExtractor {
-  extract(field: SchemaField, rootPath: Array<string>): Array<{ path: Array<string>, field: SchemaField }>
-}
-
-export type SearchOperator = "noop"|"and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"|"subquery"
+export type SearchOperator = "literal"|"noop"|"and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"|"subquery"
 export interface SearchQuery {
   operator: SearchOperator
   args: Array<any>
+}
+
+export interface QueryLinker {
+  link(query: SearchQuery): SearchQuery
 }
 
 export interface AccessControlAdapter<M extends object> {
