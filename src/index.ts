@@ -5,7 +5,6 @@ import { ConflictError } from "./errors/conflict-error"
 import { AccessError } from "./errors/access-error"
 import { State } from "./state"
 import { Changelog } from "./changelog"
-import { QueryParser } from "./query-parser"
 import { Schema } from "./schema"
 import { Search } from "./search"
 
@@ -29,7 +28,6 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   private staticData: Array<ChangeEvent<any, MetaType>>
   private schema: Schema<MetaType>
   private search: Search<MetaType>
-  private queryParser: QueryParser
   private accessControl: AccessControlAdapter<MetaType>
   private currentState: State<MetaType>
   private searchIndex: SearchIndex<MetaType>
@@ -71,8 +69,6 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
         fields: meta
       }
     })
-
-    this.queryParser = new QueryParser()
 
     this.accessControl = accessControl || new DefaultAccessControl()
     this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
@@ -222,10 +218,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.healthStats.totalSearchQueries++
 
     const aclTerms = await this.accessControl.getQuery(user, "search")
-    const queryTerms = this.queryParser.parse(query)
-    const combinedQuery = this.queryParser.merge("and", [aclTerms, queryTerms])
-
-    const collection = await this.search.find<BodyType>(combinedQuery, options)
+    const collection = await this.search.find<BodyType>({ operator: "and", args: [aclTerms, query] }, options)
 
     return collection
   }
@@ -234,10 +227,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.healthStats.totalCountQueries++
 
     const aclTerms = await this.accessControl.getQuery(user, "search")
-    const queryTerms = this.queryParser.parse(query)
-    const combinedQuery = this.queryParser.merge("and", [aclTerms, queryTerms])
-
-    const count = this.search.count(combinedQuery)
+    const count = this.search.count({ operator: "and", args: [aclTerms, query] })
 
     return count
   }

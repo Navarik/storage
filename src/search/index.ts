@@ -2,13 +2,13 @@ import util from "util"
 import { SearchIndex, CanonicalEntity, SearchOptions, SearchQuery, CanonicalSchema } from "../types"
 import { FieldFactory } from "./field-factory"
 import { ObjectField } from "./fields/object-field"
-import { Linker } from "./linker"
+import { Compiler } from "./compiler"
 
 export class Search<MetaType extends object> {
   private searchIndex: SearchIndex<MetaType>
   private searchSchema: ObjectField
   private fieldFactory: FieldFactory
-  private linker: Linker
+  private compiler: Compiler
 
   constructor({ index }) {
     this.searchIndex = index
@@ -31,7 +31,7 @@ export class Search<MetaType extends object> {
       ] }
     })
 
-    this.linker = new Linker({ searchSchema: this.searchSchema })
+    this.compiler = new Compiler({ searchSchema: this.searchSchema })
   }
 
   registerSchema(schema: CanonicalSchema) {
@@ -39,14 +39,14 @@ export class Search<MetaType extends object> {
   }
 
   async find<BodyType extends object>(query: SearchQuery, options: SearchOptions = {}): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
-    const preparedQuery = this.linker.link(query)
+    const preparedQuery = this.compiler.compile(query)
     const collection = await this.searchIndex.find<BodyType>(preparedQuery, options)
 
     return collection
   }
 
   async count(query: SearchQuery): Promise<number> {
-    const preparedQuery = this.linker.link(query)
+    const preparedQuery = this.compiler.compile(query)
     console.log(util.inspect(preparedQuery, false, 10, true))
 
     const count = this.searchIndex.count(preparedQuery)

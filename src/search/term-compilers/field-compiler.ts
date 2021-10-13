@@ -1,14 +1,14 @@
-import { SearchableField, SearchQuery, QueryLinker } from "../../types"
+import { SearchableField, SearchQuery, QueryCompiler } from "../../types"
 import { ValidationError } from "../../errors/validation-error"
 
-export class FieldLinker implements QueryLinker {
+export class FieldCompiler implements QueryCompiler<SearchQuery> {
   private searchSchema: SearchableField
 
   constructor({ searchSchema }) {
     this.searchSchema = searchSchema
   }
 
-  link(query: SearchQuery) {
+  compile(query: SearchQuery) {
     const field = query.args[0]
     const linkedQuery = this.searchSchema.resolve(field.split("."), query)
 

@@ -85,14 +85,14 @@ export interface SearchableField {
   resolve(path: Array<string>, query: SearchQuery): false|SearchQuery
 }
 
-export type SearchOperator = "literal"|"noop"|"and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"|"subquery"
+export type SearchOperator = "noop"|"and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"|"subquery"
 export interface SearchQuery {
   operator: SearchOperator
   args: Array<any>
 }
 
-export interface QueryLinker {
-  link(query: SearchQuery): SearchQuery
+export interface QueryCompiler<T> {
+  compile(query: T): SearchQuery
 }
 
 export interface AccessControlAdapter<M extends object> {
