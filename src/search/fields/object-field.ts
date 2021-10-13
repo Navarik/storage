@@ -32,12 +32,12 @@ export class ObjectField implements SearchableField {
     }
   }
 
-  resolve([head, ...tail]: Array<string>, query) {
+  resolve([head, ...tail]: Array<string>, query, schemaRoot: SearchableField) {
     if (typeof head !== "string" || !this.fields[head]) {
       return false
     }
 
-    const descriptors = this.fields[head].resolve(tail, query)
+    const descriptors = this.fields[head].resolve(tail, query, schemaRoot)
 
     return descriptors
   }

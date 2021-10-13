@@ -17,7 +17,7 @@ export class ObjectCompiler implements QueryCompiler<Dictionary<any>> {
       const condition = this.searchSchema.resolve(fieldPath, {
         operator: "eq",
         args: [field, query[field]]
-      })
+      }, this.searchSchema)
 
       if (!condition) {
         throw new ValidationError(`Unrecognized field: ${field}.`)

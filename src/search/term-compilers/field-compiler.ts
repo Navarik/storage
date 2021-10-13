@@ -10,7 +10,7 @@ export class FieldCompiler implements QueryCompiler<SearchQuery> {
 
   compile(query: SearchQuery) {
     const field = query.args[0]
-    const linkedQuery = this.searchSchema.resolve(field.split("."), query)
+    const linkedQuery = this.searchSchema.resolve(field.split("."), query, this.searchSchema)
 
     if (!linkedQuery) {
       throw new ValidationError(`Unrecognized field: ${field}.`)

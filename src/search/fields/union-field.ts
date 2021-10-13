@@ -27,8 +27,8 @@ export class UnionField implements SearchableField {
     }
   }
 
-  resolve(path: Array<string>, query: SearchQuery) {
-    const options = Object.values(this.types).flatMap(x => x.resolve(path, query))
+  resolve(path: Array<string>, query: SearchQuery, schemaRoot: SearchableField) {
+    const options = Object.values(this.types).flatMap(x => x.resolve(path, query, schemaRoot))
     const validOptions = <Array<SearchQuery>>options.filter(x => x !== false)
 
     const result: SearchQuery = validOptions.length === 1

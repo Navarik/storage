@@ -1,13 +1,6 @@
 import { SearchableField, SchemaField, SearchQuery } from "../../types"
-import { FieldFactory } from "../field-factory"
 
 export class ReferenceField implements SearchableField {
-  private factory: FieldFactory
-
-  constructor(factory: FieldFactory) {
-    this.factory = factory
-  }
-
   chain(field: SchemaField) {
     throw new Error("Can't chain reference types.")
   }
@@ -15,7 +8,7 @@ export class ReferenceField implements SearchableField {
   merge(field: SchemaField) {
   }
 
-  resolve(path: Array<string>, query: SearchQuery) {
+  resolve(path: Array<string>, query: SearchQuery, schemaRoot: SearchableField) {
     if (path.length === 0) {
       return query
     }
@@ -23,6 +16,10 @@ export class ReferenceField implements SearchableField {
     const [ field, value ] = query.args
     const nestedField = path.join(".")
     const referenceField = field.replace(`.${nestedField}`, "")
+    const subquery = {
+      operator: query.operator,
+      args: [nestedField, value]
+    }
 
     const result: SearchQuery = {
       operator: "in",
@@ -30,10 +27,7 @@ export class ReferenceField implements SearchableField {
         referenceField,
         {
           operator: "subquery",
-          args: [{
-            operator: query.operator,
-            args: [nestedField, value]
-          }]
+          args: [schemaRoot.resolve(path, subquery, schemaRoot)]
         }
       ]
     }

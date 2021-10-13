@@ -24,11 +24,11 @@ export class ArrayField implements SearchableField {
 
   }
 
-  resolve([head, ...tail]: Array<string>, query: SearchQuery) {
+  resolve([head, ...tail]: Array<string>, query: SearchQuery, schemaRoot: SearchableField) {
     if (head !== "*") {
       return false
     }
 
-    return this.items.resolve(tail, query)
+    return this.items.resolve(tail, query, schemaRoot)
   }
 }

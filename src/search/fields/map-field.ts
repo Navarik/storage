@@ -18,11 +18,11 @@ export class MapField implements SearchableField {
 
   }
 
-  resolve([head, ...tail]: Array<string>, query) {
+  resolve([head, ...tail]: Array<string>, query, schemaRoot: SearchableField) {
     if (typeof head !== "string") {
       return false
     }
 
-    return this.items.resolve(tail, query)
+    return this.items.resolve(tail, query, schemaRoot)
   }
 }

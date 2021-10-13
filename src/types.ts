@@ -82,7 +82,7 @@ export type AccessControlDecision = {
 export interface SearchableField {
   chain(field: SchemaField): void
   merge(field: SchemaField): void
-  resolve(path: Array<string>, query: SearchQuery): false|SearchQuery
+  resolve(path: Array<string>, query: SearchQuery, schemaRoot: SearchableField): false|SearchQuery
 }
 
 export type SearchOperator = "noop"|"and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"|"subquery"|"fulltext"

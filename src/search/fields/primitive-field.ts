@@ -15,7 +15,7 @@ export class PrimitiveField implements SearchableField {
   merge(field: SchemaField) {
   }
 
-  resolve(path: Array<string>, query) {
+  resolve(path: Array<string>, query, schemaRoot: SearchableField) {
     if (path.length > 0) {
       return false
     }
