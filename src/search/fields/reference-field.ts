@@ -1,6 +1,13 @@
 import { SearchableField, SchemaField, SearchQuery } from "../../types"
+import { FieldFactory } from "../field-factory"
 
 export class ReferenceField implements SearchableField {
+  private factory: FieldFactory
+
+  constructor(factory: FieldFactory) {
+    this.factory = factory
+  }
+
   chain(field: SchemaField) {
     throw new Error("Can't chain reference types.")
   }
