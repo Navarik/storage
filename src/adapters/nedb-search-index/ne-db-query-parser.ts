@@ -5,7 +5,6 @@ import { SearchQuery } from '../../types'
 type OperatorFactory = (args: Array<any>, db: NeDbSearchIndex<any>) => Promise<object|string>
 
 const operators: Dictionary<OperatorFactory> = {
-  literal: async ([value]) => value,
   and: async (args: Array<any>, db) => ({ $and: await Promise.all(args.map(x => parseTerm(x, db))) }),
   or: async (args: Array<any>, db) => ({ $or: await Promise.all(args.map(x => parseTerm(x, db))) }),
   eq: async ([field, value]: Array<any>, db) => ({ [field]: await parseTerm(value, db) }),
