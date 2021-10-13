@@ -7,9 +7,11 @@ export class DefaultFieldExtractor {
     this.callback = callback
   }
 
-  async extract({ name, type }: SchemaField, body: object, id: string) {
+  async extract({ name, type }: SchemaField, body: any, { id, key }) {
     if (type === "text") {
-      await this.callback(id, body[name])
+      const data = name ? body[name] : body
+      const uniqueKey = name ? `${key}.${name}` : key
+      await this.callback(uniqueKey, id, data)
     }
   }
 }

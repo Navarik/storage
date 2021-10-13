@@ -7,10 +7,10 @@ export class MapFieldExtractor {
     this.root = root
   }
 
-  async extract(field: SchemaField<{ values: SchemaField }>, body: object, id: string) {
+  async extract(field: SchemaField<{ values: SchemaField }>, body: object, { id, key }) {
     const content = body[field.name]
-    for (const key of Object.keys(content)) {
-      await this.root.extract(field.parameters.values, content[key], id)
+    for (const index of Object.keys(content)) {
+      await this.root.extract(field.parameters.values, content[index], { id, key: `${key}.${index}` })
     }
   }
 }

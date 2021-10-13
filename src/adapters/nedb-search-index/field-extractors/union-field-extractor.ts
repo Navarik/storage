@@ -7,9 +7,11 @@ export class UnionFieldExtractor {
     this.callback = callback
   }
 
-  async extract({ name, parameters }: SchemaField<{ options: Array<string> }>, body: object, id: string) {
+  async extract({ name, parameters }: SchemaField<{ options: Array<string> }>, body: object, { id, key }) {
     if (parameters.options.includes("text") && typeof body[name] === "string") {
-      await this.callback(id, body[name])
+      const data = name ? body[name] : body
+      const uniqueKey = name ? `${key}.${name}` : key
+      await this.callback(uniqueKey, id, data)
     }
   }
 }

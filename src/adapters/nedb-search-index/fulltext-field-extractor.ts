@@ -18,9 +18,9 @@ export class FullTextFieldExtractor {
     }
   }
 
-  async extract(field: SchemaField, body: object, id: string) {
+  async extract(field: SchemaField, body: object, { id, key }) {
     const extractor = this.extractors[field.type] || this.extractors.other
-    const result = await extractor.extract(field, body, id)
+    const result = await extractor.extract(field, body, { id, key })
 
     return result
   }

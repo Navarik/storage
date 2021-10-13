@@ -7,14 +7,14 @@ export class ObjectFieldExtractor {
     this.root = root
   }
 
-  async extract({ name, parameters }: SchemaField<{ fields: Array<SchemaField> }>, body: object, id: string) {
+  async extract({ name, parameters }: SchemaField<{ fields: Array<SchemaField> }>, body: object, { id, key }) {
     const content = body[name]
     if (content === undefined || content === null) {
       return
     }
 
     for (const field of parameters.fields) {
-      await this.root.extract(field, content[field.name], id)
+      await this.root.extract(field, content[field.name], { id, key: `${key}.${field.name}` })
     }
   }
 }

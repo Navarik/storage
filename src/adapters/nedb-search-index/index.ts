@@ -32,16 +32,18 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
     this.fullTextFieldExtractor = new FullTextFieldExtractor({ callback: this.onFullTextUpdate.bind(this) })
   }
 
-  private onFullTextUpdate(id: string, text :string) {
+  private onFullTextUpdate(key: string, id: string, text :string) {
     return new Promise((resolve, reject) =>
-      this.fullText.update({ id }, { id, text }, { upsert: true, multi: true }, callback(resolve, reject))
+      this.fullText.update({ id, key }, { id, key, text }, { upsert: true, multi: true }, callback(resolve, reject))
     )
   }
 
   private async index<B extends object, M extends object>(document: CanonicalEntity<B, M>, schema: CanonicalSchema): Promise<void> {
     this.logger.trace({ component: 'Storage.NeDbSearchIndex', document }, `Indexing document`)
 
-    schema.fields.forEach(x => this.fullTextFieldExtractor.extract(x, document.body, document.id))
+    schema.fields.forEach(x =>
+      this.fullTextFieldExtractor.extract(x, document.body, { id: document.id, key: document.id })
+    )
 
     return new Promise((resolve, reject) =>
       this.documents.update(
@@ -56,13 +58,14 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
   private async delete<B extends object, M extends object>(document: CanonicalEntity<B, M>): Promise<void> {
     this.logger.trace({ component: 'Storage.NeDbSearchIndex', id: document.id }, `Deleting document`)
 
-    return new Promise((resolve, reject) =>
-      this.documents.remove(
-        { id: document.id },
-        {},
-        callback(resolve, reject)
+    await Promise.all([
+      new Promise((resolve, reject) =>
+        this.documents.remove({ id: document.id }, {}, callback(resolve, reject))
+      ),
+      new Promise((resolve, reject) =>
+        this.fullText.remove({ id: document.id }, {}, callback(resolve, reject))
       )
-    )
+    ])
   }
 
   async find<B extends object, M extends object>(searchParams: SearchQuery, options: SearchOptions = {}): Promise<Array<CanonicalEntity<B, M>>> {
@@ -110,8 +113,7 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
     }
   }
 
-  async up() {
-  }
+  async up() {}
 
   async down() {}
 
