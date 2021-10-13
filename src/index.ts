@@ -77,6 +77,8 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       index: this.searchIndex
     })
 
+    this.search.registerFields("meta", meta)
+
     this.currentState = new State({
       cacheSize,
       searchIndex: this.searchIndex
@@ -189,7 +191,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
   define(schema: CanonicalSchema) {
     this.schema.define(schema)
-    this.search.registerSchema(schema)
+    this.search.registerFields("body", schema.fields)
   }
 
   async has(id: UUID): Promise<boolean> {

@@ -1,5 +1,4 @@
-import util from "util"
-import { SearchIndex, CanonicalEntity, SearchOptions, SearchQuery, CanonicalSchema } from "../types"
+import { SearchIndex, CanonicalEntity, SearchOptions, SearchQuery, SchemaField } from "../types"
 import { FieldFactory } from "./field-factory"
 import { ObjectField } from "./fields/object-field"
 import { Compiler } from "./compiler"
@@ -27,15 +26,16 @@ export class Search<MetaType extends object> {
         { name: "modified_at", type: "datetime" },
         { name: "type", type: "string" },
         { name: "schema", type: "uuid" },
-        { name: "body", type: "object", parameters: { fields: [] } }
+        { name: "body", type: "object", parameters: { fields: [] } },
+        { name: "meta", type: "object", parameters: { fields: [] } }
       ] }
     })
 
     this.compiler = new Compiler({ searchSchema: this.searchSchema })
   }
 
-  registerSchema(schema: CanonicalSchema) {
-    this.searchSchema.chain({ name: "body", type: "object", parameters: { fields: schema.fields } })
+  registerFields(branch: string, fields: Array<SchemaField>) {
+    this.searchSchema.chain({ name: branch, type: "object", parameters: { fields } })
   }
 
   async find<BodyType extends object>(query: SearchQuery, options: SearchOptions = {}): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
@@ -47,8 +47,6 @@ export class Search<MetaType extends object> {
 
   async count(query: SearchQuery): Promise<number> {
     const preparedQuery = this.compiler.compile(query)
-    console.log(util.inspect(preparedQuery, false, 10, true))
-
     const count = this.searchIndex.count(preparedQuery)
 
     return count

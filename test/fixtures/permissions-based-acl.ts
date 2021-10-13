@@ -50,7 +50,7 @@ export class PermissionsBasedAccessControl implements AccessControlAdapter<any> 
     // this is always false for the purpose of these tests so that the query yields nothing
     return {
       operator: "eq",
-      args: [true, false]
+      args: ["id", "000"]
     }
   }
 }
