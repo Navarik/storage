@@ -6,7 +6,7 @@ const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events').default
 const fixturesJobs: Array<CanonicalEntity<any, any>> = require('../fixtures/data/job-orders').default
 
-export const entityCount = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
+export const count = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
     data: [ ...fixturesEvents, ...fixturesJobs ],

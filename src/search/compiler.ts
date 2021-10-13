@@ -14,6 +14,7 @@ export class Compiler implements QueryCompiler<SearchQuery|Dictionary<any>> {
     this.termCompilers = {
       "noop": new PassthroughCompiler(),
       "subquery": new PassthroughCompiler(),
+      "fulltext": new PassthroughCompiler(),
       "and": new NestedCompiler({ rootCompiler: this }),
       "or": new NestedCompiler({ rootCompiler: this }),
       "not": new NestedCompiler({ rootCompiler: this }),

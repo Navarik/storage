@@ -8,7 +8,7 @@ import { ReferenceField } from "./fields/reference-field"
 import { UnionField } from "./fields/union-field"
 
 export class FieldFactory {
-  private extractors: Dictionary<Instantiable<SearchableField>> = {
+  private typeFactories: Dictionary<Instantiable<SearchableField>> = {
     "array": ArrayField,
     "map": MapField,
     "object": ObjectField,
@@ -18,7 +18,7 @@ export class FieldFactory {
   }
 
   create(field: SchemaField) {
-    const FieldClass = this.extractors[field.type] || this.extractors.other
+    const FieldClass = this.typeFactories[field.type] || this.typeFactories.other
     const descriptor = new FieldClass(this, field)
 
     return descriptor

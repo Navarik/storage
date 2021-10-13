@@ -3,6 +3,7 @@ import { SearchQuery } from '../../types'
 import { BinaryLogicOperator } from './operators/binary-logic'
 import { ComparisonOperator } from './operators/comparison'
 import { EqualityOperator } from './operators/equality'
+import { FulltextOperator } from './operators/fulltext'
 import { NoopOperator } from './operators/noop'
 import { RegexOperator } from './operators/regex'
 import { SubqueryOperator } from './operators/subquery'
@@ -11,7 +12,7 @@ import { UnaryLogicOperator } from './operators/unary-logic'
 export class NeDbQueryParser {
   private operators
 
-  constructor({ db }) {
+  constructor({ documentsDb, fullTextDb }) {
     this.operators = {
       noop: new NoopOperator(),
       and: new BinaryLogicOperator({ operator: "$and", root: this }),
@@ -25,7 +26,8 @@ export class NeDbQueryParser {
       eq: new EqualityOperator({ root: this }),
       not: new UnaryLogicOperator({ operator: "$not", root: this }),
       like: new RegexOperator(),
-      subquery: new SubqueryOperator({ db })
+      subquery: new SubqueryOperator({ db: documentsDb, root: this }),
+      fulltext: new FulltextOperator({ db: fullTextDb })
     }
   }
 
