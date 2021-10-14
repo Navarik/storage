@@ -7,6 +7,9 @@ export class ReferenceField implements SearchableField {
   }
 
   merge(field: SchemaField) {
+    if (field.type !== "reference") {
+      throw new CompilerError(`Can't merge fields of different primitive types "reference" and "${field.type}".`)
+    }
   }
 
   resolve(path: Array<string>, query: SearchQuery, schemaRoot: SearchableField) {
