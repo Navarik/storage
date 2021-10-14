@@ -1,11 +1,10 @@
-import { SearchIndex, CanonicalEntity, SearchOptions, SearchQuery, SchemaField } from "../types"
+import { SearchIndex, CanonicalEntity, SearchOptions, SearchQuery, SchemaField, SearchableField } from "../types"
 import { FieldFactory } from "./field-factory"
-import { ObjectField } from "./fields/object-field"
 import { Compiler } from "./compiler"
 
 export class Search<MetaType extends object> {
   private searchIndex: SearchIndex<MetaType>
-  private searchSchema: ObjectField
+  private searchSchema: SearchableField
   private fieldFactory: FieldFactory
   private compiler: Compiler
 
@@ -13,7 +12,7 @@ export class Search<MetaType extends object> {
     this.searchIndex = index
 
     this.fieldFactory = new FieldFactory()
-    this.searchSchema = new ObjectField(this.fieldFactory, {
+    this.searchSchema = this.fieldFactory.create({
       name: "",
       type: "object",
       parameters: { fields: [
