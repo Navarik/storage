@@ -16,13 +16,9 @@ export class ArrayField implements SearchableField {
     this.items.chain(field.parameters.items)
   }
 
-  chain(field: SchemaField) {
+  chain(field: SchemaField) {}
 
-  }
-
-  merge(field: SchemaField) {
-
-  }
+  merge(field: SchemaField) {}
 
   resolve([head, ...tail]: Array<string>, query: SearchQuery, schemaRoot: SearchableField) {
     if (head !== "*") {

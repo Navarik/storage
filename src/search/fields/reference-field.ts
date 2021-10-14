@@ -1,8 +1,9 @@
 import { SearchableField, SchemaField, SearchQuery } from "../../types"
+import { CompilerError } from "../../errors/compiler-error"
 
 export class ReferenceField implements SearchableField {
   chain(field: SchemaField) {
-    throw new Error("Can't chain reference types.")
+    throw new CompilerError("Can't chain reference types.")
   }
 
   merge(field: SchemaField) {

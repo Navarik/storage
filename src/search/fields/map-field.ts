@@ -10,13 +10,9 @@ export class MapField implements SearchableField {
     this.items = factory.create(field.parameters.values)
   }
 
-  chain(field: SchemaField) {
+  chain(field: SchemaField) {}
 
-  }
-
-  merge(field: SchemaField) {
-
-  }
+  merge(field: SchemaField) {}
 
   resolve([head, ...tail]: Array<string>, query, schemaRoot: SearchableField) {
     if (typeof head !== "string") {
