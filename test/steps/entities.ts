@@ -13,10 +13,12 @@ export class EntitySteps {
   async cannotCreate(entity: EntityData<any, any>, user?: UUID) {
     try {
       await this.storage.create(entity, "AAA", user)
-      expect(true).to.equal(false, "Expected error didn't happen")
     } catch (err) {
       expect(true).to.equal(true)
+      return
     }
+
+    expect(true).to.equal(false, "Expected error didn't happen")
   }
 
   async canCreate(entity: EntityData<any, any>, user?: UUID) {
@@ -69,19 +71,23 @@ export class EntitySteps {
   async cannotGet(id: string, user?: UUID) {
     try {
       await this.storage.get(id, user)
-      expect(true).to.equal(false, "Expected error didn't happen")
     } catch (err) {
       expect(true).to.equal(true)
+      return
     }
+
+    expect(true).to.equal(false, "Expected error didn't happen")
   }
 
   async cannotDelete(id: string, user?: UUID) {
     try {
       await this.storage.delete(id, "Ohno!", user)
-      expect(true).to.equal(false, "Expected error didn't happen")
     } catch (err) {
       expect(true).to.equal(true)
+      return
     }
+
+    expect(true).to.equal(false, "Expected error didn't happen")
   }
 
   async cannotFind(entity: Partial<CanonicalEntity<any, any>>, user?: UUID) {

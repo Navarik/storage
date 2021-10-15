@@ -79,22 +79,6 @@ export type AccessControlDecision = {
   explanation: string
 }
 
-export interface SearchableField {
-  chain(field: SchemaField): void
-  merge(field: SchemaField): void
-  resolve(path: Array<string>, query: SearchQuery, schemaRoot: SearchableField): false|SearchQuery
-}
-
-export type SearchOperator = "noop"|"and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"|"subquery"|"fulltext"
-export interface SearchQuery {
-  operator: SearchOperator
-  args: Array<any>
-}
-
-export interface QueryCompiler<T> {
-  compile(query: T): SearchQuery
-}
-
 export interface AccessControlAdapter<M extends object> {
   check<B extends object>(subject: UUID, action: AccessType, object: CanonicalEntity<B, M>): Promise<AccessControlDecision>
   attachTerms<B extends object>(entity: CanonicalEntity<B, M>): Promise<CanonicalEntity<B, M>>
@@ -112,6 +96,10 @@ export interface FormattedEntity<T> {
 export interface ValidationResponse {
   isValid: boolean
   message: string
+}
+
+export interface ValidatableField {
+  validate(value: any): Promise<ValidationResponse>
 }
 
 export interface SchemaEngine {
@@ -132,6 +120,22 @@ export interface ChangelogAdapter<M extends object> extends Service {
   readAll(): Promise<void>
 }
 
+export interface SearchableField {
+  chain(field: SchemaField): void
+  merge(field: SchemaField): void
+  resolve(path: Array<string>, query: SearchQuery, schemaRoot: SearchableField): false|SearchQuery
+}
+
+export type SearchOperator = "noop"|"and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"|"subquery"|"fulltext"
+export interface SearchQuery {
+  operator: SearchOperator
+  args: Array<any>
+}
+
+export interface QueryCompiler<T> {
+  compile(query: T): SearchQuery
+}
+
 export type SearchOptions = {
   limit?: number
   offset?: number
@@ -145,10 +149,18 @@ export interface SearchIndex<M extends object> extends Service {
   isClean(): Promise<boolean>
 }
 
+export interface EntityRegistry<M extends object> extends Service {
+  put<B extends object>(document: CanonicalEntity<B, M>): Promise<void>
+  has(id: UUID): Promise<boolean>
+  get<B extends object>(id: UUID): Promise<CanonicalEntity<B, M>>
+  delete(id: UUID): Promise<void>
+}
+
 export interface StorageConfig<M extends object> {
   // Adapters - override when changing underlying technology
   changelog?: ChangelogAdapter<M>
   index?: SearchIndex<M>
+  state?: EntityRegistry<M>
   schemaEngine?: SchemaEngine
   schemaIdGenerator?: IdGenerator<CanonicalSchema>
 

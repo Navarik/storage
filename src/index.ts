@@ -1,10 +1,11 @@
 import { Logger } from "@navarik/types"
-import { CanonicalSchema, ValidationResponse, StorageInterface, AccessControlAdapter, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig } from "./types"
+import { CanonicalSchema, ValidationResponse, StorageInterface, AccessControlAdapter, EntityRegistry, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig } from "./types"
 import { AvroSchemaEngine } from "@navarik/avro-schema-engine"
 import { ConflictError } from "./errors/conflict-error"
 import { AccessError } from "./errors/access-error"
-import { State } from "./state"
+import { ValidationError } from "./errors/validation-error"
 import { Changelog } from "./changelog"
+import { DataLink } from "./data-link"
 import { Schema } from "./schema"
 import { Search } from "./search"
 
@@ -13,6 +14,7 @@ import { UpdateAction } from "./actions/update-action"
 import { DeleteAction } from "./actions/delete-action"
 
 import { UuidV5IdGenerator } from "./adapters/uuid-v5-id-generator"
+import { CachedSearchEntityRegistry } from "./adapters/cached-search-entity-registry"
 import { NeDbSearchIndex } from "./adapters/nedb-search-index/index"
 import { DefaultAccessControl } from "./adapters/default-access-control"
 import { DefaultChangelogAdapter } from "./adapters/default-changelog"
@@ -28,8 +30,9 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   private staticData: Array<ChangeEvent<any, MetaType>>
   private schema: Schema<MetaType>
   private search: Search<MetaType>
+  private dataLink: DataLink
   private accessControl: AccessControlAdapter<MetaType>
-  private currentState: State<MetaType>
+  private currentState: EntityRegistry<MetaType>
   private searchIndex: SearchIndex<MetaType>
   private changelog: Changelog<MetaType>
   private observers: Array<Observer<any, MetaType>>
@@ -53,13 +56,21 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   constructor(config: StorageConfig<MetaType> = {}) {
-    const { accessControl, changelog, index, schemaRegistry, schemaEngine, schemaIdGenerator, meta = [], schema = [], data = [], cacheSize = 5000000, logger } = config
+    const { accessControl, changelog, index, schemaRegistry, state, schemaEngine, schemaIdGenerator, meta = [], schema = [], data = [], cacheSize = 5000000, logger } = config
 
     this.isUp = false
     this.logger = logger || defaultLogger
     this.logger.debug({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}, static data: ${data.length})`)
 
     this.observers = []
+
+    this.accessControl = accessControl || new DefaultAccessControl()
+    this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
+    this.currentState = state || new CachedSearchEntityRegistry({
+      cacheSize,
+      searchIndex: this.searchIndex
+    })
+
     this.schema = new Schema({
       schemaEngine: schemaEngine || new AvroSchemaEngine(),
       schemaRegistry: schemaRegistry || new InMemorySchemaRegistry(),
@@ -70,18 +81,12 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       }
     })
 
-    this.accessControl = accessControl || new DefaultAccessControl()
-    this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
+    this.dataLink = new DataLink({
+      state: this.currentState
+    })
 
     this.search = new Search({
       index: this.searchIndex
-    })
-
-    this.search.registerFields("meta", meta)
-
-    this.currentState = new State({
-      cacheSize,
-      searchIndex: this.searchIndex
     })
 
     this.changelog = new Changelog<MetaType>({
@@ -96,6 +101,8 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       update: new UpdateAction({ schema: this.schema }),
       delete: new DeleteAction({ schema: this.schema })
     }
+
+    this.search.registerFields("meta", meta)
 
     // Static schema definitions if there is any
     schema.forEach(this.define.bind(this))
@@ -192,6 +199,11 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   define(schema: CanonicalSchema) {
     this.schema.define(schema)
     this.search.registerFields("body", schema.fields)
+    this.dataLink.registerSchema(schema.name, schema.fields)
+  }
+
+  validate<BodyType extends object>(entity: EntityData<BodyType, MetaType>): ValidationResponse {
+    return this.schema.validate(entity.type, entity.body, entity.meta)
   }
 
   async has(id: UUID): Promise<boolean> {
@@ -234,14 +246,15 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     return count
   }
 
-  validate<BodyType extends object>(entity: EntityData<BodyType, MetaType>): ValidationResponse {
-    return this.schema.validate(entity.type, entity.body, entity.meta)
-  }
-
   async create<BodyType extends object>(data: EntityData<BodyType, MetaType>, commitMessage: string = "", user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
     this.healthStats.totalCreateRequests++
 
     const changeEvent = this.actions.create.request(data, commitMessage, user)
+    const referenceValidation = await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body)
+    if (!referenceValidation.isValid) {
+      throw new ValidationError(referenceValidation.message)
+    }
+
     const transaction = this.changelog.requestChange(changeEvent)
 
     return transaction
@@ -256,6 +269,11 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     const changeEvent = this.actions.update.request(previous, data, commitMessage, user)
+    const referenceValidation = await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body)
+    if (!referenceValidation.isValid) {
+      throw new ValidationError(referenceValidation.message)
+    }
+
     const transaction = this.changelog.requestChange(changeEvent)
 
     return transaction

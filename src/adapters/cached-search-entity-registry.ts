@@ -1,17 +1,17 @@
 import LRU from "lru-cache"
-import { CanonicalEntity, SearchIndex, UUID } from "./types"
+import { CanonicalEntity, SearchIndex, UUID, EntityRegistry } from "../types"
 
-interface StateConfig<M extends object> {
+interface Config<M extends object> {
   cacheSize: number
   searchIndex: SearchIndex<M>
 }
 
-export class State<M extends object> {
+export class CachedSearchEntityRegistry<M extends object> implements EntityRegistry<M> {
   private cacheSize: number
   private cache: LRU<string, CanonicalEntity<any, M>>
   private searchIndex: SearchIndex<M>
 
-  constructor({ cacheSize, searchIndex }: StateConfig<M>) {
+  constructor({ cacheSize, searchIndex }: Config<M>) {
     this.cacheSize = cacheSize
     this.searchIndex = searchIndex
     this.cache = new LRU({
