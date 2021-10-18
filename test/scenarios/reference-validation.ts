@@ -20,14 +20,14 @@ const fixtureSchemata = [
     name: "user",
     fields: [
       { name: "name", type: "string" },
-      { name: "group", type: "reference" }
+      { name: "group", type: "reference", required: true }
     ]
   },
   {
     name: "message",
     fields: [
-      { name: "channel", type: "reference" },
-      { name: "user", type: "reference" },
+      { name: "channel", type: "reference", required: true },
+      { name: "user", type: "reference", required: true },
       { name: "content", type: "text" },
       { name: "tags", type: "map", parameters: { values: { type: "string" } } }
     ]

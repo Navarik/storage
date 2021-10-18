@@ -2,7 +2,7 @@ import { SchemaField, ValidatableField } from "../../types"
 
 interface Config {
   path: string
-  field: SchemaField<{ fields: Array<SchemaField> }>
+  field: SchemaField<{}>
 }
 
 export class PrimitiveField implements ValidatableField {
