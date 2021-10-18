@@ -5,7 +5,7 @@ export class QueryParser {
   private createTerm(field, value) {
     const term = (typeof value === "object") && value && value.operator
       ? value
-      : { operator: "eq", args: [field, value] }
+      : { operator: "eq", args: [ field, value ] }
 
     return term
   }
@@ -34,10 +34,10 @@ export class QueryParser {
     return query
   }
 
-  merge(operator: SearchOperator, queries: Array<SearchQuery|undefined>): SearchQuery|{} {
+  merge(operator: SearchOperator, queries: Array<SearchQuery|undefined>): SearchQuery {
     const cleanSet = queries.filter(x => x !== undefined)
     if (cleanSet.length === 0) {
-      return {}
+      return { operator: "noop", args: [] }
     }
 
     if (cleanSet.length === 1) {

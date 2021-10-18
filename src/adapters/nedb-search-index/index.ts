@@ -1,32 +1,76 @@
 import { Logger } from '@navarik/types'
 import Database from '@navarik/nedb'
-import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, ActionType } from '../../types'
+import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, ActionType, CanonicalSchema } from '../../types'
 import { NeDbQueryParser } from './ne-db-query-parser'
+import { FullTextFieldExtractor } from './fulltext-field-extractor'
 
-
-type Config = {
+interface Config {
   logger: Logger
 }
 
-const databaseError = (err: Error) => {
-  throw new Error(`[NeDB] Database error: ${err.message}`)
+const callback = (resolve, reject) => (err: Error, res) => {
+  if (err) {
+    reject(new Error(`[NeDB] Database error: ${err.message}`))
+  } else {
+    resolve(res)
+  }
 }
 
 export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
   private logger: Logger
-  private client: Database
+  private documents: Database
+  private fullText: Database
   private queryParser: NeDbQueryParser
+  private fullTextFieldExtractor: FullTextFieldExtractor
 
   constructor({ logger }: Config) {
     this.logger = logger
-    this.client = new Database()
-    this.queryParser = new NeDbQueryParser()
-    this.client.ensureIndex({ fieldName: 'id', unique: true })
+    this.documents = new Database()
+    this.documents.ensureIndex({ fieldName: 'id', unique: true })
+    this.fullText = new Database()
+    this.queryParser = new NeDbQueryParser({ documentsDb: this.documents, fullTextDb: this.fullText })
+    this.fullTextFieldExtractor = new FullTextFieldExtractor({ callback: this.onFullTextUpdate.bind(this) })
+  }
+
+  private onFullTextUpdate(key: string, id: string, text :string) {
+    return new Promise((resolve, reject) =>
+      this.fullText.update({ id, key }, { id, key, text }, { upsert: true, multi: true }, callback(resolve, reject))
+    )
+  }
+
+  private async index<B extends object, M extends object>(document: CanonicalEntity<B, M>, schema: CanonicalSchema): Promise<void> {
+    this.logger.trace({ component: 'Storage.NeDbSearchIndex', document }, `Indexing document`)
+
+    schema.fields.forEach(x =>
+      this.fullTextFieldExtractor.extract(x, document.body, { id: document.id, key: document.id })
+    )
+
+    return new Promise((resolve, reject) =>
+      this.documents.update(
+        { id: document.id },
+        document,
+        { upsert: true, multi: true },
+        callback(resolve, reject)
+      )
+    )
+  }
+
+  private async delete<B extends object, M extends object>(document: CanonicalEntity<B, M>): Promise<void> {
+    this.logger.trace({ component: 'Storage.NeDbSearchIndex', id: document.id }, `Deleting document`)
+
+    await Promise.all([
+      new Promise((resolve, reject) =>
+        this.documents.remove({ id: document.id }, {}, callback(resolve, reject))
+      ),
+      new Promise((resolve, reject) =>
+        this.fullText.remove({ id: document.id }, {}, callback(resolve, reject))
+      )
+    ])
   }
 
   async find<B extends object, M extends object>(searchParams: SearchQuery, options: SearchOptions = {}): Promise<Array<CanonicalEntity<B, M>>> {
-    const filter = this.queryParser.parseFilter(searchParams)
-    const query = this.client.find(filter, { _id: 0 })
+    const filter = await this.queryParser.parseFilter(searchParams)
+    const query = this.documents.find(filter, { _id: 0 })
     const { offset, limit, sort } = options
 
     if (offset) {
@@ -44,46 +88,24 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
     this.logger.trace({ component: 'Storage.NeDbSearchIndex', filter, limit, offset, sort: sortParams }, `Performing find operation`)
 
     const collection: Array<CanonicalEntity<B, M>> = await new Promise((resolve, reject) => {
-      query.exec((err: Error, res: Array<CanonicalEntity<B, M>>) => {
-        if (err) reject(databaseError(err))
-        else resolve((res || []))
-      })
+      query.exec(callback(resolve, reject))
     })
 
-    return collection
+    return collection || []
   }
 
   async count(searchParams: SearchQuery): Promise<number> {
-    const filter = this.queryParser.parseFilter(searchParams)
+    const filter = await this.queryParser.parseFilter(searchParams)
     this.logger.trace({ component: 'Storage.NeDbSearchIndex', filter }, `Performing find operation`)
 
     return new Promise((resolve, reject) => {
-      this.client.count(filter, (err: Error, res: number) => {
-        if (err) reject(databaseError(err))
-        else resolve(res)
-      })
+      this.documents.count(filter, callback(resolve, reject))
     })
   }
 
-  async index<B extends object, M extends object>(document: CanonicalEntity<B, M>): Promise<void> {
-    this.logger.trace({ component: 'Storage.NeDbSearchIndex', document }, `Indexing document`)
-
-    return new Promise((resolve, reject) =>
-      this.client.update(
-        { id: document.id },
-        document,
-        { upsert: true, multi: true },
-        (err: Error) => {
-          if (err) reject(databaseError(err))
-          else resolve()
-        }
-      )
-    )
-  }
-
-  async update<B extends object, M extends object>(action: ActionType, document: CanonicalEntity<B, M>): Promise<void> {
+  async update<B extends object, M extends object>(action: ActionType, document: CanonicalEntity<B, M>, schema: CanonicalSchema): Promise<void> {
     if (action === "create" || action === "update") {
-      await this.index(document)
+      await this.index(document, schema)
     } else if (action === "delete")  {
       await this.delete(document)
     } else {
@@ -91,25 +113,7 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
     }
   }
 
-  delete<B extends object, M extends object>(document: CanonicalEntity<B, M>): Promise<void> {
-    this.logger.trace({ component: 'Storage.NeDbSearchIndex', id: document.id }, `Deleting document`)
-
-    return new Promise((resolve, reject) =>
-      this.client.remove(
-        { id: document.id },
-        {},
-        (err: Error) => {
-          if (err) reject(databaseError(err))
-          else resolve()
-        }
-      )
-    )
-  }
-
-  async up() {
-    this.client = new Database()
-    this.client.ensureIndex({ fieldName: 'id', unique: true })
-  }
+  async up() {}
 
   async down() {}
 

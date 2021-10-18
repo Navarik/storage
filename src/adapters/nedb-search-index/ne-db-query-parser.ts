@@ -1,49 +1,55 @@
 import { Dictionary } from '@navarik/types'
 import { SearchQuery } from '../../types'
-
-type OperatorFactory = (args: Array<any>) => object|string
-
-const operators: Dictionary<OperatorFactory> = {
-  and: (args: Array<any>) => ({ $and: args.map(parseTerm) }),
-  or: (args: Array<any>) => ({ $or: args.map(parseTerm) }),
-  eq: ([field, value]: Array<any>) => ({ [field]: parseTerm(value) }),
-  in: ([field, value]: Array<any>) => ({ [field]: { $in: parseTerm(value) } }),
-  neq: (args: Array<any>) => ({ $not: parseTerm({ operator: "eq", args }) }),
-  gt: ([field, value]: Array<any>) => ({ [field]: { $gt: parseTerm(value) } }),
-  lt: ([field, value]: Array<any>) => ({ [field]: { $lt: parseTerm(value) } }),
-  gte: ([field, value]: Array<any>) => ({ [field]: { $gte: parseTerm(value) } }),
-  lte: ([field, value]: Array<any>) => ({ [field]: { $lte: parseTerm(value) } }),
-  not: (args: Array<any>) => ({ $not: parseTerm(args[0]) }),
-  like: ([field, regex, options]: Array<any>) => ({ [field]: { $regex: new RegExp(regex, options) } })
-}
-
-const parseTerm = (term: SearchQuery) => {
-  if (typeof term !== "object" || term === null || !term.operator) {
-    return term
-  }
-
-  const parseOperator = operators[term.operator]
-  if (!parseOperator) {
-    throw new Error(`[NeDbSearchIndex] Query operator not implemented: ${term.operator}`)
-  }
-
-  return parseOperator(term.args)
-}
+import { BinaryLogicOperator } from './operators/binary-logic'
+import { ComparisonOperator } from './operators/comparison'
+import { EqualityOperator } from './operators/equality'
+import { FulltextOperator } from './operators/fulltext'
+import { NoopOperator } from './operators/noop'
+import { RegexOperator } from './operators/regex'
+import { SubqueryOperator } from './operators/subquery'
+import { UnaryLogicOperator } from './operators/unary-logic'
 
 export class NeDbQueryParser {
-  parseFilter(query: SearchQuery): Dictionary<any> {
-    return <Dictionary<any>>parseTerm(query)
+  private operators
+
+  constructor({ documentsDb, fullTextDb }) {
+    this.operators = {
+      noop: new NoopOperator(),
+      and: new BinaryLogicOperator({ operator: "$and", root: this }),
+      or: new BinaryLogicOperator({ operator: "$or", root: this }),
+      in: new ComparisonOperator({ operator: "$in", root: this }),
+      gt: new ComparisonOperator({ operator: "$gt", root: this }),
+      lt: new ComparisonOperator({ operator: "$lt", root: this }),
+      gte: new ComparisonOperator({ operator: "$gte", root: this }),
+      lte: new ComparisonOperator({ operator: "$lte", root: this }),
+      neq: new ComparisonOperator({ operator: "$ne", root: this }),
+      eq: new EqualityOperator({ root: this }),
+      not: new UnaryLogicOperator({ operator: "$not", root: this }),
+      like: new RegexOperator(),
+      subquery: new SubqueryOperator({ db: documentsDb, root: this }),
+      fulltext: new FulltextOperator({ db: fullTextDb })
+    }
+  }
+
+  async parseFilter(query: SearchQuery): Promise<Dictionary<any>> {
+    if (typeof query !== "object" || query === null || !query.operator) {
+      return query
+    }
+
+    const operator = this.operators[query.operator]
+    if (!operator) {
+      throw new Error(`[NeDbSearchIndex] Query operator not implemented: "${query.operator}".`)
+    }
+
+    return await operator.compile(query.args)
   }
 
   /**
-    * Translate the array of sort queries from CoreQL format to NeDB cursor.sort() format. Example:
-    *    received this:         [ 'vessels:asc', 'foo.bar.baz:desc', ... ]
-    *    NeDB wants this:       { vessels: 1 , 'foo.bar.baz': -1, ... }
-   * @param {string
-   * tring[]} sortQueries - A single sort query string or an array of sort query strings in descending priority:
-   * @returns {Array<Array>} - An array of one or more [string, number] pairs where string is the field to be sorted by and number is either 1 for ascending sorting or -1 for descending sorting.
+   * Translate the array of sort queries from CoreQL format to NeDB cursor.sort() format. Example:
+   *    received this:         [ 'vessels:asc', 'foo.bar.baz:desc', ... ]
+   *    NeDB wants this:       { vessels: 1 , 'foo.bar.baz': -1, ... }
    */
-   parseSort(sortQueries: Array<string>): Dictionary<number> {
+  parseSort(sortQueries: Array<string>): Dictionary<number> {
     const result: Dictionary<number> = {}
     for (const item of sortQueries) {
       const [field, order] = item.split(':')

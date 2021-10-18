@@ -61,7 +61,12 @@
     "fields": [
       { "name": "inspection", "type": "object", "parameters": {
         "fields": [
-          { "name": "contract", "type": "string" },
+          { "name": "contract", "type": "union", "parameters": {
+            "options": [
+              { "type": "string" },
+              { "type": "int" }
+            ]
+          } },
           { "name": "vesselQuantity", "type": "string" },
           { "name": "terminalQuantity", "type": "string" },
           { "name": "timeLog", "type": "string" },

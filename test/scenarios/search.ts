@@ -159,16 +159,6 @@ export const search = (createStorage: <T extends object = {}>(config: StorageCon
       )).to.equal(3)
     })
 
-    it("doesn't break easily", async () => {
-      expect(await storage.count({ operator: "like", args: [] })).to.equal(0)
-      expect(await storage.count({ operator: "like", args: [undefined] })).to.equal(0)
-      expect(await storage.count({ operator: "like", args: [null] })).to.equal(0)
-      expect(await storage.count({ operator: "like", args: [0] })).to.equal(0)
-      expect(await storage.count({ operator: "eq", args: [] })).to.equal(0)
-      expect(await storage.count({ operator: "eq", args: [undefined] })).to.equal(0)
-      expect(await storage.count({ operator: "eq", args: [null] })).to.equal(0)
-    })
-
     it("can't find what's not there", async () => {
       const response = await storage.find({ 'body.sender': '100500' })
       expect(response).to.be.an('array')

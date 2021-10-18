@@ -65,10 +65,6 @@ export class Schema<M extends object> {
   }
 
   validate<T = any>(type: string, body: T, meta: M) {
-    if (!type) {
-      return { isValid: false, message: "Type must be provided.", schema: null, schemaId: null }
-    }
-
     const schema = this.describe(type)
     if (!schema) {
       return { isValid: false, message: `Type "${type}" not found.`, schema: null, schemaId: null }
@@ -81,7 +77,12 @@ export class Schema<M extends object> {
       return { ...metaValidationResult, schema, schemaId }
     }
 
-    return { ...this.schemaEngine.validate(schemaId, body), schema, schemaId }
+    const dataValidationResult = this.schemaEngine.validate(schemaId, body)
+    if (!dataValidationResult.isValid) {
+      return { ...dataValidationResult, schema, schemaId }
+    }
+
+    return { isValid: true, message: "", schema, schemaId }
   }
 
   format<T = any>(type: string, body: T, meta: M) {
