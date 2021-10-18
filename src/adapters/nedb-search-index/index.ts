@@ -41,9 +41,11 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
   private async index<B extends object, M extends object>(document: CanonicalEntity<B, M>, schema: CanonicalSchema): Promise<void> {
     this.logger.trace({ component: 'Storage.NeDbSearchIndex', document }, `Indexing document`)
 
-    schema.fields.forEach(x =>
-      this.fullTextFieldExtractor.extract(x, document.body, { id: document.id, key: document.id })
-    )
+    if (schema.fields) {
+      schema.fields.forEach(x =>
+        this.fullTextFieldExtractor.extract(x, document.body, { id: document.id, key: document.id })
+      )
+    }
 
     return new Promise((resolve, reject) =>
       this.documents.update(
