@@ -22,7 +22,8 @@ export class DataLink {
   async validate<BodyType extends object>(type: string, body: BodyType): Promise<ValidationResponse> {
     const typeSchema = this.schema[type]
     if (!typeSchema) {
-      return { isValid: false, message: `Unknown type "${type}".` }
+      // No links to validate. Whatever it is, it must be valid.
+      return { isValid: true, message: "" }
     }
 
     return typeSchema.validate(body)
