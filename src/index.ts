@@ -71,22 +71,24 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       searchIndex: this.searchIndex
     })
 
-    this.schema = new Schema({
-      schemaEngine: schemaEngine || new AvroSchemaEngine(),
-      schemaRegistry: schemaRegistry || new InMemorySchemaRegistry(),
-      idGenerator: schemaIdGenerator || new UuidV5IdGenerator({ root: defaultSchemaIdNamespace }),
-      metaSchema: {
-        name: "metadata",
-        fields: meta
-      }
-    })
-
     this.dataLink = new DataLink({
       state: this.currentState
     })
 
     this.search = new Search({
       index: this.searchIndex
+    })
+
+    this.schema = new Schema({
+      schemaEngine: schemaEngine || new AvroSchemaEngine(),
+      schemaRegistry: schemaRegistry || new InMemorySchemaRegistry(),
+      idGenerator: schemaIdGenerator || new UuidV5IdGenerator({ root: defaultSchemaIdNamespace }),
+      dataLink: this.dataLink,
+      search: this.search,
+      metaSchema: {
+        name: "metadata",
+        fields: meta
+      }
     })
 
     this.changelog = new Changelog<MetaType>({
@@ -198,8 +200,6 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
   define(schema: CanonicalSchema) {
     this.schema.define(schema)
-    this.search.registerFields("body", schema.fields)
-    this.dataLink.registerSchema(schema.name, schema.fields)
   }
 
   validate<BodyType extends object>(entity: EntityData<BodyType, MetaType>): ValidationResponse {
