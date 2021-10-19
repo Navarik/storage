@@ -16,6 +16,10 @@ export class DataLink {
   }
 
   registerSchema(type: string, fields: Array<SchemaField>) {
+    if (!fields) {
+      return
+    }
+
     this.schema[type] = this.fieldFactory.create("body", { name: "body", type: "object", parameters: { fields } })
   }
 
