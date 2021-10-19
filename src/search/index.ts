@@ -34,6 +34,10 @@ export class Search<MetaType extends object> {
   }
 
   registerFields(branch: string, fields: Array<SchemaField>) {
+    if (!fields) {
+      return
+    }
+
     this.searchSchema.chain({ name: branch, type: "object", parameters: { fields } })
   }
 
