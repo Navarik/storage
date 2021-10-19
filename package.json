@@ -1,7 +1,7 @@
 {
   "name": "@navarik/storage",
   "description": "Document storage with schemas and versions",
-  "version": "20.1.6",
+  "version": "20.1.7",
   "scripts": {
     "build": "rimraf dist && tsc -d",
     "prepublishOnly": "npm run build",
