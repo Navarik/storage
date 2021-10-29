@@ -8,6 +8,10 @@ export class DefaultFieldExtractor {
   }
 
   async extract({ name, type }: SchemaField, body: any, { id, key }) {
+    if (body === undefined || body === null) {
+      return
+    }
+
     if (type === "text") {
       const data = name ? body[name] : body
       const uniqueKey = name ? `${key}.${name}` : key
