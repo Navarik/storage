@@ -249,6 +249,10 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   async create<BodyType extends object>(data: EntityData<BodyType, MetaType>, commitMessage: string = "", user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
     this.healthStats.totalCreateRequests++
 
+    if (data.id && (await this.has(data.id))) {
+      throw new ConflictError(`Entity "${data.id}" already exists.`)
+    }
+
     const changeEvent = this.actions.create.request(data, commitMessage, user)
     const referenceValidation = await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body)
     if (!referenceValidation.isValid) {
@@ -265,7 +269,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
     const previous = await this.currentState.get(data.id)
     if (!previous) {
-      throw new ConflictError(`Update failed: can't find entity ${data.id}.`)
+      throw new ConflictError(`Update failed: can't find entity "${data.id}".`)
     }
 
     const changeEvent = this.actions.update.request(previous, data, commitMessage, user)
