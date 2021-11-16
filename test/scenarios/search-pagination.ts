@@ -66,7 +66,7 @@ export const searchPagination = (createStorage: <T extends object = {}>(config: 
     })
 
     it("can offset and limit with sort", async () => {
-      let response = await storage.find({ 'body.sender': 1, 'body.job_order': 13}, { limit: 2, offset: 2, sort: ['timestamp:asc'] })
+      let response = await storage.find({ 'body.sender': 1, 'body.job_order': 13}, { limit: 2, offset: 2, sort: ['body.timestamp:asc'] })
       expect(response).to.be.an('array')
       expect(response).to.have.length(2)
       response.forEach(expectEntity)
