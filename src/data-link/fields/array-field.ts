@@ -1,4 +1,4 @@
-import { SchemaField, ValidatableField } from "../../types"
+import { SchemaField, DataField } from "../../types"
 import { FieldFactory } from "../field-factory"
 
 interface Config {
@@ -7,9 +7,9 @@ interface Config {
   field: SchemaField<{ items: SchemaField }>
 }
 
-export class ArrayField implements ValidatableField {
+export class ArrayField implements DataField {
   private name: string
-  private items: ValidatableField
+  private items: DataField
 
   constructor({ factory, path, field: { parameters: { items } } }: Config) {
     this.name = path
@@ -29,5 +29,13 @@ export class ArrayField implements ValidatableField {
     }
 
     return { isValid, message }
+  }
+
+  async hydrate(value: any) {
+    if (!value) {
+      return value
+    }
+
+    return Promise.all(value.map(x => this.items.hydrate(x)))
   }
 }

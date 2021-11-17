@@ -1,5 +1,5 @@
 import { Dictionary, Instantiable } from "@navarik/types"
-import { SchemaField, ValidatableField, EntityRegistry } from "../types"
+import { SchemaField, DataField, EntityRegistry } from "../types"
 import { ArrayField } from "./fields/array-field"
 import { MapField } from "./fields/map-field"
 import { ObjectField } from "./fields/object-field"
@@ -9,7 +9,7 @@ import { UnionField } from "./fields/union-field"
 
 export class FieldFactory {
   private state: EntityRegistry<any>
-  private typeFactories: Dictionary<Instantiable<ValidatableField>> = {
+  private typeFactories: Dictionary<Instantiable<DataField>> = {
     "array": ArrayField,
     "map": MapField,
     "object": ObjectField,
