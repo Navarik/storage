@@ -1,11 +1,11 @@
-import { SchemaField, ValidatableField } from "../../types"
+import { SchemaField, DataField } from "../../types"
 
 interface Config {
   path: string
   field: SchemaField<{}>
 }
 
-export class PrimitiveField implements ValidatableField {
+export class PrimitiveField implements DataField {
   public name: string
   public type: string
 
@@ -19,5 +19,9 @@ export class PrimitiveField implements ValidatableField {
       isValid: true,
       message: ""
     }
+  }
+
+  async hydrate(value: any) {
+    return value
   }
 }

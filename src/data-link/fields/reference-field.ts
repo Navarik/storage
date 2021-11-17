@@ -1,4 +1,4 @@
-import { ValidatableField, EntityRegistry, SchemaField } from "../../types"
+import { DataField, EntityRegistry, SchemaField } from "../../types"
 
 interface Config {
   path: string
@@ -6,7 +6,7 @@ interface Config {
   field: SchemaField<{}>
 }
 
-export class ReferenceField implements ValidatableField {
+export class ReferenceField implements DataField {
   private name: string
   private state: EntityRegistry<any>
   private isRequired: boolean
@@ -36,5 +36,10 @@ export class ReferenceField implements ValidatableField {
       isValid: true,
       message: ""
     }
+  }
+
+  async hydrate(value: any) {
+    const referencedDocument = await this.state.get(value)
+    return referencedDocument
   }
 }

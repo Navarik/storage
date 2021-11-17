@@ -98,8 +98,9 @@ export interface ValidationResponse {
   message: string
 }
 
-export interface ValidatableField {
+export interface DataField {
   validate(value: any): Promise<ValidationResponse>
+  hydrate(value: any): Promise<any>
 }
 
 export interface SchemaEngine {
@@ -136,10 +137,15 @@ export interface QueryCompiler<T> {
   compile(query: T): SearchQuery
 }
 
-export type SearchOptions = {
+export interface GetOptions {
+  hydrate?: boolean
+}
+
+export interface SearchOptions {
   limit?: number
   offset?: number
   sort?: string|Array<string>
+  hydrate?: boolean
 }
 
 export interface SearchIndex<M extends object> extends Service {
@@ -186,7 +192,7 @@ export interface StorageInterface<MetaType extends object> extends Service {
   describe(type: string): CanonicalSchema|undefined
   define(schema: CanonicalSchema): void
   has(id: UUID): Promise<boolean>
-  get<BodyType extends object>(id: UUID, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
+  get<BodyType extends object>(id: UUID, user?: UUID, options?: GetOptions): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
   find<BodyType extends object>(query?: Dictionary<any>, options?: SearchOptions, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
   count(query?: Dictionary<any>, user?: UUID): Promise<number>
   validate<BodyType extends object>(entity: EntityData<BodyType, MetaType>): ValidationResponse

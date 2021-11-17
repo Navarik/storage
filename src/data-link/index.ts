@@ -1,5 +1,5 @@
 import { Dictionary } from "@navarik/types"
-import { SchemaField, EntityRegistry, ValidationResponse } from "../types"
+import { SchemaField, EntityRegistry, ValidationResponse, CanonicalEntity, DataField } from "../types"
 import { FieldFactory } from "./field-factory"
 
 interface Config {
@@ -7,7 +7,7 @@ interface Config {
 }
 
 export class DataLink {
-  private schema: Dictionary<any>
+  private schema: Dictionary<DataField>
   private fieldFactory: FieldFactory
 
   constructor({ state }: Config) {
@@ -31,5 +31,16 @@ export class DataLink {
     }
 
     return typeSchema.validate(body)
+  }
+
+  async hydrate(entity: CanonicalEntity<any, any>) {
+    const typeSchema = this.schema[entity.type]
+    if (!typeSchema) {
+      throw new Error(`Hydration failed: unknown type "${entity.type}".`)
+    }
+
+    const result = await typeSchema.hydrate(entity.body)
+
+    return result
   }
 }

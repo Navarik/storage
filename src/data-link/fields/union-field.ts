@@ -1,5 +1,5 @@
 import { Dictionary } from "@navarik/types"
-import { SchemaField, ValidatableField } from "../../types"
+import { SchemaField, DataField } from "../../types"
 import { FieldFactory } from "../field-factory"
 
 interface Config {
@@ -8,9 +8,9 @@ interface Config {
   field: SchemaField<{ options: Array<SchemaField> }>
 }
 
-export class UnionField implements ValidatableField {
+export class UnionField implements DataField {
   public name: string
-  public types: Dictionary<ValidatableField> = {}
+  public types: Dictionary<DataField> = {}
 
   constructor({ factory, path, field: { parameters: { options } } }: Config) {
     this.name = path
@@ -24,5 +24,9 @@ export class UnionField implements ValidatableField {
       isValid: true,
       message: ""
     }
+  }
+
+  async hydrate(value: any) {
+    return value
   }
 }

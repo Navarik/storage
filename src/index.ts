@@ -212,7 +212,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     return entityExists
   }
 
-  async get<BodyType extends object>(id: UUID, user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
+  async get<BodyType extends object>(id: UUID, user: UUID = nobody, options = { hydrate: false }): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
     this.healthStats.totalIdLookups++
 
     const entity = await this.currentState.get<BodyType>(id)
@@ -225,7 +225,13 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       throw new AccessError(access.explanation)
     }
 
-    return entity
+    if (!options.hydrate) {
+      return entity
+    }
+
+    const hydrated = await this.dataLink.hydrate(entity)
+
+    return hydrated
   }
 
   async find<BodyType extends object>(query: object, options: SearchOptions = {}, user: UUID = nobody): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
@@ -234,7 +240,13 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     const aclTerms = await this.accessControl.getQuery(user, "search")
     const collection = await this.search.find<BodyType>({ operator: "and", args: [aclTerms, query] }, options)
 
-    return collection
+    if (!options.hydrate) {
+      return collection
+    }
+
+    const hydrated = await Promise.all(collection.map(entity => this.dataLink.hydrate(entity)))
+
+    return hydrated
   }
 
   async count(query: object, user: UUID = nobody): Promise<number> {
