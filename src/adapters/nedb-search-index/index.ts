@@ -26,7 +26,6 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
   constructor({ logger }: Config) {
     this.logger = logger
     this.documents = new Database()
-    this.documents.ensureIndex({ fieldName: 'id', unique: true })
     this.fullText = new Database()
     this.queryParser = new NeDbQueryParser({ documentsDb: this.documents, fullTextDb: this.fullText })
     this.fullTextFieldExtractor = new FullTextFieldExtractor({ callback: this.onFullTextUpdate.bind(this) })
@@ -115,7 +114,14 @@ export class NeDbSearchIndex<M extends object> implements SearchIndex<M> {
     }
   }
 
-  async up() {}
+  async up() {
+    await new Promise((resolve, reject) => {
+      this.documents.ensureIndex({ fieldName: 'type' }, callback(resolve, reject))
+    })
+    await new Promise((resolve, reject) => {
+      this.documents.ensureIndex({ fieldName: 'id', unique: true }, callback(resolve, reject))
+    })
+  }
 
   async down() {}
 
