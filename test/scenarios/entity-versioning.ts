@@ -1,3 +1,4 @@
+import { expect } from "chai"
 import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
 import { expectSameEntity } from '../steps/checks'
 import { EntitySteps } from '../steps/entities'
@@ -49,6 +50,10 @@ export const entityVersioning = (createStorage: <T extends object = {}>(config: 
       expectSameEntity(response, lastVersion)
 
       await steps.canFind(lastVersion)
+    })
+
+    it('only one version counts', async () => {
+      expect(await storage.count({id})).to.equal(1)
     })
   })
 }
