@@ -1,7 +1,7 @@
 {
   "name": "@navarik/storage",
   "description": "Document storage with schemas and versions",
-  "version": "20.3.3",
+  "version": "20.3.4",
   "scripts": {
     "build": "rimraf dist && tsc -d",
     "prepublishOnly": "npm run build",
@@ -27,7 +27,7 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@navarik/types": "^7.6.0",
+    "@navarik/types": "^8.1.0",
     "@types/chai": "^4.2.15",
     "@types/lru-cache": "^5.1.0",
     "@types/mocha": "^9.0.0",
