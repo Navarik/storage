@@ -39,8 +39,8 @@ export class DataLink {
       throw new Error(`Hydration failed: unknown type "${entity.type}".`)
     }
 
-    const result = await typeSchema.hydrate(entity.body)
+    const body = await typeSchema.hydrate(entity.body)
 
-    return result
+    return { ...entity, body }
   }
 }

@@ -165,6 +165,13 @@ export const search = (createStorage: <T extends object = {}>(config: StorageCon
       expect(response).to.have.length(0)
     })
 
+    it("can hudrate found entities", async () => {
+      const response = await storage.find({ 'body.sender': 1 }, { hydrate: true })
+      expect(response).to.be.an('array')
+      expect(response).to.have.length(6)
+      response.forEach(expectEntity)
+    })
+
     after(() => storage.down())
   })
 }
