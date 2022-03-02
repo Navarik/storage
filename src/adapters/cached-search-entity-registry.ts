@@ -16,7 +16,8 @@ export class CachedSearchEntityRegistry<M extends object> implements EntityRegis
     this.searchIndex = searchIndex
     this.cache = new LRU({
       max: cacheSize,
-      length: (document) => JSON.stringify(document).length
+      maxSize: cacheSize,
+      sizeCalculation: (document) => JSON.stringify(document).length
     })
   }
 
@@ -56,7 +57,7 @@ export class CachedSearchEntityRegistry<M extends object> implements EntityRegis
   }
 
   async delete(id: UUID) {
-    this.cache.del(id)
+    this.cache.delete(id)
   }
 
   async up() {}
@@ -68,7 +69,7 @@ export class CachedSearchEntityRegistry<M extends object> implements EntityRegis
   async stats() {
     return {
       cacheSize: this.cacheSize,
-      cacheUsed: this.cache.length
+      cacheUsed: this.cache.size
     }
   }
 }

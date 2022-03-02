@@ -1,7 +1,7 @@
 {
   "name": "@navarik/storage",
   "description": "Document storage with schemas and versions",
-  "version": "20.3.4",
+  "version": "20.4.0",
   "scripts": {
     "build": "rimraf dist && tsc -d",
     "prepublishOnly": "npm run build",
@@ -18,7 +18,7 @@
     "@navarik/avro-schema-engine": "^1.1.1",
     "@navarik/nedb": "^1.0.1",
     "@navarik/transaction-manager": "^1.2.4",
-    "lru-cache": "^6.0.0",
+    "lru-cache": "^7.4.0",
     "uuid": "^8.3.2"
   },
   "engines": {
@@ -29,7 +29,7 @@
   "devDependencies": {
     "@navarik/types": "^8.1.0",
     "@types/chai": "^4.2.15",
-    "@types/lru-cache": "^5.1.0",
+    "@types/lru-cache": "^7.4.0",
     "@types/mocha": "^9.0.0",
     "@types/node": "^17.0.8",
     "@types/uuid": "^8.3.0",

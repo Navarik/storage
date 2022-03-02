@@ -56,7 +56,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   constructor(config: StorageConfig<MetaType> = {}) {
-    const { accessControl, changelog, index, schemaRegistry, state, schemaEngine, schemaIdGenerator, meta = [], schema = [], data = [], cacheSize = 5000000, logger } = config
+    const { accessControl, changelog, index, schemaRegistry, state, schemaEngine, schemaIdGenerator, meta = [], schema = [], data = [], cacheSize = 100000, logger } = config
 
     this.isUp = false
     this.logger = logger || defaultLogger

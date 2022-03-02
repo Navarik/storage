@@ -40,6 +40,7 @@ export class UpdateAction<M extends object> {
         id: oldEntity.id,
         version_id: uuidv5(JSON.stringify(formatted.body), oldEntity.id),
         previous_version_id: oldEntity.version_id,
+        last_action: "update",
         created_by: oldEntity.created_by,
         created_at: oldEntity.created_at,
         modified_by: user,
