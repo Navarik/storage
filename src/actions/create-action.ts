@@ -28,6 +28,7 @@ export class CreateAction<M extends object> {
         id: newId,
         version_id: uuidv5(JSON.stringify(formatted.body), newId),
         previous_version_id: null,
+        last_action: "create",
         created_by: user,
         created_at: now,
         modified_by: user,

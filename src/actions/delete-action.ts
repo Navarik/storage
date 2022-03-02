@@ -24,6 +24,7 @@ export class DeleteAction<M extends object> {
       message: commitMessage,
       entity: {
         ...entity,
+        last_action: "delete",
         modified_by: user,
         modified_at: now
       },

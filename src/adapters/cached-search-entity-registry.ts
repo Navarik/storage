@@ -16,7 +16,8 @@ export class CachedSearchEntityRegistry<M extends object> implements EntityRegis
     this.searchIndex = searchIndex
     this.cache = new LRU({
       max: cacheSize,
-      length: (document) => JSON.stringify(document).length
+      maxSize: cacheSize,
+      sizeCalculation: (document) => JSON.stringify(document).length
     })
   }
 
