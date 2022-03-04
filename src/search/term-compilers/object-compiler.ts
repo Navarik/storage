@@ -20,7 +20,7 @@ export class ObjectCompiler implements QueryCompiler<Dictionary<any>> {
       }, this.searchSchema)
 
       if (!condition) {
-        throw new ValidationError(`Unrecognized field: ${field}.`)
+        throw new ValidationError(`Unrecognized field: ${field}`)
       }
 
       args.push(condition)

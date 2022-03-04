@@ -38,7 +38,7 @@ export class NeDbQueryParser {
 
     const operator = this.operators[query.operator]
     if (!operator) {
-      throw new Error(`[NeDbSearchIndex] Query operator not implemented: "${query.operator}".`)
+      throw new Error(`[NeDbSearchIndex] Query operator not implemented: ${query.operator}`)
     }
 
     return await operator.compile(query.args)
