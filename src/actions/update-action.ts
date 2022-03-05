@@ -20,7 +20,7 @@ export class UpdateAction<M extends object> {
       throw new ConflictError(`Update unsuccessful due to missing version_id.`)
     }
     if (oldEntity.version_id != patch.version_id) {
-      throw new ConflictError(`${patch.version_id} is not the latest version id for entity "${patch.id}".`)
+      throw new ConflictError(`${patch.version_id} is not the latest version id for entity ${patch.id}`)
     }
 
     const type = patch.type || oldEntity.type

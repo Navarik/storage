@@ -262,7 +262,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.healthStats.totalCreateRequests++
 
     if (data.id && (await this.has(data.id))) {
-      throw new ConflictError(`Entity "${data.id}" already exists.`)
+      throw new ConflictError(`Entity ${data.id} already exists.`)
     }
 
     const changeEvent = this.actions.create.request(data, commitMessage, user)
@@ -281,7 +281,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
     const previous = await this.currentState.get(data.id)
     if (!previous) {
-      throw new ConflictError(`Update failed: can't find entity "${data.id}".`)
+      throw new ConflictError(`Update failed: can't find entity ${data.id}`)
     }
 
     const changeEvent = this.actions.update.request(previous, data, commitMessage, user)

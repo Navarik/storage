@@ -10,12 +10,12 @@ export class PrimitiveField implements SearchableField {
   }
 
   chain(field: SchemaField) {
-    throw new CompilerError("Can't chain primitive types.")
+    throw new CompilerError("Can't chain primitive types")
   }
 
   merge(field: SchemaField) {
     if (field.type !== this.type) {
-      throw new CompilerError(`Can't merge fields of different primitive types "${this.type}" and "${field.type}".`)
+      throw new CompilerError(`Can't merge fields of different primitive types ${this.type} and ${field.type}`)
     }
   }
 

@@ -37,7 +37,7 @@ export class Compiler implements QueryCompiler<SearchQuery|Dictionary<any>> {
 
     const compiler = this.termCompilers[query.operator]
     if (!compiler) {
-      throw new ValidationError(`Query term "${query.operator}" not recognized.`)
+      throw new ValidationError(`Query term ${query.operator} is not recognized.`)
     }
 
     return compiler.compile(<SearchQuery>query)

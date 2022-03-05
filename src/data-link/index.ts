@@ -36,7 +36,7 @@ export class DataLink {
   async hydrate(entity: CanonicalEntity<any, any>) {
     const typeSchema = this.schema[entity.type]
     if (!typeSchema) {
-      throw new Error(`Hydration failed: unknown type "${entity.type}".`)
+      throw new Error(`Hydration failed: unknown type ${entity.type}`)
     }
 
     const body = await typeSchema.hydrate(entity.body)
