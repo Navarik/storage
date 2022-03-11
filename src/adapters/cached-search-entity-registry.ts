@@ -58,6 +58,10 @@ export class CachedSearchEntityRegistry<M extends object> implements EntityRegis
     this.cache.delete(id)
   }
 
+  async isClean() {
+    return true
+  }
+
   async up() {}
   async down() {}
   async isHealthy() {

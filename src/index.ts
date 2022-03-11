@@ -1,13 +1,12 @@
-import { Logger } from "@navarik/types"
-import { CanonicalSchema, ValidationResponse, StorageInterface, AccessControlAdapter, EntityRegistry, SearchIndex, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig } from "./types"
+import { Dictionary, Logger } from "@navarik/types"
+import { CanonicalSchema, ValidationResponse, StorageInterface, EntityRegistry, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery } from "./types"
 import { AvroSchemaEngine } from "@navarik/avro-schema-engine"
 import { ConflictError } from "./errors/conflict-error"
-import { AccessError } from "./errors/access-error"
 import { ValidationError } from "./errors/validation-error"
 import { Changelog } from "./changelog"
 import { DataLink } from "./data-link"
 import { Schema } from "./schema"
-import { Search } from "./search"
+import { State } from "./state"
 
 import { CreateAction } from "./actions/create-action"
 import { UpdateAction } from "./actions/update-action"
@@ -29,24 +28,19 @@ const defaultSchemaIdNamespace = '00000000-0000-0000-0000-000000000000'
 export class Storage<MetaType extends object> implements StorageInterface<MetaType> {
   private staticData: Array<ChangeEvent<any, MetaType>>
   private schema: Schema<MetaType>
-  private search: Search<MetaType>
+  private state: State<MetaType>
   private dataLink: DataLink
-  private accessControl: AccessControlAdapter<MetaType>
   private currentState: EntityRegistry<MetaType>
-  private searchIndex: SearchIndex<MetaType>
   private changelog: Changelog<MetaType>
-  private observers: Array<Observer<any, MetaType>>
+  private observers: Array<Observer<any, MetaType>> = []
   private logger: Logger
   private healthStats = {
     upSince: new Date(),
-    totalIdLookups: 0,
-    totalSearchQueries: 0,
-    totalCountQueries: 0,
     totalCreateRequests: 0,
     totalUpdateRequests: 0,
     totalDeleteRequests: 0
   }
-  private isUp: boolean
+  private isUp: boolean = false
 
   // Change event factories
   private actions: {
@@ -56,45 +50,49 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   constructor(config: StorageConfig<MetaType> = {}) {
-    const { accessControl, changelog, index, schemaRegistry, state, schemaEngine, schemaIdGenerator, meta = [], schema = [], data = [], cacheSize = 100000, logger } = config
+    const { schema = [], data = [], cacheSize = 100000 } = config
 
-    this.isUp = false
-    this.logger = logger || defaultLogger
-    this.logger.debug({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}, static data: ${data.length})`)
+    this.logger = config.logger || defaultLogger
+    this.logger.info({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}, static data: ${data.length})`)
 
-    this.observers = []
+    const metaSchema = {
+      name: "metadata",
+      fields: config.meta || []
+    }
 
-    this.accessControl = accessControl || new DefaultAccessControl()
-    this.searchIndex = index || new NeDbSearchIndex({ logger: this.logger })
-    this.currentState = state || new CachedSearchEntityRegistry({
+    const accessControl = config.accessControl || new DefaultAccessControl()
+    const searchIndex = config.index || new NeDbSearchIndex<MetaType>({ logger: this.logger })
+
+    this.currentState = config.state || new CachedSearchEntityRegistry<MetaType>({
       cacheSize,
-      searchIndex: this.searchIndex
+      searchIndex
     })
 
     this.dataLink = new DataLink({
       state: this.currentState
     })
 
-    this.search = new Search({
-      index: this.searchIndex
+    this.state = new State<MetaType>({
+      logger: this.logger,
+      index: searchIndex,
+      registry: this.currentState,
+      accessControl,
+      metaSchema
     })
 
     this.schema = new Schema({
-      schemaEngine: schemaEngine || new AvroSchemaEngine(),
-      schemaRegistry: schemaRegistry || new InMemorySchemaRegistry(),
-      idGenerator: schemaIdGenerator || new UuidV5IdGenerator({ root: defaultSchemaIdNamespace }),
+      schemaEngine: config.schemaEngine || new AvroSchemaEngine(),
+      schemaRegistry: config.schemaRegistry || new InMemorySchemaRegistry(),
+      idGenerator: config.schemaIdGenerator || new UuidV5IdGenerator({ root: defaultSchemaIdNamespace }),
       dataLink: this.dataLink,
-      search: this.search,
-      metaSchema: {
-        name: "metadata",
-        fields: meta
-      }
+      state: this.state,
+      metaSchema
     })
 
     this.changelog = new Changelog<MetaType>({
-      adapter: changelog || new DefaultChangelogAdapter(),
+      adapter: config.changelog || new DefaultChangelogAdapter(),
       logger: this.logger,
-      accessControl: this.accessControl,
+      accessControl,
       observer: this.onChange.bind(this)
     })
 
@@ -104,32 +102,17 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       delete: new DeleteAction({ schema: this.schema })
     }
 
-    this.search.registerFields("meta", meta)
-
     // Static schema definitions if there is any
     schema.forEach(this.define.bind(this))
 
     // Static data is used primarily for automated tests
     this.staticData = data.map(document =>
-      this.actions.create.request(document, "Static data loaded", nobody)
+      this.actions.create.request(document, nobody)
     )
   }
 
-  private async updateState<B extends object>(event: ChangeEvent<B, MetaType>) {
-    this.logger.debug({ component: "Storage" }, `Processing "${event.action}" change event event for entity ${event.entity.id}`)
-
-    if (event.action === "delete") {
-      await this.currentState.delete(event.entity.id)
-    } else {
-      await this.currentState.put(event.entity)
-    }
-
-    const entityWithAcl = await this.accessControl.attachTerms(event.entity)
-    await this.searchIndex.update(event.action, entityWithAcl, event.schema, this.schema.metaSchema)
-  }
-
   private async onChange<B extends object>(event: ChangeEvent<B, MetaType>) {
-    await this.updateState(event)
+    await this.state.update(event)
 
     if (this.isUp) {
       this.logger.debug({ component: "Storage" }, `Notifying observers on change event for entity ${event.entity.id}`)
@@ -144,12 +127,12 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   async up() {
-    await this.searchIndex.up()
+    await this.state.up()
     for (const staticEntity of this.staticData) {
-      await this.updateState(staticEntity)
+      await this.state.update(staticEntity)
     }
 
-    if (!(await this.searchIndex.isClean())) {
+    if (!(await this.state.isClean())) {
       await this.changelog.readAll()
     } else {
       await this.changelog.up()
@@ -160,7 +143,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
   async down() {
     await this.changelog.down()
-    await this.searchIndex.down()
+    await this.state.down()
 
     this.isUp = false
   }
@@ -170,22 +153,21 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       return false
     }
 
-    const [changelogHealth, indexHealth, stateHealth] = await Promise.all([
+    const [changelogHealth, stateHealth] = await Promise.all([
       this.changelog.isHealthy(),
-      this.searchIndex.isHealthy(),
-      this.currentState.isHealthy()
+      this.state.isHealthy()
     ])
 
-    return changelogHealth && indexHealth && stateHealth
+    return changelogHealth && stateHealth
   }
 
   async stats() {
-    const cacheStats = await this.currentState.stats()
+    const stateStats = await this.state.stats()
     const changelogStats = await this.changelog.stats()
 
     return {
       ...this.healthStats,
-      ...cacheStats,
+      ...stateStats,
       ...changelogStats
     }
   }
@@ -207,76 +189,52 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   async has(id: UUID): Promise<boolean> {
-    const entityExists = await this.currentState.has(id)
-
-    return entityExists
+    return this.state.has(id)
   }
 
-  async get<BodyType extends object>(id: UUID, user: UUID = nobody, options = { hydrate: false }): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
-    this.healthStats.totalIdLookups++
-
-    const entity = await this.currentState.get<BodyType>(id)
+  async get<BodyType extends object>(id: UUID, { hydrate = false }: GetOptions = {}, user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
+    const entity = await this.state.get<BodyType>(id, user)
     if (!entity) {
       return undefined
     }
 
-    const access = await this.accessControl.check(user, "read", entity)
-    if (!access.granted) {
-      throw new AccessError(access.explanation)
-    }
-
-    if (!options.hydrate) {
-      return entity
-    }
-
-    const hydrated = await this.dataLink.hydrate(entity)
-
-    return hydrated
+    return hydrate
+      ? this.dataLink.hydrate(entity)
+      : entity
   }
 
-  async find<BodyType extends object>(query: object, options: SearchOptions = {}, user: UUID = nobody): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
-    this.healthStats.totalSearchQueries++
+  async find<BodyType extends object>(query: SearchQuery|Dictionary<any>, options: SearchOptions = {}, user: UUID = nobody): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
+    const { limit = 1000, offset = 0, sort = ["created_date:desc", "id:asc"], hydrate = false } = options
+    const collection = await this.state.find<BodyType>(query, { offset, limit, sort }, user)
 
-    const aclTerms = await this.accessControl.getQuery(user, "search")
-    const collection = await this.search.find<BodyType>({ operator: "and", args: [aclTerms, query] }, options)
-
-    if (!options.hydrate) {
+    if (!hydrate) {
       return collection
     }
 
-    const hydrated = await Promise.all(collection.map(entity => this.dataLink.hydrate(entity)))
-
-    return hydrated
+    return Promise.all(collection.map(entity => this.dataLink.hydrate(entity)))
   }
 
-  async count(query: object, user: UUID = nobody): Promise<number> {
-    this.healthStats.totalCountQueries++
-
-    const aclTerms = await this.accessControl.getQuery(user, "search")
-    const count = this.search.count({ operator: "and", args: [aclTerms, query] })
-
-    return count
+  async count(query: SearchQuery|Dictionary<any>, user: UUID = nobody): Promise<number> {
+    return this.state.count(query, user)
   }
 
-  async create<BodyType extends object>(data: EntityData<BodyType, MetaType>, commitMessage: string = "", user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
+  async create<BodyType extends object>(data: EntityData<BodyType, MetaType>, user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
     this.healthStats.totalCreateRequests++
 
     if (data.id && (await this.has(data.id))) {
       throw new ConflictError(`Entity ${data.id} already exists.`)
     }
 
-    const changeEvent = this.actions.create.request(data, commitMessage, user)
+    const changeEvent = this.actions.create.request(data, user)
     const referenceValidation = await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body)
     if (!referenceValidation.isValid) {
       throw new ValidationError(referenceValidation.message)
     }
 
-    const transaction = this.changelog.requestChange(changeEvent)
-
-    return transaction
+    return this.changelog.requestChange(changeEvent)
   }
 
-  async update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, commitMessage: string = "", user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
+  async update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
     this.healthStats.totalUpdateRequests++
 
     const previous = await this.currentState.get(data.id)
@@ -284,18 +242,16 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       throw new ConflictError(`Update failed: can't find entity ${data.id}`)
     }
 
-    const changeEvent = this.actions.update.request(previous, data, commitMessage, user)
+    const changeEvent = this.actions.update.request(previous, data, user)
     const referenceValidation = await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body)
     if (!referenceValidation.isValid) {
       throw new ValidationError(referenceValidation.message)
     }
 
-    const transaction = this.changelog.requestChange(changeEvent)
-
-    return transaction
+    return this.changelog.requestChange(changeEvent)
   }
 
-  async delete<BodyType extends object>(id: UUID, commitMessage: string = "", user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
+  async delete<BodyType extends object>(id: UUID, user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
     this.healthStats.totalDeleteRequests++
 
     const previous = await this.currentState.get<BodyType>(id)
@@ -303,10 +259,9 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       return undefined
     }
 
-    const changeEvent = this.actions.delete.request(previous, commitMessage, user)
-    const transaction = this.changelog.requestChange(changeEvent)
+    const changeEvent = this.actions.delete.request(previous, user)
 
-    return transaction
+    return this.changelog.requestChange(changeEvent)
   }
 
   observe<BodyType extends object>(handler: Observer<BodyType, MetaType>) {

@@ -12,7 +12,7 @@ export class EntitySteps {
 
   async cannotCreate(entity: EntityData<any, any>, user?: UUID) {
     try {
-      await this.storage.create(entity, "AAA", user)
+      await this.storage.create(entity, user)
     } catch (err) {
       expect(true).to.equal(true)
       return
@@ -23,7 +23,7 @@ export class EntitySteps {
 
   async canCreate(entity: EntityData<any, any>, user?: UUID) {
     // Create entity
-    const created = await this.storage.create(entity, "AAAA", user)
+    const created = await this.storage.create(entity, user)
     expectSameEntity(created, entity)
 
     // Try to read it back by ID
@@ -70,7 +70,7 @@ export class EntitySteps {
 
   async cannotGet(id: string, user?: UUID) {
     try {
-      await this.storage.get(id, user)
+      await this.storage.get(id, {}, user)
     } catch (err) {
       expect(true).to.equal(true)
       return
@@ -81,7 +81,7 @@ export class EntitySteps {
 
   async cannotDelete(id: string, user?: UUID) {
     try {
-      await this.storage.delete(id, "Ohno!", user)
+      await this.storage.delete(id, user)
     } catch (err) {
       expect(true).to.equal(true)
       return

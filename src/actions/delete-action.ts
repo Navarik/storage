@@ -13,7 +13,7 @@ export class DeleteAction<M extends object> {
     this.schema = schema
   }
 
-  request<B extends object>(entity: CanonicalEntity<B, M>, commitMessage: string, user: UUID): ChangeEvent<B, M> {
+  request<B extends object>(entity: CanonicalEntity<B, M>, user: UUID): ChangeEvent<B, M> {
     const now = new Date().toISOString()
     const schema = this.schema.describeEntity(entity)
 
@@ -21,7 +21,6 @@ export class DeleteAction<M extends object> {
       id: uuidv4(),
       action: "delete",
       user: user,
-      message: commitMessage,
       entity: {
         ...entity,
         last_action: "delete",

@@ -31,7 +31,7 @@ export class Changelog<MetaType extends object> {
     this.adapter.observe(x => this.onChange(x))
   }
 
-  async onChange<B extends object>(event: ChangeEvent<B, MetaType>) {
+  private async onChange<B extends object>(event: ChangeEvent<B, MetaType>) {
     this.healthStats.totalChangesReceived++
 
     try {
@@ -82,6 +82,9 @@ export class Changelog<MetaType extends object> {
   }
 
   async stats() {
-    return { ...this.healthStats }
+    return {
+      ...this.healthStats,
+      changelog: await this.adapter.stats()
+    }
   }
 }

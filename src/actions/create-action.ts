@@ -13,7 +13,7 @@ export class CreateAction<M extends object> {
     this.schema = schema
   }
 
-  request<B extends object>({ id, type, body, meta }: EntityData<B, M>, commitMessage: string, user: UUID): ChangeEvent<B, M> {
+  request<B extends object>({ id, type, body, meta }: EntityData<B, M>, user: UUID): ChangeEvent<B, M> {
     const formatted = this.schema.format(type, body, meta || {})
 
     const newId = id || uuidv4()
@@ -23,7 +23,6 @@ export class CreateAction<M extends object> {
       id: uuidv4(),
       action: "create",
       user: user,
-      message: commitMessage,
       entity: {
         id: newId,
         version_id: uuidv5(JSON.stringify(formatted.body), newId),

@@ -8,10 +8,6 @@ export class DefaultAccessControl<M extends object> implements AccessControlAdap
     }
   }
 
-  async attachTerms<B extends object>(entity: CanonicalEntity<B, M>): Promise<CanonicalEntity<B, M>> {
-    return entity
-  }
-
   async getQuery(subject: UUID, access: AccessType): Promise<SearchQuery|undefined> {
     return undefined
   }

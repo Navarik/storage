@@ -14,7 +14,7 @@ export class UpdateAction<M extends object> {
     this.schema = schema
   }
 
-  request<B extends object>(oldEntity: CanonicalEntity<Partial<B>, Partial<M>>, patch: EntityPatch<B, M>, commitMessage: string, user: UUID): ChangeEvent<B, M> {
+  request<B extends object>(oldEntity: CanonicalEntity<Partial<B>, Partial<M>>, patch: EntityPatch<B, M>, user: UUID): ChangeEvent<B, M> {
     // check if update is not based on an outdated entity
     if (!patch.version_id) {
       throw new ConflictError(`Update unsuccessful due to missing version_id.`)
@@ -35,7 +35,6 @@ export class UpdateAction<M extends object> {
       id: uuidv4(),
       action: "update",
       user: user,
-      message: commitMessage,
       entity: {
         id: oldEntity.id,
         version_id: uuidv5(JSON.stringify(formatted.body), oldEntity.id),

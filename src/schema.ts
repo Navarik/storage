@@ -1,43 +1,41 @@
 import { Dictionary } from '@navarik/types'
 import { SchemaRegistry, SchemaEngine, CanonicalSchema, CanonicalEntity, IdGenerator } from './types'
 import { ValidationError } from "./errors/validation-error"
-import { Search } from './search'
+import { State } from './state'
 import { DataLink } from './data-link'
 
 interface Config<M extends object> {
   schemaRegistry: SchemaRegistry
   schemaEngine: SchemaEngine
   metaSchema: CanonicalSchema
-  search: Search<M>
+  state: State<M>
   dataLink: DataLink
   idGenerator: IdGenerator<CanonicalSchema>
 }
 
 export class Schema<M extends object> {
-  public metaSchema: CanonicalSchema
   private idGenerator: IdGenerator<CanonicalSchema>
   private metaSchemaId: string
   private schemaRegistry: SchemaRegistry
   private schemaEngine: SchemaEngine
-  private search: Search<M>
+  private state: State<M>
   private dataLink: DataLink
   private knownTypes: Dictionary<string> = {}
 
-  constructor({ schemaRegistry, schemaEngine, metaSchema, idGenerator, search, dataLink }: Config<M>) {
+  constructor({ schemaRegistry, schemaEngine, metaSchema, idGenerator, state, dataLink }: Config<M>) {
     this.schemaRegistry = schemaRegistry
     this.schemaEngine = schemaEngine
     this.idGenerator = idGenerator
-    this.metaSchema = metaSchema
-    this.search = search
+    this.state = state
     this.dataLink = dataLink
-    this.metaSchemaId = this.idGenerator.id(this.metaSchema)
-    this.schemaEngine.register(this.metaSchemaId, this.metaSchema)
+    this.metaSchemaId = this.idGenerator.id(metaSchema)
+    this.schemaEngine.register(this.metaSchemaId, metaSchema)
 
     this.schemaRegistry.observe(this.onRegistryUpdate.bind(this))
   }
 
   private onRegistryUpdate(schemaId: string, schema: CanonicalSchema) {
-    this.search.registerFields("body", schema.fields)
+    this.state.registerFields("body", schema.fields)
     this.dataLink.registerSchema(schema.name, schema.fields)
     this.schemaEngine.register(schemaId, schema)
     this.knownTypes[schema.name] = schemaId

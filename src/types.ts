@@ -57,7 +57,6 @@ export interface ChangeEvent<B extends object, M extends object> {
   action: ActionType
   user: UUID
   timestamp: Timestamp
-  message: string
   entity: CanonicalEntity<B, M>
   schema: CanonicalSchema|undefined
   parent: CanonicalEntity<B, M>|undefined
@@ -82,7 +81,6 @@ export type AccessControlDecision = {
 
 export interface AccessControlAdapter<M extends object> {
   check<B extends object>(subject: UUID, action: AccessType, object: CanonicalEntity<B, M>): Promise<AccessControlDecision>
-  attachTerms<B extends object>(entity: CanonicalEntity<B, M>): Promise<CanonicalEntity<B, M>>
   getQuery(subject: UUID, access: AccessType): Promise<SearchQuery|undefined>
 }
 
@@ -161,6 +159,7 @@ export interface EntityRegistry<M extends object> extends Service {
   has(id: UUID): Promise<boolean>
   get<B extends object>(id: UUID): Promise<CanonicalEntity<B, M>>
   delete(id: UUID): Promise<void>
+  isClean(): Promise<boolean>
 }
 
 export interface StorageConfig<M extends object> {
@@ -193,12 +192,12 @@ export interface StorageInterface<MetaType extends object> extends Service {
   describe(type: string): CanonicalSchema|undefined
   define(schema: CanonicalSchema): void
   has(id: UUID): Promise<boolean>
-  get<BodyType extends object>(id: UUID, user?: UUID, options?: GetOptions): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
-  find<BodyType extends object>(query?: Dictionary<any>, options?: SearchOptions, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
-  count(query?: Dictionary<any>, user?: UUID): Promise<number>
+  get<BodyType extends object>(id: UUID, options?: GetOptions, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
+  find<BodyType extends object>(query?: SearchQuery|Dictionary<any>, options?: SearchOptions, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
+  count(query?: SearchQuery|Dictionary<any>, user?: UUID): Promise<number>
   validate<BodyType extends object>(entity: EntityData<BodyType, MetaType>): ValidationResponse
-  create<BodyType extends object>(data: EntityData<BodyType, MetaType>, commitMessage?: string, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType>>
-  update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, commitMessage?: string , user?: UUID): Promise<CanonicalEntity<BodyType, MetaType>>
-  delete<BodyType extends object>(id: UUID, commitMessage?: string, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
+  create<BodyType extends object>(data: EntityData<BodyType, MetaType>, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType>>
+  update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType>>
+  delete<BodyType extends object>(id: UUID, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
   observe<BodyType extends object>(handler: Observer<BodyType, MetaType>): void
 }
