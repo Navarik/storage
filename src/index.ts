@@ -13,7 +13,7 @@ import { UpdateAction } from "./actions/update-action"
 import { DeleteAction } from "./actions/delete-action"
 
 import { UuidV5IdGenerator } from "./adapters/uuid-v5-id-generator"
-import { CachedSearchEntityRegistry } from "./adapters/cached-search-entity-registry"
+import { SearchBasedEntityRegistry } from "./adapters/search-based-entity-registry"
 import { NeDbSearchIndex } from "./adapters/nedb-search-index/index"
 import { DefaultAccessControl } from "./adapters/default-access-control"
 import { DefaultChangelogAdapter } from "./adapters/default-changelog"
@@ -63,10 +63,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     const accessControl = config.accessControl || new DefaultAccessControl()
     const searchIndex = config.index || new NeDbSearchIndex<MetaType>({ logger: this.logger })
 
-    this.currentState = config.state || new CachedSearchEntityRegistry<MetaType>({
-      cacheSize,
-      searchIndex
-    })
+    this.currentState = config.state || new SearchBasedEntityRegistry<MetaType>({ searchIndex })
 
     this.dataLink = new DataLink({
       state: this.currentState
@@ -77,7 +74,8 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       index: searchIndex,
       registry: this.currentState,
       accessControl,
-      metaSchema
+      metaSchema,
+      cacheSize
     })
 
     this.schema = new Schema({

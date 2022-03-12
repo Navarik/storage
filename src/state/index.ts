@@ -3,6 +3,7 @@ import { CanonicalSchema, SearchIndex, EntityRegistry, CanonicalEntity, ChangeEv
 import { AccessError } from "../errors/access-error"
 import { FieldFactory } from "./field-factory"
 import { Compiler } from "./compiler"
+import { RegistryWithCache } from "./registry-with-cache"
 
 interface Config<M extends object> {
   logger: Logger
@@ -10,13 +11,14 @@ interface Config<M extends object> {
   registry: EntityRegistry<M>
   metaSchema: CanonicalSchema
   accessControl: AccessControlAdapter<M>
+  cacheSize: number
 }
 
 export class State<MetaType extends object> {
   private logger: Logger
+  private cachedRegistry: EntityRegistry<MetaType>
   private metaSchema: CanonicalSchema
   private index: SearchIndex<MetaType>
-  private registry: EntityRegistry<MetaType>
   private accessControl: AccessControlAdapter<MetaType>
   private searchSchema: SearchableField
   private fieldFactory: FieldFactory
@@ -27,12 +29,12 @@ export class State<MetaType extends object> {
     totalIdLookups: 0
   }
 
-  constructor({ logger, index, registry, metaSchema, accessControl }: Config<MetaType>) {
+  constructor({ logger, index, registry, metaSchema, accessControl, cacheSize }: Config<MetaType>) {
     this.logger = logger
     this.metaSchema = metaSchema
     this.accessControl = accessControl
     this.index = index
-    this.registry = registry
+    this.cachedRegistry = new RegistryWithCache({ cacheSize, registry })
 
     this.fieldFactory = new FieldFactory()
     this.searchSchema = this.fieldFactory.create({
@@ -77,22 +79,22 @@ export class State<MetaType extends object> {
     this.logger.debug({ component: "Storage" }, `Processing "${event.action}" change event event for entity ${event.entity.id}`)
 
     if (event.action === "delete") {
-      await this.registry.delete(event.entity.id)
+      await this.cachedRegistry.delete(event.entity.id)
     } else {
-      await this.registry.put(event.entity)
+      await this.cachedRegistry.put(event.entity)
     }
 
     await this.index.update(event.action, event.entity, event.schema, this.metaSchema)
   }
 
   async has(id: string): Promise<boolean> {
-    return this.registry.has(id)
+    return this.cachedRegistry.has(id)
   }
 
   async get<BodyType extends object>(id: string, user: string): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
     this.healthStats.totalIdLookups++
 
-    const entity = await this.registry.get<BodyType>(id)
+    const entity = await this.cachedRegistry.get<BodyType>(id)
     if (!entity) {
       return undefined
     }
@@ -117,7 +119,7 @@ export class State<MetaType extends object> {
 
   async isClean() {
     const [registryClean, indexClean] = await Promise.all([
-      this.registry.isClean(),
+      this.cachedRegistry.isClean(),
       this.index.isClean()
     ])
 
@@ -125,18 +127,18 @@ export class State<MetaType extends object> {
   }
 
   async up() {
-    await this.registry.up()
+    await this.cachedRegistry.up()
     await this.index.up()
   }
 
   async down() {
     await this.index.down()
-    await this.registry.down()
+    await this.cachedRegistry.down()
   }
 
   async isHealthy() {
     const [registryHealth, indexHealth] = await Promise.all([
-      this.registry.isHealthy(),
+      this.cachedRegistry.isHealthy(),
       this.index.isHealthy()
     ])
 
@@ -146,8 +148,8 @@ export class State<MetaType extends object> {
   async stats() {
     return {
       ...this.healthStats,
-      searchIndex: await this.index.stats(),
-      state: await this.registry.stats()
+      state: await this.cachedRegistry.stats(),
+      searchIndex: await this.index.stats()
     }
   }
 }
