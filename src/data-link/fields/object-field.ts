@@ -21,14 +21,14 @@ export class ObjectField implements DataField {
     }
   }
 
-  async validate(value: any) {
+  async validate(value: any, user: string) {
     if (value instanceof Array && typeof value !== "object") {
       return { isValid: false, message: `Field "${this.name} must be an object, ${typeof value} given. ` }
     }
 
     let isValid = true, message = ""
     for (const fieldName in this.fields) {
-      const fieldValidation = await this.fields[fieldName].validate(value[fieldName])
+      const fieldValidation = await this.fields[fieldName].validate(value[fieldName], user)
       isValid &&= fieldValidation.isValid
       message += fieldValidation.message
     }
@@ -36,14 +36,14 @@ export class ObjectField implements DataField {
     return { isValid, message }
   }
 
-  async hydrate(value: any) {
+  async hydrate(value: any, user: string) {
     if (!value) {
       return value
     }
 
     const result = {}
     for (const name in this.fields) {
-      result[name] = await this.fields[name].hydrate(value[name])
+      result[name] = await this.fields[name].hydrate(value[name], user)
     }
 
     return result

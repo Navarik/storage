@@ -1,5 +1,5 @@
 import { Dictionary, Logger } from "@navarik/types"
-import { CanonicalSchema, ValidationResponse, StorageInterface, EntityRegistry, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery } from "./types"
+import { CanonicalSchema, ValidationResponse, StorageInterface, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery } from "./types"
 import { AvroSchemaEngine } from "@navarik/avro-schema-engine"
 import { ConflictError } from "./errors/conflict-error"
 import { ValidationError } from "./errors/validation-error"
@@ -30,7 +30,6 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   private schema: Schema<MetaType>
   private state: State<MetaType>
   private dataLink: DataLink
-  private currentState: EntityRegistry<MetaType>
   private changelog: Changelog<MetaType>
   private observers: Array<Observer<any, MetaType>> = []
   private logger: Logger
@@ -63,19 +62,17 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     const accessControl = config.accessControl || new DefaultAccessControl()
     const searchIndex = config.index || new NeDbSearchIndex<MetaType>({ logger: this.logger })
 
-    this.currentState = config.state || new SearchBasedEntityRegistry<MetaType>({ searchIndex })
-
-    this.dataLink = new DataLink({
-      state: this.currentState
-    })
-
     this.state = new State<MetaType>({
       logger: this.logger,
       index: searchIndex,
-      registry: this.currentState,
+      registry: config.state || new SearchBasedEntityRegistry<MetaType>({ searchIndex }),
       accessControl,
       metaSchema,
       cacheSize
+    })
+
+    this.dataLink = new DataLink({
+      state: this.state
     })
 
     this.schema = new Schema({
@@ -197,7 +194,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     return hydrate
-      ? this.dataLink.hydrate(entity)
+      ? this.dataLink.hydrate(entity, user)
       : entity
   }
 
@@ -209,7 +206,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       return collection
     }
 
-    return Promise.all(collection.map(entity => this.dataLink.hydrate(entity)))
+    return Promise.all(collection.map(entity => this.dataLink.hydrate(entity, user)))
   }
 
   async count(query: SearchQuery|Dictionary<any>, user: UUID = nobody): Promise<number> {
@@ -224,7 +221,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     const changeEvent = this.actions.create.request(data, user)
-    const referenceValidation = await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body)
+    const referenceValidation = await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body, user)
     if (!referenceValidation.isValid) {
       throw new ValidationError(referenceValidation.message)
     }
@@ -235,13 +232,13 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   async update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
     this.healthStats.totalUpdateRequests++
 
-    const previous = await this.currentState.get(data.id)
+    const previous = await this.state.get(data.id, user)
     if (!previous) {
       throw new ConflictError(`Update failed: can't find entity ${data.id}`)
     }
 
     const changeEvent = this.actions.update.request(previous, data, user)
-    const referenceValidation = await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body)
+    const referenceValidation = await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body, user)
     if (!referenceValidation.isValid) {
       throw new ValidationError(referenceValidation.message)
     }
@@ -252,7 +249,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   async delete<BodyType extends object>(id: UUID, user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
     this.healthStats.totalDeleteRequests++
 
-    const previous = await this.currentState.get<BodyType>(id)
+    const previous = await this.state.get<BodyType>(id, user)
     if (!previous) {
       return undefined
     }

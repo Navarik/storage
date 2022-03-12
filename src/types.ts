@@ -98,8 +98,8 @@ export interface ValidationResponse {
 }
 
 export interface DataField {
-  validate(value: any): Promise<ValidationResponse>
-  hydrate(value: any): Promise<any>
+  validate(value: any, user: string): Promise<ValidationResponse>
+  hydrate(value: any, user: string): Promise<any>
 }
 
 export interface SchemaEngine {

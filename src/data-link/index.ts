@@ -1,9 +1,10 @@
 import { Dictionary } from "@navarik/types"
-import { SchemaField, EntityRegistry, ValidationResponse, CanonicalEntity, DataField } from "../types"
+import { SchemaField, ValidationResponse, CanonicalEntity, DataField } from "../types"
+import { State } from "../state"
 import { FieldFactory } from "./field-factory"
 
 interface Config {
-  state: EntityRegistry<any>
+  state: State<any>
 }
 
 export class DataLink {
@@ -23,23 +24,23 @@ export class DataLink {
     this.schema[type] = this.fieldFactory.create("body", { name: "body", type: "object", parameters: { fields } })
   }
 
-  async validate<BodyType extends object>(type: string, body: BodyType): Promise<ValidationResponse> {
+  async validate<BodyType extends object>(type: string, body: BodyType, user: string): Promise<ValidationResponse> {
     const typeSchema = this.schema[type]
     if (!typeSchema) {
       // No links to validate. Whatever it is, it must be valid.
       return { isValid: true, message: "" }
     }
 
-    return typeSchema.validate(body)
+    return typeSchema.validate(body, user)
   }
 
-  async hydrate(entity: CanonicalEntity<any, any>) {
+  async hydrate(entity: CanonicalEntity<any, any>, user: string) {
     const typeSchema = this.schema[entity.type]
     if (!typeSchema) {
       throw new Error(`Hydration failed: unknown type ${entity.type}`)
     }
 
-    const body = await typeSchema.hydrate(entity.body)
+    const body = await typeSchema.hydrate(entity.body, user)
 
     return { ...entity, body }
   }
