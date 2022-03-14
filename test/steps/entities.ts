@@ -1,7 +1,7 @@
 import { Dictionary } from "@navarik/types"
 import { expect } from "chai"
 import { EntityPatch, StorageInterface, CanonicalEntity, UUID, EntityData } from '../../src'
-import { expectSameEntity } from './checks'
+import { expectSameEntity, expectEnvelope } from './checks'
 
 export class EntitySteps {
   private storage: StorageInterface<any>
@@ -24,22 +24,22 @@ export class EntitySteps {
   async canCreate(entity: EntityData<any, any>, user?: UUID) {
     // Create entity
     const created = await this.storage.create(entity, user)
-    expectSameEntity(created, entity)
+    expectEnvelope(created)
 
     // Try to read it back by ID
     const id = created.id
     const found = await this.storage.get(id)
     expectSameEntity(found, entity)
 
-    return created
+    return found
   }
 
   async canDelete(id: string) {
     const lastVersion = await this.storage.get(id)
     const response = await this.storage.delete(id)
-    expectSameEntity(response, lastVersion)
+    expectEnvelope(response)
 
-    return response
+    return lastVersion
   }
 
   async canFind(entity: Partial<CanonicalEntity<any, any>>, user?: UUID) {
@@ -126,7 +126,12 @@ export class EntitySteps {
 
   async canUpdate(entity: EntityPatch<any, any>) {
     const response = await this.storage.update(entity)
-    expectSameEntity(response, entity)
-    return response
+    expectEnvelope(response)
+
+    // Try to read it back by ID
+    const found = await this.storage.get(entity.id)
+    expectSameEntity(found, entity)
+
+    return found
   }
 }

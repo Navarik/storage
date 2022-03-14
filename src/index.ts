@@ -1,5 +1,5 @@
 import { Dictionary, Logger } from "@navarik/types"
-import { CanonicalSchema, ValidationResponse, StorageInterface, UUID, CanonicalEntity, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery } from "./types"
+import { CanonicalSchema, ValidationResponse, StorageInterface, UUID, CanonicalEntity, EntityEnvelope, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery } from "./types"
 import { AvroSchemaEngine } from "@navarik/avro-schema-engine"
 import { ConflictError } from "./errors/conflict-error"
 import { ValidationError } from "./errors/validation-error"
@@ -213,7 +213,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     return this.state.count(query, user)
   }
 
-  async create<BodyType extends object>(data: EntityData<BodyType, MetaType>, user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
+  async create<BodyType extends object>(data: EntityData<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope<BodyType, MetaType>> {
     this.healthStats.totalCreateRequests++
 
     if (data.id && (await this.has(data.id))) {
@@ -229,15 +229,22 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     return this.changelog.requestChange(changeEvent)
   }
 
-  async update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType>> {
+  async update<BodyType extends object>(patch: EntityPatch<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope<BodyType, MetaType>> {
     this.healthStats.totalUpdateRequests++
 
-    const previous = await this.state.get(data.id, user)
+    const previous = await this.state.get(patch.id, user)
     if (!previous) {
-      throw new ConflictError(`Update failed: can't find entity ${data.id}`)
+      throw new ConflictError(`Update failed: can't find entity ${patch.id}`)
+    }
+    // check if update is not based on an outdated entity
+    if (!patch.version_id) {
+      throw new ConflictError(`Update unsuccessful due to missing version_id.`)
+    }
+    if (previous.version_id != patch.version_id) {
+      throw new ConflictError(`${patch.version_id} is not the latest version id for entity ${patch.id}`)
     }
 
-    const changeEvent = this.actions.update.request(previous, data, user)
+    const changeEvent = this.actions.update.request(previous, patch, user)
     const referenceValidation = await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body, user)
     if (!referenceValidation.isValid) {
       throw new ValidationError(referenceValidation.message)
@@ -246,7 +253,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     return this.changelog.requestChange(changeEvent)
   }
 
-  async delete<BodyType extends object>(id: UUID, user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
+  async delete<BodyType extends object>(id: UUID, user: UUID = nobody): Promise<EntityEnvelope<BodyType, MetaType> | undefined> {
     this.healthStats.totalDeleteRequests++
 
     const previous = await this.state.get<BodyType>(id, user)

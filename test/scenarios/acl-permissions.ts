@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
 import { EntitySteps } from '../steps/entities'
-import { expectSameEntity } from '../steps/checks'
+import { expectEnvelope } from '../steps/checks'
 import { nullLogger } from "../fixtures/null-logger"
 import { PermissionsBasedAccessControl } from "../fixtures/permissions-based-acl"
 
@@ -44,7 +44,7 @@ export const aclPermissions = (createStorage: <T extends object = {}>(config: St
       await Promise.all(fixtureData.map(async (entity) => {
         const created = await storage.create(entity, writer)
         createdIds.push(created.id)
-        expectSameEntity(created, entity)
+        expectEnvelope(created)
       }))
     })
 

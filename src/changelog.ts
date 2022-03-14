@@ -1,7 +1,8 @@
 import { Logger } from '@navarik/types'
 import { TransactionManager } from "@navarik/transaction-manager"
-import { AccessControlAdapter, ChangelogAdapter, CanonicalEntity, ChangeEvent } from './types'
+import { AccessControlAdapter, ChangelogAdapter, CanonicalEntity, ChangeEvent, EntityEnvelope } from './types'
 import { AccessError } from './errors/access-error'
+import { entityEnvelope } from './entity-envelope'
 
 interface ChangelogConfig<M extends object> {
   adapter: ChangelogAdapter<M>
@@ -38,7 +39,9 @@ export class Changelog<MetaType extends object> {
       this.logger.debug({ component: "Storage" }, `Received change event for entity: ${event.entity.id}`)
       await this.observer(event)
 
-      if (!this.transactionManager.commit(event.id, event.entity)) {
+      const envelope = entityEnvelope(event.entity)
+
+      if (!this.transactionManager.commit(event.id, envelope)) {
         this.logger.debug({ component: "Storage" }, `Can't find transaction ${event.id}`)
       }
     } catch (error: any) {
@@ -62,7 +65,7 @@ export class Changelog<MetaType extends object> {
 
     this.healthStats.totalChangesProduced++
 
-    return <Promise<CanonicalEntity<B, MetaType>>>transaction
+    return <Promise<EntityEnvelope<B, MetaType>>>transaction
   }
 
   async readAll() {

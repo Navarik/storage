@@ -24,7 +24,7 @@ export interface CanonicalSchema {
   fields: Array<SchemaField>
 }
 
-export interface CanonicalEntity<B extends object, M extends object> {
+export interface EntityEnvelope<B extends object, M extends object> {
   id: UUID
   version_id: UUID
   previous_version_id: UUID|null
@@ -34,9 +34,12 @@ export interface CanonicalEntity<B extends object, M extends object> {
   modified_by: UUID
   modified_at: Timestamp
   type: string
+  schema: UUID
+}
+
+export interface CanonicalEntity<B extends object, M extends object> extends EntityEnvelope<B, M> {
   body: B
   meta: M
-  schema: UUID
 }
 
 export type EntityData<B extends object, M extends object> = Partial<CanonicalEntity<B, M>> & {
@@ -196,8 +199,8 @@ export interface StorageInterface<MetaType extends object> extends Service {
   find<BodyType extends object>(query?: SearchQuery|Dictionary<any>, options?: SearchOptions, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
   count(query?: SearchQuery|Dictionary<any>, user?: UUID): Promise<number>
   validate<BodyType extends object>(entity: EntityData<BodyType, MetaType>): ValidationResponse
-  create<BodyType extends object>(data: EntityData<BodyType, MetaType>, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType>>
-  update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType>>
-  delete<BodyType extends object>(id: UUID, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
+  create<BodyType extends object>(data: EntityData<BodyType, MetaType>, user?: UUID): Promise<EntityEnvelope<BodyType, MetaType>>
+  update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, user?: UUID): Promise<EntityEnvelope<BodyType, MetaType>>
+  delete<BodyType extends object>(id: UUID, user?: UUID): Promise<EntityEnvelope<BodyType, MetaType> | undefined>
   observe<BodyType extends object>(handler: Observer<BodyType, MetaType>): void
 }

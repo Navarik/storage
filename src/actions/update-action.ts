@@ -1,6 +1,5 @@
 import { v5 as uuidv5, v4 as uuidv4 } from 'uuid'
 import { CanonicalEntity, EntityPatch, UUID, ChangeEvent } from '../types'
-import { ConflictError } from '../errors/conflict-error'
 import { Schema } from "../schema"
 
 interface Config {
@@ -15,14 +14,6 @@ export class UpdateAction<M extends object> {
   }
 
   request<B extends object>(oldEntity: CanonicalEntity<Partial<B>, Partial<M>>, patch: EntityPatch<B, M>, user: UUID): ChangeEvent<B, M> {
-    // check if update is not based on an outdated entity
-    if (!patch.version_id) {
-      throw new ConflictError(`Update unsuccessful due to missing version_id.`)
-    }
-    if (oldEntity.version_id != patch.version_id) {
-      throw new ConflictError(`${patch.version_id} is not the latest version id for entity ${patch.id}`)
-    }
-
     const type = patch.type || oldEntity.type
     const body = patch.body ? patch.body : {}
     const newBody = { ...oldEntity.body, ...body }
