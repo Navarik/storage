@@ -1,4 +1,5 @@
-import { SchemaField, DataField } from "../../types"
+import { SchemaField } from "../../types"
+import { DataField } from "../index"
 
 interface Config {
   path: string

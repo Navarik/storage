@@ -1,15 +1,15 @@
-import { DataField, SchemaField } from "../../types"
-import { State } from "../../state"
+import { SchemaField, StorageInterface } from "../../types"
+import { DataField } from "../index"
 
 interface Config {
   path: string
-  state: State<any>
+  state: StorageInterface<any>
   field: SchemaField<{}>
 }
 
 export class ReferenceField implements DataField {
   private name: string
-  private state: State<any>
+  private state: StorageInterface<any>
   private isRequired: boolean
 
   constructor({ state, path, field: { required } }: Config) {
@@ -26,7 +26,7 @@ export class ReferenceField implements DataField {
       }
     }
 
-    if (this.isRequired && !await this.state.get(value, user)) {
+    if (this.isRequired && !await this.state.get(value, {}, user)) {
       return {
         isValid: false,
         message: `Reference document "${value}" not found for "${this.name}". `
@@ -40,6 +40,6 @@ export class ReferenceField implements DataField {
   }
 
   async hydrate(value: any, user: string) {
-    return this.state.get(value, user)
+    return this.state.get(value, {}, user)
   }
 }

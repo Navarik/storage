@@ -1,8 +1,8 @@
 import { Dictionary, Logger } from "@navarik/types"
-import { CanonicalSchema, ValidationResponse, StorageInterface, UUID, CanonicalEntity, EntityEnvelope, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery } from "./types"
+import { CanonicalSchema, StorageInterface, UUID, CanonicalEntity, EntityEnvelope, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery, AccessControlAdapter } from "./types"
 import { AvroSchemaEngine } from "@navarik/avro-schema-engine"
 import { ConflictError } from "./errors/conflict-error"
-import { ValidationError } from "./errors/validation-error"
+import { AccessError } from "./errors/access-error"
 import { Changelog } from "./changelog"
 import { DataLink } from "./data-link"
 import { Schema } from "./schema"
@@ -29,6 +29,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   private staticData: Array<ChangeEvent<any, MetaType>>
   private schema: Schema<MetaType>
   private state: State<MetaType>
+  private accessControl: AccessControlAdapter<MetaType>
   private dataLink: DataLink
   private changelog: Changelog<MetaType>
   private observers: Array<Observer<any, MetaType>> = []
@@ -59,20 +60,19 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       fields: config.meta || []
     }
 
-    const accessControl = config.accessControl || new DefaultAccessControl()
+    this.accessControl = config.accessControl || new DefaultAccessControl()
     const searchIndex = config.index || new NeDbSearchIndex<MetaType>({ logger: this.logger })
 
     this.state = new State<MetaType>({
       logger: this.logger,
       index: searchIndex,
       registry: config.state || new SearchBasedEntityRegistry<MetaType>({ searchIndex }),
-      accessControl,
       metaSchema,
       cacheSize
     })
 
     this.dataLink = new DataLink({
-      state: this.state
+      state: this
     })
 
     this.schema = new Schema({
@@ -87,7 +87,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.changelog = new Changelog<MetaType>({
       adapter: config.changelog || new DefaultChangelogAdapter(),
       logger: this.logger,
-      accessControl,
+      accessControl: this.accessControl,
       observer: this.onChange.bind(this)
     })
 
@@ -179,18 +179,19 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.schema.define(schema)
   }
 
-  validate<BodyType extends object>(entity: EntityData<BodyType, MetaType>): ValidationResponse {
-    return this.schema.validate(entity.type, entity.body, entity.meta)
-  }
-
   async has(id: UUID): Promise<boolean> {
     return this.state.has(id)
   }
 
   async get<BodyType extends object>(id: UUID, { hydrate = false }: GetOptions = {}, user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
-    const entity = await this.state.get<BodyType>(id, user)
+    const entity = await this.state.get<BodyType>(id)
     if (!entity) {
       return undefined
+    }
+
+    const access = await this.accessControl.check(user, "read", entity)
+    if (!access.granted) {
+      throw new AccessError(access.explanation)
     }
 
     return hydrate
@@ -200,7 +201,11 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
   async find<BodyType extends object>(query: SearchQuery|Dictionary<any>, options: SearchOptions = {}, user: UUID = nobody): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
     const { limit = 1000, offset = 0, sort = ["created_date:desc", "id:asc"], hydrate = false } = options
-    const collection = await this.state.find<BodyType>(query, { offset, limit, sort }, user)
+
+    const aclTerms = await this.accessControl.getQuery(user, "search")
+    const secureQuery = { operator: "and", args: [aclTerms, query] }
+
+    const collection = await this.state.find<BodyType>(secureQuery, { offset, limit, sort })
 
     if (!hydrate) {
       return collection
@@ -210,7 +215,10 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   async count(query: SearchQuery|Dictionary<any>, user: UUID = nobody): Promise<number> {
-    return this.state.count(query, user)
+    const aclTerms = await this.accessControl.getQuery(user, "search")
+    const secureQuery = { operator: "and", args: [aclTerms, query] }
+
+    return this.state.count(secureQuery)
   }
 
   async create<BodyType extends object>(data: EntityData<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope<BodyType, MetaType>> {
@@ -221,10 +229,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     const changeEvent = this.actions.create.request(data, user)
-    const referenceValidation = await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body, user)
-    if (!referenceValidation.isValid) {
-      throw new ValidationError(referenceValidation.message)
-    }
+    await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body, user)
 
     return this.changelog.requestChange(changeEvent)
   }
@@ -232,7 +237,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   async update<BodyType extends object>(patch: EntityPatch<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope<BodyType, MetaType>> {
     this.healthStats.totalUpdateRequests++
 
-    const previous = await this.state.get(patch.id, user)
+    const previous = await this.state.get(patch.id)
     if (!previous) {
       throw new ConflictError(`Update failed: can't find entity ${patch.id}`)
     }
@@ -245,10 +250,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     const changeEvent = this.actions.update.request(previous, patch, user)
-    const referenceValidation = await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body, user)
-    if (!referenceValidation.isValid) {
-      throw new ValidationError(referenceValidation.message)
-    }
+    await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body, user)
 
     return this.changelog.requestChange(changeEvent)
   }
@@ -256,7 +258,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   async delete<BodyType extends object>(id: UUID, user: UUID = nobody): Promise<EntityEnvelope<BodyType, MetaType> | undefined> {
     this.healthStats.totalDeleteRequests++
 
-    const previous = await this.state.get<BodyType>(id, user)
+    const previous = await this.state.get<BodyType>(id)
     if (!previous) {
       return undefined
     }

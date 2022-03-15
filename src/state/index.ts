@@ -1,6 +1,5 @@
 import { Dictionary, Logger } from "@navarik/types"
-import { CanonicalSchema, SearchIndex, EntityRegistry, CanonicalEntity, ChangeEvent, SearchOptions, SearchQuery, SchemaField, SearchableField, AccessControlAdapter } from "../types"
-import { AccessError } from "../errors/access-error"
+import { CanonicalSchema, SearchIndex, EntityRegistry, CanonicalEntity, ChangeEvent, SearchOptions, SearchQuery, SchemaField, SearchableField } from "../types"
 import { FieldFactory } from "./field-factory"
 import { Compiler } from "./compiler"
 import { RegistryWithCache } from "./registry-with-cache"
@@ -10,7 +9,6 @@ interface Config<M extends object> {
   index: SearchIndex<M>
   registry: EntityRegistry<M>
   metaSchema: CanonicalSchema
-  accessControl: AccessControlAdapter<M>
   cacheSize: number
 }
 
@@ -19,7 +17,6 @@ export class State<MetaType extends object> {
   private cachedRegistry: EntityRegistry<MetaType>
   private metaSchema: CanonicalSchema
   private index: SearchIndex<MetaType>
-  private accessControl: AccessControlAdapter<MetaType>
   private searchSchema: SearchableField
   private fieldFactory: FieldFactory
   private compiler: Compiler
@@ -29,10 +26,9 @@ export class State<MetaType extends object> {
     totalIdLookups: 0
   }
 
-  constructor({ logger, index, registry, metaSchema, accessControl, cacheSize }: Config<MetaType>) {
+  constructor({ logger, index, registry, metaSchema, cacheSize }: Config<MetaType>) {
     this.logger = logger
     this.metaSchema = metaSchema
-    this.accessControl = accessControl
     this.index = index
     this.cachedRegistry = new RegistryWithCache({ cacheSize, registry })
 
@@ -60,13 +56,6 @@ export class State<MetaType extends object> {
     this.registerFields("meta", metaSchema.fields)
   }
 
-  private async compileQuery(query: SearchQuery|Dictionary<any>, user: string) {
-    const aclTerms = await this.accessControl.getQuery(user, "search")
-    const secureQuery = { operator: "and", args: [aclTerms, query] }
-
-    return this.compiler.compile(secureQuery)
-  }
-
   registerFields(branch: string, fields: Array<SchemaField>) {
     if (!fields) {
       return
@@ -91,30 +80,19 @@ export class State<MetaType extends object> {
     return this.cachedRegistry.has(id)
   }
 
-  async get<BodyType extends object>(id: string, user: string): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
+  async get<BodyType extends object>(id: string): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
     this.healthStats.totalIdLookups++
-
-    const entity = await this.cachedRegistry.get<BodyType>(id)
-    if (!entity) {
-      return undefined
-    }
-
-    const access = await this.accessControl.check(user, "read", entity)
-    if (!access.granted) {
-      throw new AccessError(access.explanation)
-    }
-
-    return entity
+    return this.cachedRegistry.get<BodyType>(id)
   }
 
-  async find<BodyType extends object>(query: SearchQuery|Dictionary<any>, options: SearchOptions, user: string): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
+  async find<BodyType extends object>(query: SearchQuery|Dictionary<any>, options: SearchOptions): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
     this.healthStats.totalSearchQueries++
-    return this.index.find<BodyType>(await this.compileQuery(query, user), options)
+    return this.index.find<BodyType>(this.compiler.compile(query), options)
   }
 
-  async count(query: SearchQuery|Dictionary<any>, user: string): Promise<number> {
+  async count(query: SearchQuery|Dictionary<any>): Promise<number> {
     this.healthStats.totalCountQueries++
-    return this.index.count(await this.compileQuery(query, user))
+    return this.index.count(this.compiler.compile(query))
   }
 
   async isClean() {

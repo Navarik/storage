@@ -1,10 +1,15 @@
 import { Dictionary } from "@navarik/types"
-import { SchemaField, ValidationResponse, CanonicalEntity, DataField } from "../types"
-import { State } from "../state"
+import { SchemaField, CanonicalEntity, ValidationResponse, StorageInterface } from "../types"
+import { ValidationError } from "../errors/validation-error"
 import { FieldFactory } from "./field-factory"
 
 interface Config {
-  state: State<any>
+  state: StorageInterface<any>
+}
+
+export interface DataField {
+  validate(value: any, user: string): Promise<ValidationResponse>
+  hydrate(value: any, user: string): Promise<any>
 }
 
 export class DataLink {
@@ -24,14 +29,17 @@ export class DataLink {
     this.schema[type] = this.fieldFactory.create("body", { name: "body", type: "object", parameters: { fields } })
   }
 
-  async validate<BodyType extends object>(type: string, body: BodyType, user: string): Promise<ValidationResponse> {
+  async validate<BodyType extends object>(type: string, body: BodyType, user: string): Promise<void> {
     const typeSchema = this.schema[type]
     if (!typeSchema) {
       // No links to validate. Whatever it is, it must be valid.
-      return { isValid: true, message: "" }
+      return
     }
 
-    return typeSchema.validate(body, user)
+    const { isValid, message } = await typeSchema.validate(body, user)
+    if (!isValid) {
+      throw new ValidationError(message)
+    }
   }
 
   async hydrate(entity: CanonicalEntity<any, any>, user: string) {

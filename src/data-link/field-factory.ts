@@ -1,6 +1,6 @@
 import { Dictionary, Instantiable } from "@navarik/types"
-import { SchemaField, DataField } from "../types"
-import { State } from "../state"
+import { SchemaField, StorageInterface } from "../types"
+import { DataField } from "."
 import { ArrayField } from "./fields/array-field"
 import { MapField } from "./fields/map-field"
 import { ObjectField } from "./fields/object-field"
@@ -9,7 +9,7 @@ import { ReferenceField } from "./fields/reference-field"
 import { UnionField } from "./fields/union-field"
 
 export class FieldFactory {
-  private state: State<any>
+  private state: StorageInterface<any>
   private typeFactories: Dictionary<Instantiable<DataField>> = {
     "array": ArrayField,
     "map": MapField,
