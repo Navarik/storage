@@ -73,7 +73,7 @@ export class Schema<M extends object> {
     return schema
   }
 
-  format<T = any>(type: string, body: T, meta: M) {
+  format<T = any>(type: string, body: Partial<T>, meta: Partial<M>) {
     const schema = this.describe(type)
     if (!schema) {
       throw new ValidationError(`Type ${type} not found.`)
@@ -87,8 +87,8 @@ export class Schema<M extends object> {
     return {
       schema,
       schemaId,
-      body: this.schemaEngine.format(schemaId, body),
-      meta: this.schemaEngine.format(this.metaSchemaId, meta)
+      body: <T>this.schemaEngine.format(schemaId, body),
+      meta: <M>this.schemaEngine.format(this.metaSchemaId, meta)
     }
   }
 }

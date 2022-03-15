@@ -1,5 +1,5 @@
 import { Dictionary, Logger } from "@navarik/types"
-import { CanonicalSchema, SearchIndex, EntityRegistry, CanonicalEntity, ChangeEvent, SearchOptions, SearchQuery, SchemaField, SearchableField } from "../types"
+import { CanonicalSchema, SearchIndex, EntityRegistry, CanonicalEntity, SearchOptions, SearchQuery, SchemaField, SearchableField } from "../types"
 import { FieldFactory } from "./field-factory"
 import { Compiler } from "./compiler"
 import { RegistryWithCache } from "./registry-with-cache"
@@ -64,19 +64,23 @@ export class State<MetaType extends object> {
     this.searchSchema.chain({ name: branch, type: "object", parameters: { fields } })
   }
 
-  async update<B extends object>(event: ChangeEvent<B, MetaType>) {
-    this.logger.debug({ component: "Storage" }, `Processing ${event.action} change event event for entity ${event.entity.id}`)
+  async update<B extends object>(entity: CanonicalEntity<B, MetaType>, schema: CanonicalSchema) {
+    this.logger.debug({ component: "Storage" }, `Processing ${entity.last_action} event event for entity ${entity.id}`)
 
-    if (event.action === "delete") {
-      await this.cachedRegistry.delete(event.entity.id)
+    if (entity.last_action === "delete") {
+      await this.cachedRegistry.delete(entity.id)
     } else {
-      await this.cachedRegistry.put(event.entity)
+      await this.cachedRegistry.put(entity)
     }
 
-    await this.index.update(event.action, event.entity, event.schema, this.metaSchema)
+    await this.index.update(entity.last_action, entity, schema, this.metaSchema)
   }
 
   async has(id: string): Promise<boolean> {
+    if (!id) {
+      return false
+    }
+
     return this.cachedRegistry.has(id)
   }
 

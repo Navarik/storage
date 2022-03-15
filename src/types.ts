@@ -47,14 +47,18 @@ export type EntityPatch<B extends object, M extends object> = Partial<CanonicalE
   body: B
 }
 
+export type FormattedEntity<B extends object, M extends object> = Partial<CanonicalEntity<B, M>> & {
+  type: string
+  body: B
+  meta: M
+  schema: string
+}
+
 export interface ChangeEvent<B extends object, M extends object> {
   id: UUID
   action: ActionType
-  user: UUID
-  timestamp: Timestamp
   entity: CanonicalEntity<B, M>
   schema: CanonicalSchema|undefined
-  parent: CanonicalEntity<B, M>|undefined
 }
 
 export type AccessType = 'read'|'write'|'search'

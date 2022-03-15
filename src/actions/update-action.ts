@@ -1,50 +1,23 @@
-import { v5 as uuidv5, v4 as uuidv4 } from 'uuid'
-import { CanonicalEntity, EntityPatch, UUID, ChangeEvent } from '../types'
-import { Schema } from "../schema"
-
-interface Config {
-  schema: Schema<any>
-}
+import { v5 as uuidv5 } from 'uuid'
+import { CanonicalEntity, FormattedEntity, UUID } from '../types'
 
 export class UpdateAction<M extends object> {
-  private schema: Schema<any>
-
-  constructor({ schema }: Config) {
-    this.schema = schema
-  }
-
-  request<B extends object>(oldEntity: CanonicalEntity<Partial<B>, Partial<M>>, patch: EntityPatch<B, M>, user: UUID): ChangeEvent<B, M> {
-    const type = patch.type || oldEntity.type
-    const body = patch.body ? patch.body : {}
-    const newBody = { ...oldEntity.body, ...body }
-    const newMeta = { ...oldEntity.meta, ...(patch.meta || {}) }
-
-    const formatted = this.schema.format(type, newBody, newMeta)
+  request<B extends object>(entity: FormattedEntity<B, M>, user: UUID): CanonicalEntity<B, M> {
     const now = new Date().toISOString()
 
-    const changeEvent: ChangeEvent<B, M> = {
-      id: uuidv4(),
-      action: "update",
-      user: user,
-      entity: {
-        id: oldEntity.id,
-        version_id: uuidv5(JSON.stringify(formatted.body), oldEntity.id),
-        previous_version_id: oldEntity.version_id,
-        last_action: "update",
-        created_by: oldEntity.created_by,
-        created_at: oldEntity.created_at,
-        modified_by: user,
-        modified_at: now,
-        type,
-        body: <B>formatted.body,
-        meta: <M>formatted.meta,
-        schema: formatted.schemaId
-      },
-      schema: formatted.schema,
-      parent: undefined,
-      timestamp: now
+    return {
+      id: entity.id,
+      version_id: uuidv5(JSON.stringify(entity.body), entity.id),
+      previous_version_id: entity.version_id,
+      last_action: "update",
+      created_by: entity.created_by,
+      created_at: entity.created_at,
+      modified_by: user,
+      modified_at: now,
+      type: entity.type,
+      body: entity.body,
+      meta: entity.meta,
+      schema: entity.schema
     }
-
-    return changeEvent
   }
 }
