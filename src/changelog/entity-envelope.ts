@@ -1,4 +1,4 @@
-import { CanonicalEntity } from "./types"
+import { CanonicalEntity } from "../types"
 
 export function entityEnvelope<B extends object, M extends object>(entity: CanonicalEntity<B, M>) {
   return {

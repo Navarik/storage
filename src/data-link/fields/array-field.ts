@@ -19,7 +19,7 @@ export class ArrayField implements DataField {
 
   async validate(value: any, user: string) {
     if (!(value instanceof Array)) {
-      return { isValid: false, message: `Field "${this.name} must be an array, ${typeof value} given. ` }
+      return { isValid: false, message: `Field ${this.name} must be an array, ${typeof value} given. ` }
     }
 
     const itemsValidation = await Promise.all(value.map(x => this.items.validate(x, user)))

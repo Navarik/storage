@@ -1,16 +1,13 @@
 import { Dictionary } from '@navarik/types'
 import { SchemaRegistry, SchemaEngine, CanonicalSchema, CanonicalEntity, IdGenerator } from './types'
 import { ValidationError } from "./errors/validation-error"
-import { State } from './state'
-import { DataLink } from './data-link'
 
-interface Config<M extends object> {
+interface Config {
   schemaRegistry: SchemaRegistry
   schemaEngine: SchemaEngine
   metaSchema: CanonicalSchema
-  state: State<M>
-  dataLink: DataLink
   idGenerator: IdGenerator<CanonicalSchema>
+  onChange: (schema: CanonicalSchema) => void
 }
 
 export class Schema<M extends object> {
@@ -18,16 +15,14 @@ export class Schema<M extends object> {
   private metaSchemaId: string
   private schemaRegistry: SchemaRegistry
   private schemaEngine: SchemaEngine
-  private state: State<M>
-  private dataLink: DataLink
   private knownTypes: Dictionary<string> = {}
+  private onChange: (schema: CanonicalSchema) => void
 
-  constructor({ schemaRegistry, schemaEngine, metaSchema, idGenerator, state, dataLink }: Config<M>) {
+  constructor({ schemaRegistry, schemaEngine, metaSchema, idGenerator, onChange }: Config) {
     this.schemaRegistry = schemaRegistry
     this.schemaEngine = schemaEngine
     this.idGenerator = idGenerator
-    this.state = state
-    this.dataLink = dataLink
+    this.onChange = onChange
     this.metaSchemaId = this.idGenerator.id(metaSchema)
     this.schemaEngine.register(this.metaSchemaId, metaSchema)
 
@@ -35,10 +30,16 @@ export class Schema<M extends object> {
   }
 
   private onRegistryUpdate(schemaId: string, schema: CanonicalSchema) {
-    this.state.registerFields("body", schema.fields)
-    this.dataLink.registerSchema(schema.name, schema.fields)
+    this.onChange(schema)
     this.schemaEngine.register(schemaId, schema)
     this.knownTypes[schema.name] = schemaId
+  }
+
+  private validate<T = any>(schemaId: string, data: T) {
+    const { isValid, message } = this.schemaEngine.validate(schemaId, data)
+    if (!isValid) {
+      throw new ValidationError(message)
+    }
   }
 
   types(): Array<string> {
@@ -72,38 +73,22 @@ export class Schema<M extends object> {
     return schema
   }
 
-  validate<T = any>(type: string, body: T, meta: M) {
+  format<T = any>(type: string, body: T, meta: M) {
     const schema = this.describe(type)
     if (!schema) {
-      return { isValid: false, message: `Type "${type}" not found.`, schema: null, schemaId: null }
+      throw new ValidationError(`Type ${type} not found.`)
     }
 
     const schemaId = this.idGenerator.id(schema)
 
-    const metaValidationResult = this.schemaEngine.validate(this.metaSchemaId, meta || {})
-    if (!metaValidationResult.isValid) {
-      return { ...metaValidationResult, schema, schemaId }
-    }
-
-    const dataValidationResult = this.schemaEngine.validate(schemaId, body)
-    if (!dataValidationResult.isValid) {
-      return { ...dataValidationResult, schema, schemaId }
-    }
-
-    return { isValid: true, message: "", schema, schemaId }
-  }
-
-  format<T = any>(type: string, body: T, meta: M) {
-    const { isValid, message, schema, schemaId } = this.validate(type, body, meta)
-    if (!isValid) {
-      throw new ValidationError(message)
-    }
+    this.validate(this.metaSchemaId, meta)
+    this.validate(schemaId, body)
 
     return {
       schema,
       schemaId,
       body: this.schemaEngine.format(schemaId, body),
-      meta: this.schemaEngine.format(this.metaSchemaId, meta || {})
+      meta: this.schemaEngine.format(this.metaSchemaId, meta)
     }
   }
 }

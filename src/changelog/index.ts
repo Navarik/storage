@@ -1,20 +1,17 @@
 import { Logger } from '@navarik/types'
 import { TransactionManager } from "@navarik/transaction-manager"
-import { AccessControlAdapter, ChangelogAdapter, CanonicalEntity, ChangeEvent, EntityEnvelope } from './types'
-import { AccessError } from './errors/access-error'
+import { ChangelogAdapter, CanonicalEntity, ChangeEvent, EntityEnvelope } from '../types'
 import { entityEnvelope } from './entity-envelope'
 
 interface ChangelogConfig<M extends object> {
   adapter: ChangelogAdapter<M>
   logger: Logger
   observer: (change: ChangeEvent<any, M>) => Promise<void>
-  accessControl: AccessControlAdapter<M>
 }
 
 export class Changelog<MetaType extends object> {
   private adapter: ChangelogAdapter<MetaType>
   private observer: (change: ChangeEvent<any, MetaType>) => Promise<void>
-  private accessControl: AccessControlAdapter<MetaType>
   private transactionManager: TransactionManager<CanonicalEntity<any, MetaType>>
   private logger: Logger
   private healthStats = {
@@ -23,11 +20,10 @@ export class Changelog<MetaType extends object> {
     totalProcessingErrors: 0
   }
 
-  constructor({ observer, adapter, accessControl, logger }: ChangelogConfig<MetaType>) {
+  constructor({ observer, adapter, logger }: ChangelogConfig<MetaType>) {
     this.logger = logger
     this.adapter = adapter
     this.observer = observer
-    this.accessControl = accessControl
     this.transactionManager = new TransactionManager()
     this.adapter.observe(x => this.onChange(x))
   }
@@ -55,11 +51,6 @@ export class Changelog<MetaType extends object> {
   }
 
   async requestChange<B extends object>(change: ChangeEvent<B, MetaType>) {
-    const access = await this.accessControl.check(change.user, 'write', change.entity)
-    if (!access.granted) {
-      throw new AccessError(access.explanation)
-    }
-
     const transaction = this.transactionManager.start(change.id, 1)
     await this.adapter.write(change)
 

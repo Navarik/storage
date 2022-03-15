@@ -65,7 +65,7 @@ export class State<MetaType extends object> {
   }
 
   async update<B extends object>(event: ChangeEvent<B, MetaType>) {
-    this.logger.debug({ component: "Storage" }, `Processing "${event.action}" change event event for entity ${event.entity.id}`)
+    this.logger.debug({ component: "Storage" }, `Processing ${event.action} change event event for entity ${event.entity.id}`)
 
     if (event.action === "delete") {
       await this.cachedRegistry.delete(event.entity.id)

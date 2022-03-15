@@ -23,7 +23,7 @@ export class MapField implements DataField {
     }
 
     if (value instanceof Array || typeof value !== "object") {
-      return { isValid: false, message: `Field "${this.name} must be an object, "${typeof value}" given. ` }
+      return { isValid: false, message: `Field ${this.name} must be an object, ${typeof value} given. ` }
     }
 
     const values = Object.values(value)

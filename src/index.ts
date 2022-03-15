@@ -61,6 +61,11 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     this.accessControl = config.accessControl || new DefaultAccessControl()
+
+    this.dataLink = new DataLink({
+      state: this
+    })
+
     const searchIndex = config.index || new NeDbSearchIndex<MetaType>({ logger: this.logger })
 
     this.state = new State<MetaType>({
@@ -71,24 +76,18 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       cacheSize
     })
 
-    this.dataLink = new DataLink({
-      state: this
-    })
-
     this.schema = new Schema({
       schemaEngine: config.schemaEngine || new AvroSchemaEngine(),
       schemaRegistry: config.schemaRegistry || new InMemorySchemaRegistry(),
       idGenerator: config.schemaIdGenerator || new UuidV5IdGenerator({ root: defaultSchemaIdNamespace }),
-      dataLink: this.dataLink,
-      state: this.state,
-      metaSchema
+      metaSchema,
+      onChange: this.onSchemaChange.bind(this)
     })
 
     this.changelog = new Changelog<MetaType>({
       adapter: config.changelog || new DefaultChangelogAdapter(),
       logger: this.logger,
-      accessControl: this.accessControl,
-      observer: this.onChange.bind(this)
+      observer: this.onDataChange.bind(this)
     })
 
     this.actions = {
@@ -106,7 +105,12 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     )
   }
 
-  private async onChange<B extends object>(event: ChangeEvent<B, MetaType>) {
+  private async onSchemaChange(schema: CanonicalSchema) {
+    this.state.registerFields("body", schema.fields)
+    this.dataLink.registerSchema(schema.name, schema.fields)
+  }
+
+  private async onDataChange<B extends object>(event: ChangeEvent<B, MetaType>) {
     await this.state.update(event)
 
     if (this.isUp) {
@@ -229,6 +233,11 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     const changeEvent = this.actions.create.request(data, user)
+    const access = await this.accessControl.check(user, 'write', changeEvent.entity)
+    if (!access.granted) {
+      throw new AccessError(access.explanation)
+    }
+
     await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body, user)
 
     return this.changelog.requestChange(changeEvent)
@@ -250,6 +259,11 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     const changeEvent = this.actions.update.request(previous, patch, user)
+    const access = await this.accessControl.check(user, 'write', changeEvent.entity)
+    if (!access.granted) {
+      throw new AccessError(access.explanation)
+    }
+
     await this.dataLink.validate(changeEvent.entity.type, changeEvent.entity.body, user)
 
     return this.changelog.requestChange(changeEvent)
@@ -264,6 +278,10 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     const changeEvent = this.actions.delete.request(previous, user)
+    const access = await this.accessControl.check(user, 'write', changeEvent.entity)
+    if (!access.granted) {
+      throw new AccessError(access.explanation)
+    }
 
     return this.changelog.requestChange(changeEvent)
   }

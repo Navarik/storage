@@ -29,7 +29,7 @@ export class ReferenceField implements DataField {
     if (this.isRequired && !await this.state.get(value, {}, user)) {
       return {
         isValid: false,
-        message: `Reference document "${value}" not found for "${this.name}". `
+        message: `Reference document ${value} not found for ${this.name}`
       }
     }
 

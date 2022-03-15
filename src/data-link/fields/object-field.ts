@@ -24,7 +24,7 @@ export class ObjectField implements DataField {
 
   async validate(value: any, user: string) {
     if (value instanceof Array && typeof value !== "object") {
-      return { isValid: false, message: `Field "${this.name} must be an object, ${typeof value} given. ` }
+      return { isValid: false, message: `Field ${this.name} must be an object, ${typeof value} given. ` }
     }
 
     let isValid = true, message = ""
