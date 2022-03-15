@@ -68,7 +68,7 @@ export type AccessControlDecision = {
   explanation: string
 }
 
-export type Observer<B extends object, M extends object> = (event: ChangeEvent<B, M>) => void|Promise<void>
+export type Observer<B extends object, M extends object> = (event: CanonicalEntity<B, M>) => void|Promise<void>
 
 export interface ValidationResponse {
   isValid: boolean

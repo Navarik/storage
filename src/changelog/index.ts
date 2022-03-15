@@ -8,12 +8,12 @@ import { entityEnvelope } from './entity-envelope'
 interface ChangelogConfig<M extends object> {
   adapter: ChangelogAdapter<M>
   logger: Logger
-  observer: (change: ChangeEvent<any, M>) => Promise<void>
+  observer: (change: CanonicalEntity<any, M>, schema: CanonicalSchema) => Promise<void>
 }
 
 export class Changelog<M extends object> {
   private adapter: ChangelogAdapter<M>
-  private observer: (change: ChangeEvent<any, M>) => Promise<void>
+  private observer: (change: CanonicalEntity<any, M>, schema: CanonicalSchema) => Promise<void>
   private transactionManager: TransactionManager<CanonicalEntity<any, M>>
   private logger: Logger
   private healthStats = {
@@ -30,25 +30,19 @@ export class Changelog<M extends object> {
     this.adapter.observe(x => this.onChange(x))
   }
 
-  private async onChange<B extends object>(event: ChangeEvent<B, M>) {
+  private async onChange<B extends object>({ id, entity, schema }: ChangeEvent<B, M>) {
     this.healthStats.totalChangesReceived++
 
     try {
-      this.logger.debug({ component: "Storage" }, `Received change event for entity: ${event.entity.id}`)
-      await this.observer(event)
+      this.logger.debug({ component: "Storage" }, `Received change event for entity: ${entity.id}`)
+      await this.observer(entity, schema)
+      this.transactionManager.commit(id, entityEnvelope(entity))
 
-      const envelope = entityEnvelope(event.entity)
-
-      if (!this.transactionManager.commit(event.id, envelope)) {
-        this.logger.debug({ component: "Storage" }, `Can't find transaction ${event.id}`)
-      }
     } catch (error: any) {
       this.healthStats.totalProcessingErrors++
       this.logger.error({ component: "Storage", stack: error.stack }, `Error processing change event: ${error.message}`)
 
-      if (!this.transactionManager.reject(event.id, error)) {
-        this.logger.debug({ component: "Storage" }, `Can't find transaction ${event.id}`)
-      }
+      this.transactionManager.reject(id, error)
     }
   }
 

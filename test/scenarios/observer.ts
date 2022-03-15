@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { StorageInterface, CanonicalSchema, CanonicalEntity, ChangeEvent, StorageConfig } from '../../src'
+import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
 import { nullLogger } from "../fixtures/null-logger"
 import { PersistentInMemoryChangelog } from "../fixtures/persistent-in-memory-changelog"
 import { EntitySteps } from "../steps/entities"
@@ -16,7 +16,7 @@ export const observer = (createStorage: <T extends object = {}>(config: StorageC
   })
 
   const steps = new EntitySteps(storage)
-  const results: Array<ChangeEvent<any, any>> = []
+  const results: Array<CanonicalEntity<any, any>> = []
 
   describe('Observing changes', () => {
     it("can observe entity changes", async () => {

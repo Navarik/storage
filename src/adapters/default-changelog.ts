@@ -1,7 +1,7 @@
-import { ChangelogAdapter, Observer, ChangeEvent } from '../types'
+import { ChangelogAdapter, ChangeEvent } from '../types'
 
 export class DefaultChangelogAdapter<M extends object> implements ChangelogAdapter<M> {
-  private observer?: Observer<any, M>
+  private observer?: (change: ChangeEvent<any, M>) => Promise<void>
   private log: Array<ChangeEvent<any, M>>
 
   constructor(log: Array<ChangeEvent<any, M>> = []) {
@@ -9,11 +9,11 @@ export class DefaultChangelogAdapter<M extends object> implements ChangelogAdapt
     this.log = log
   }
 
-  observe<B extends object>(handler: Observer<B, M>) {
+  observe(handler: (change: ChangeEvent<any, M>) => Promise<void>) {
     this.observer = handler
   }
 
-  async write<B extends object>(message: ChangeEvent<B, M>) {
+  async write(message: ChangeEvent<any, M>) {
     if (this.observer) {
       await this.observer(message)
     }

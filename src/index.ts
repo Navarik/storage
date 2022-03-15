@@ -1,5 +1,5 @@
 import { Dictionary, Logger } from "@navarik/types"
-import { CanonicalSchema, StorageInterface, UUID, CanonicalEntity, EntityEnvelope, Observer, SearchOptions, ChangeEvent, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery, AccessControlAdapter, AccessType } from "./types"
+import { CanonicalSchema, StorageInterface, UUID, CanonicalEntity, EntityEnvelope, Observer, SearchOptions, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery, AccessControlAdapter, AccessType } from "./types"
 import { AvroSchemaEngine } from "@navarik/avro-schema-engine"
 import { v4 as uuidv4 } from 'uuid'
 import { ConflictError } from "./errors/conflict-error"
@@ -102,14 +102,14 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.dataLink.registerSchema(schema.name, schema.fields)
   }
 
-  private async onDataChange<B extends object>(event: ChangeEvent<B, MetaType>) {
-    await this.state.update(event.entity, event.schema)
+  private async onDataChange<B extends object>(entity: CanonicalEntity<B, MetaType>, schema: CanonicalSchema) {
+    await this.state.update(entity, schema)
 
     if (this.isUp) {
-      this.logger.debug({ component: "Storage" }, `Notifying observers on change event for entity ${event.entity.id}`)
+      this.logger.debug({ component: "Storage" }, `Notifying observers on change event for entity ${entity.id}`)
       this.observers.forEach(async (observer) => {
         try {
-          await observer(event)
+          await observer(entity)
         } catch (error: any) {
           this.logger.error({ component: "Storage", stack: error.stack }, `Error notifying observer of change event: ${error.message}`)
         }
