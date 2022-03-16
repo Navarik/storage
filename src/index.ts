@@ -233,10 +233,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     const entity = new Entity<BodyType, MetaType>()
-      .create({ id, body, meta }, user)
-      .formatBody(schema)
-      .formatMeta(this.metaSchema)
-      .sign()
+      .create({ id, body, meta }, { schema, metaSchema: this.metaSchema }, user)
 
     await this.verifyAccess(user, 'write', entity)
     await this.dataLink.validate(type, body, user)
@@ -244,7 +241,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     return this.changelog.requestChange("create", entity, schema.canonical())
   }
 
-  async update<BodyType extends object>({ id, version_id, type, body, meta }: EntityPatch<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope> {
+  async update<BodyType extends object>({ id, version_id, body, meta }: EntityPatch<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope> {
     this.healthStats.totalUpdateRequests++
     if (!version_id) {
       throw new ValidationError(`Update unsuccessful due to missing version_id.`)
@@ -255,15 +252,10 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       throw new ValidationError(`Update failed: can't find entity ${id}`)
     }
 
+    const schema = this.schema.describe(previous.type)
+
     const entity = new Entity<BodyType, MetaType>(previous)
-      .update({ version_id, type, body, meta }, user)
-
-    const schema = this.schema.describe(entity.type)
-
-    entity
-      .formatBody(schema)
-      .formatMeta(this.metaSchema)
-      .sign()
+      .update({ version_id, body, meta }, { schema, metaSchema: this.metaSchema }, user)
 
     await this.verifyAccess(user, 'write', entity)
     await this.dataLink.validate(entity.type, entity.body, user)
@@ -281,8 +273,6 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
     const entity = new Entity(lastVersion).delete(user)
     const schema = this.schema.describeEntity(entity)
-
-    entity.sign()
 
     await this.verifyAccess(user, 'write', entity)
 

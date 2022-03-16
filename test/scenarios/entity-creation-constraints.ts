@@ -14,7 +14,6 @@ export const entityCreationConstraints = (createStorage: <T extends object = {}>
 
   describe('Entity format and constraints', () => {
     before(() => storage.up())
-    after(() => storage.down())
 
     it("can't create entity of unknown type", async () => {
       await steps.cannotCreate({ type: 'wow.doge', body: {} })
@@ -50,5 +49,7 @@ export const entityCreationConstraints = (createStorage: <T extends object = {}>
         }
       })
     })
+
+    after(() => storage.down())
   })
 }
