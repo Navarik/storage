@@ -18,7 +18,7 @@ export interface CanonicalSchema {
 
 export type ActionType = 'create'|'update'|'delete'
 
-export interface EntityEnvelope<B extends object, M extends object> {
+export interface EntityEnvelope {
   id: UUID
   version_id: UUID
   previous_version_id: UUID|null
@@ -31,7 +31,7 @@ export interface EntityEnvelope<B extends object, M extends object> {
   schema: UUID
 }
 
-export interface CanonicalEntity<B extends object, M extends object> extends EntityEnvelope<B, M> {
+export interface CanonicalEntity<B extends object, M extends object> extends EntityEnvelope {
   body: B
   meta: M
 }
@@ -177,8 +177,8 @@ export interface StorageInterface<MetaType extends object> extends Service {
   get<BodyType extends object>(id: UUID, options?: GetOptions, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
   find<BodyType extends object>(query?: SearchQuery|Dictionary<any>, options?: SearchOptions, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
   count(query?: SearchQuery|Dictionary<any>, user?: UUID): Promise<number>
-  create<BodyType extends object>(data: EntityData<BodyType, MetaType>, user?: UUID): Promise<EntityEnvelope<BodyType, MetaType>>
-  update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, user?: UUID): Promise<EntityEnvelope<BodyType, MetaType>>
-  delete<BodyType extends object>(id: UUID, user?: UUID): Promise<EntityEnvelope<BodyType, MetaType> | undefined>
+  create<BodyType extends object>(data: EntityData<BodyType, MetaType>, user?: UUID): Promise<EntityEnvelope>
+  update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, user?: UUID): Promise<EntityEnvelope>
+  delete(id: UUID, user?: UUID): Promise<EntityEnvelope | undefined>
   observe<BodyType extends object>(handler: Observer<BodyType, MetaType>): void
 }

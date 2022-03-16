@@ -1,6 +1,7 @@
 import { Dictionary } from '@navarik/types'
 import { SchemaRegistry, SchemaEngine, CanonicalSchema, CanonicalEntity, IdGenerator } from './types'
 import { ValidationError } from "./errors/validation-error"
+import { Entity } from './entity'
 
 interface Config {
   schemaRegistry: SchemaRegistry
@@ -73,7 +74,7 @@ export class Schema<M extends object> {
     return schema
   }
 
-  format<T = any>(type: string, body: Partial<T>, meta: Partial<M>) {
+  format<B extends object>(type: string, body: Partial<B>, meta: Partial<M>) {
     const schema = this.describe(type)
     if (!schema) {
       throw new ValidationError(`Type ${type} not found.`)
@@ -84,11 +85,16 @@ export class Schema<M extends object> {
     this.validate(this.metaSchemaId, meta)
     this.validate(schemaId, body)
 
-    return {
-      schema,
-      schemaId,
-      body: <T>this.schemaEngine.format(schemaId, body),
+    const entity = new Entity<B, M>({
+      type,
+      schema: schemaId,
+      body: <B>this.schemaEngine.format(schemaId, body),
       meta: <M>this.schemaEngine.format(this.metaSchemaId, meta)
+    })
+
+    return {
+      entity,
+      schema
     }
   }
 }

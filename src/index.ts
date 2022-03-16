@@ -8,6 +8,7 @@ import { Changelog } from "./changelog"
 import { DataLink } from "./data-link"
 import { Schema } from "./schema"
 import { State } from "./state"
+import { Entity } from "./entity"
 
 import { UuidV5IdGenerator } from "./adapters/uuid-v5-id-generator"
 import { SearchBasedEntityRegistry } from "./adapters/search-based-entity-registry"
@@ -17,20 +18,10 @@ import { DefaultChangelogAdapter } from "./adapters/default-changelog"
 import { InMemorySchemaRegistry } from "./adapters/in-memory-schema-registry"
 import { defaultLogger } from "./adapters/default-logger"
 
-import { CreateAction } from './actions/create-action'
-import { UpdateAction } from './actions/update-action'
-import { DeleteAction } from './actions/delete-action'
-
 export * from "./types"
 
 const nobody = "00000000-0000-0000-0000-000000000000"
 const defaultSchemaIdNamespace = '00000000-0000-0000-0000-000000000000'
-
-const actions = {
-  create: new CreateAction<any>(),
-  update: new UpdateAction<any>(),
-  delete: new DeleteAction<any>()
-}
 
 export class Storage<MetaType extends object> implements StorageInterface<MetaType> {
   private staticData: Array<EntityData<any, MetaType>>
@@ -127,10 +118,8 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   async up() {
     await this.state.up()
     for (const { id = uuidv4(), type, body, meta = {} } of this.staticData) {
-      const formatted = this.schema.format(type, body, meta)
-      const entity = actions.create.request({ id, type, body: formatted.body, meta: formatted.meta, schema: formatted.schemaId }, nobody)
-
-      await this.state.update(entity, formatted.schema)
+      const { entity, schema } = this.schema.format(type, body, meta)
+      await this.state.update(entity.create({ id }, nobody), schema)
     }
 
     if (!(await this.state.isClean())) {
@@ -224,44 +213,35 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     return this.state.count(secureQuery)
   }
 
-  async create<BodyType extends object>({ id = uuidv4(), type, body, meta }: EntityData<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope<BodyType, MetaType>> {
+  async create<BodyType extends object>({ id = uuidv4(), type, body, meta }: EntityData<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope> {
     this.healthStats.totalCreateRequests++
 
     if (await this.has(id)) {
       throw new ConflictError(`Entity ${id} already exists.`)
     }
 
-    const formatted = this.schema.format(type, body, meta || {})
-    const entity = actions.create.request({ id, type, body: formatted.body, meta: formatted.meta, schema: formatted.schemaId }, user)
+    const { entity, schema } = this.schema.format<BodyType>(type, body, meta || {})
+    entity.create({ id }, user)
 
     await this.verifyAccess(user, 'write', entity)
-    await this.dataLink.validate(entity.type, entity.body, user)
+    await this.dataLink.validate(type, body, user)
 
-    return this.changelog.requestChange("create", entity, formatted.schema)
+    return this.changelog.requestChange("create", entity, schema)
   }
 
-  async update<BodyType extends object>({ id, version_id, type, body, meta }: EntityPatch<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope<BodyType, MetaType>> {
+  async update<BodyType extends object>({ id, version_id, type, body, meta }: EntityPatch<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope> {
     this.healthStats.totalUpdateRequests++
+    if (!version_id) {
+      throw new ConflictError(`Update unsuccessful due to missing version_id.`)
+    }
 
     const previous = await this.state.get(id)
     if (!previous) {
       throw new ConflictError(`Update failed: can't find entity ${id}`)
     }
-    // check if update is not based on an outdated entity
-    if (!version_id) {
-      throw new ConflictError(`Update unsuccessful due to missing version_id.`)
-    }
-    if (previous.version_id != version_id) {
-      throw new ConflictError(`Update unsuccessful due to ${version_id} being not the latest version for entity ${id}`)
-    }
 
-    const newType = type || previous.type
-    const formatted = this.schema.format(
-      type || previous.schema,
-      { ...previous.body, ...(body || {}) },
-      { ...previous.meta, ...(meta || {}) }
-    )
-    const entity = actions.update.request({ ...previous, type: newType, body: formatted.body, meta: formatted.meta, schema: formatted.schemaId }, user)
+    const entity = new Entity(previous).update({ version_id, type, body, meta }, user)
+    const formatted = this.schema.format(entity.type, entity.body, entity.meta)
 
     await this.verifyAccess(user, 'write', entity)
     await this.dataLink.validate(entity.type, entity.body, user)
@@ -269,7 +249,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     return this.changelog.requestChange("update", entity, formatted.schema)
   }
 
-  async delete<BodyType extends object>(id: UUID, user: UUID = nobody): Promise<EntityEnvelope<BodyType, MetaType> | undefined> {
+  async delete<BodyType extends object>(id: UUID, user: UUID = nobody): Promise<EntityEnvelope | undefined> {
     this.healthStats.totalDeleteRequests++
 
     const lastVersion = await this.state.get<BodyType>(id)
@@ -277,8 +257,8 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       return undefined
     }
 
+    const entity = new Entity(lastVersion).delete(user)
     const schema = this.schema.describeEntity(lastVersion)
-    const entity = actions.delete.request(lastVersion, user)
 
     await this.verifyAccess(user, 'write', entity)
 

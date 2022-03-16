@@ -21,7 +21,7 @@ export const expectEntity = (given: Partial<CanonicalEntity<any, any>>|undefined
 }
 
 
-export const expectEnvelope = (given: Partial<EntityEnvelope<any, any>>|undefined) => {
+export const expectEnvelope = (given: Partial<EntityEnvelope>|undefined) => {
   expect(given).to.be.an('object')
   if (!given) {
     throw new Error('No entity given')

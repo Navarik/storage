@@ -54,7 +54,7 @@ export class Changelog<M extends object> {
 
     this.healthStats.totalChangesProduced++
 
-    return <Promise<EntityEnvelope<B, M>>>transaction
+    return <Promise<EntityEnvelope>>transaction
   }
 
   async readAll() {
