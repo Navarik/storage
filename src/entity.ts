@@ -1,6 +1,7 @@
 import { v5 as uuidv5, v4 as uuidv4 } from 'uuid'
 import { UUID, ActionType, Timestamp, CanonicalEntity, EntityEnvelope } from './types'
 import { ConflictError } from './errors/conflict-error'
+import { Schema } from './schema'
 
 export class Entity<B extends object, M extends object> implements CanonicalEntity<B, M> {
   id: UUID
@@ -16,7 +17,7 @@ export class Entity<B extends object, M extends object> implements CanonicalEnti
   body: B
   meta: M
 
-  constructor(data: Partial<CanonicalEntity<B, M>>) {
+  constructor(data: Partial<CanonicalEntity<B, M>> = {}) {
     this.id = data.id
     this.version_id = data.version_id
     this.previous_version_id = data.previous_version_id
@@ -31,17 +32,18 @@ export class Entity<B extends object, M extends object> implements CanonicalEnti
     this.meta = data.meta
   }
 
-  create({ id = uuidv4() }: { id?: UUID }, user: UUID): Entity<B, M> {
+  create({ id = uuidv4(), body, meta }: { id?: UUID, body: B, meta: M }, user: UUID): Entity<B, M> {
     const now = new Date().toISOString()
 
     this.id = id
-    this.version_id = uuidv5(JSON.stringify(this.body), id)
     this.previous_version_id = null
     this.last_action = "create"
     this.created_by = user
     this.created_at = now
     this.modified_by = user
     this.modified_at = now
+    this.body = body
+    this.meta = meta
 
     return this
   }
@@ -65,7 +67,6 @@ export class Entity<B extends object, M extends object> implements CanonicalEnti
 
     const now = new Date().toISOString()
 
-    this.version_id = uuidv5(JSON.stringify(this.body), this.id)
     this.previous_version_id = this.version_id
     this.last_action = "update"
     this.modified_by = user
@@ -82,6 +83,43 @@ export class Entity<B extends object, M extends object> implements CanonicalEnti
     this.modified_at = now
 
     return this
+  }
+
+  formatBody(schema: Schema): Entity<B, M> {
+    this.body = schema.format(this.body)
+    this.type = schema.type
+    this.schema = schema.id
+
+    return this
+  }
+
+  sign(): Entity<B, M> {
+    this.version_id = uuidv5(JSON.stringify(this.body), this.id)
+
+    return this
+  }
+
+  formatMeta(schema: Schema): Entity<B, M> {
+    this.meta = schema.format(this.meta || {})
+
+    return this
+  }
+
+  canonical(): CanonicalEntity<B, M> {
+    return {
+      id: this.id,
+      version_id: this.version_id,
+      previous_version_id: this.previous_version_id,
+      last_action: this.last_action,
+      created_by: this.created_by,
+      created_at: this.created_at,
+      modified_by: this.modified_by,
+      modified_at: this.modified_at,
+      type: this.type,
+      schema: this.schema,
+      body: this.body,
+      meta: this.meta
+    }
   }
 
   envelope(): EntityEnvelope {

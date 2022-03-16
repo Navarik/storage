@@ -20,14 +20,16 @@ const fixtureData = [
 export const search = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
-    data: fixtureData,
     logger: nullLogger
   })
 
   const steps = new EntitySteps(storage)
 
   describe('Entity search', () => {
-    before(() => storage.up())
+    before(async () => {
+      await storage.up()
+      await Promise.all(fixtureData.map(x => storage.create<any>(x)))
+    })
 
     it("can't get non-existing entities", async () => {
       const response = await storage.get('nope')

@@ -13,19 +13,20 @@ export const entityHas = (createStorage: <T extends object = {}>(config: Storage
         { name: "meow", type: "boolean" }
       ]
     }],
-    data: [{
-      id: catId,
-      type: "cat",
-      body: {
-        meow: true
-      }
-    }],
     logger: nullLogger
   })
 
   describe('Entity existance', () => {
-    before(() => storage.up())
-    after(() => storage.down())
+    before(async () => {
+      await storage.up()
+      await storage.create({
+        id: catId,
+        type: "cat",
+        body: {
+          meow: true
+        }
+      })
+    })
 
     it("can haz existing entity", async () => {
       expect(await storage.has(catId)).to.be.true
@@ -35,5 +36,7 @@ export const entityHas = (createStorage: <T extends object = {}>(config: Storage
       expect(await storage.has(dogeId)).to.be.false
       expect(await storage.has("00000000-0000-0000-0000-000000000000")).to.be.false
     })
+
+    after(() => storage.down())
   })
 }

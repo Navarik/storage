@@ -9,13 +9,14 @@ const fixturesJobs: Array<CanonicalEntity<any, any>> = require('../fixtures/data
 export const count = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
-    data: [ ...fixturesEvents, ...fixturesJobs ],
     logger: nullLogger
   })
 
   describe('Entity counts', () => {
-    before(() => storage.up())
-    after(() => storage.down())
+    before(async () => {
+      await storage.up()
+      await Promise.all([...fixturesEvents, ...fixturesJobs].map(x => storage.create(x)))
+    })
 
     it("can count entities", async () => {
       const response = await storage.count()
@@ -29,5 +30,7 @@ export const count = (createStorage: <T extends object = {}>(config: StorageConf
       const response2 = await storage.count({ type: 'document.job_order' })
       expect(response2).to.equal(fixturesJobs.length)
     })
+
+    after(() => storage.down())
   })
 }

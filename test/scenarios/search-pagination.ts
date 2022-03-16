@@ -19,13 +19,14 @@ const fixtureData = [
 export const searchPagination = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
-    data: fixtureData,
     logger: nullLogger
   })
 
   describe('Search pagination', () => {
-    before(() => storage.up())
-    after(() => storage.down())
+    before(async () => {
+      await storage.up()
+      await Promise.all(fixtureData.map(x => storage.create<any>(x)))
+    })
 
     it("can limit the search results", async () => {
       let response = await storage.find({ 'body.sender': 1, 'body.job_order': 13 }, { limit: 2 })
@@ -71,5 +72,7 @@ export const searchPagination = (createStorage: <T extends object = {}>(config: 
       expect(response).to.have.length(2)
       response.forEach(expectEntity)
     })
+
+    after(() => storage.down())
   })
 }

@@ -18,6 +18,10 @@ export class ArrayField implements DataField {
   }
 
   async validate(value: any, user: string) {
+    if (value === undefined || value === null) {
+      return { isValid: true, message: "" }
+    }
+
     if (!(value instanceof Array)) {
       return { isValid: false, message: `Field ${this.name} must be an array, ${typeof value} given. ` }
     }

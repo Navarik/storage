@@ -51,12 +51,14 @@ const fixtureData = [
 export const searchFulltext = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
-    data: fixtureData,
     logger: nullLogger
   })
 
   describe('Full-text search', () => {
-    before(() => storage.up())
+    before(async () => {
+      await storage.up()
+      await Promise.all(fixtureData.map(x => storage.create<any>(x)))
+    })
 
     it("can count entities by text fragments", async () => {
       expect(await storage.count({ operator: "fulltext", args: ["amaze"] })).to.equal(2)

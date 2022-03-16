@@ -47,14 +47,16 @@ const fixtureData = [
 export const referenceValidation = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
-    data: fixtureData,
     logger: nullLogger
   })
 
   const steps = new EntitySteps(storage)
 
   describe('Deep search', () => {
-    before(() => storage.up())
+    before(async () => {
+      await storage.up()
+      await Promise.all(fixtureData.map(x => storage.create<any>(x)))
+    })
 
     it("can create entities when referenced objects exist", async () => {
       await steps.canCreate({ type: "message", body: { content: "is this a pegeon?", user: "51d73d52-b209-429c-b374-f4f7e2e2f028", channel: "22956b03-1f99-49b0-830a-1e3c7d4beeef" } })

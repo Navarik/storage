@@ -6,9 +6,10 @@ import { ConflictError } from "./errors/conflict-error"
 import { AccessError } from "./errors/access-error"
 import { Changelog } from "./changelog"
 import { DataLink } from "./data-link"
-import { Schema } from "./schema"
+import { SchemaRegistry } from "./schema-registry"
 import { State } from "./state"
 import { Entity } from "./entity"
+import { Schema } from "./schema"
 
 import { UuidV5IdGenerator } from "./adapters/uuid-v5-id-generator"
 import { SearchBasedEntityRegistry } from "./adapters/search-based-entity-registry"
@@ -17,6 +18,7 @@ import { DefaultAccessControl } from "./adapters/default-access-control"
 import { DefaultChangelogAdapter } from "./adapters/default-changelog"
 import { InMemorySchemaRegistry } from "./adapters/in-memory-schema-registry"
 import { defaultLogger } from "./adapters/default-logger"
+import { ValidationError } from "./errors/validation-error"
 
 export * from "./types"
 
@@ -24,8 +26,8 @@ const nobody = "00000000-0000-0000-0000-000000000000"
 const defaultSchemaIdNamespace = '00000000-0000-0000-0000-000000000000'
 
 export class Storage<MetaType extends object> implements StorageInterface<MetaType> {
-  private staticData: Array<EntityData<any, MetaType>>
-  private schema: Schema<MetaType>
+  private schema: SchemaRegistry
+  private metaSchema: Schema
   private state: State<MetaType>
   private accessControl: AccessControlAdapter<MetaType>
   private dataLink: DataLink
@@ -41,38 +43,39 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   private isUp: boolean = false
 
   constructor(config: StorageConfig<MetaType> = {}) {
-    const { schema = [], data = [], cacheSize = 100000 } = config
+    const { schema = [], cacheSize = 100000 } = config
 
     this.logger = config.logger || defaultLogger
-    this.logger.info({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}, static data: ${data.length})`)
+    this.logger.info({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}`)
 
-    const metaSchema = {
+    const schemaIdGenerator = config.schemaIdGenerator || new UuidV5IdGenerator({ root: defaultSchemaIdNamespace })
+    const schemaEngine = config.schemaEngine || new AvroSchemaEngine()
+
+    const metaSchemaDefinition = {
       name: "metadata",
       fields: config.meta || []
     }
+    this.metaSchema = new Schema({
+      id: schemaIdGenerator.id(metaSchemaDefinition),
+      definition: metaSchemaDefinition,
+      engine: schemaEngine
+    })
+    schemaEngine.register(this.metaSchema.id, metaSchemaDefinition)
 
-    this.accessControl = config.accessControl || new DefaultAccessControl()
-
-    this.dataLink = new DataLink({
-      state: this
+    this.schema = new SchemaRegistry({
+      adapter: config.schemaRegistry || new InMemorySchemaRegistry(),
+      engine: config.schemaEngine || new AvroSchemaEngine(),
+      idGenerator: schemaIdGenerator,
+      onChange: this.onSchemaChange.bind(this)
     })
 
     const searchIndex = config.index || new NeDbSearchIndex<MetaType>({ logger: this.logger })
-
     this.state = new State<MetaType>({
       logger: this.logger,
       index: searchIndex,
       registry: config.state || new SearchBasedEntityRegistry<MetaType>({ searchIndex }),
-      metaSchema,
+      metaSchema: this.metaSchema.canonical(),
       cacheSize
-    })
-
-    this.schema = new Schema({
-      schemaEngine: config.schemaEngine || new AvroSchemaEngine(),
-      schemaRegistry: config.schemaRegistry || new InMemorySchemaRegistry(),
-      idGenerator: config.schemaIdGenerator || new UuidV5IdGenerator({ root: defaultSchemaIdNamespace }),
-      metaSchema,
-      onChange: this.onSchemaChange.bind(this)
     })
 
     this.changelog = new Changelog<MetaType>({
@@ -81,11 +84,14 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       observer: this.onDataChange.bind(this)
     })
 
+    this.accessControl = config.accessControl || new DefaultAccessControl()
+
+    this.dataLink = new DataLink({
+      state: this
+    })
+
     // Static schema definitions if there is any
     schema.forEach(this.define.bind(this))
-
-    // Static data is used primarily for automated tests
-    this.staticData = data
   }
 
   private async onSchemaChange(schema: CanonicalSchema) {
@@ -117,10 +123,6 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
   async up() {
     await this.state.up()
-    for (const { id = uuidv4(), type, body, meta = {} } of this.staticData) {
-      const { entity, schema } = this.schema.format(type, body, meta)
-      await this.state.update(entity.create({ id }, nobody), schema)
-    }
 
     if (!(await this.state.isClean())) {
       await this.changelog.readAll()
@@ -167,7 +169,12 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   }
 
   describe(type: string) {
-    return this.schema.describe(type)
+    const schema = this.schema.describe(type)
+    if (!schema) {
+      return undefined
+    }
+
+    return schema.canonical()
   }
 
   define(schema: CanonicalSchema) {
@@ -220,33 +227,48 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       throw new ConflictError(`Entity ${id} already exists.`)
     }
 
-    const { entity, schema } = this.schema.format<BodyType>(type, body, meta || {})
-    entity.create({ id }, user)
+    const schema = this.schema.describe(type)
+    if (!schema) {
+      throw new ValidationError(`Unknown type: ${type}`)
+    }
+
+    const entity = new Entity<BodyType, MetaType>()
+      .create({ id, body, meta }, user)
+      .formatBody(schema)
+      .formatMeta(this.metaSchema)
+      .sign()
 
     await this.verifyAccess(user, 'write', entity)
     await this.dataLink.validate(type, body, user)
 
-    return this.changelog.requestChange("create", entity, schema)
+    return this.changelog.requestChange("create", entity, schema.canonical())
   }
 
   async update<BodyType extends object>({ id, version_id, type, body, meta }: EntityPatch<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope> {
     this.healthStats.totalUpdateRequests++
     if (!version_id) {
-      throw new ConflictError(`Update unsuccessful due to missing version_id.`)
+      throw new ValidationError(`Update unsuccessful due to missing version_id.`)
     }
 
-    const previous = await this.state.get(id)
+    const previous = await this.state.get<BodyType>(id)
     if (!previous) {
-      throw new ConflictError(`Update failed: can't find entity ${id}`)
+      throw new ValidationError(`Update failed: can't find entity ${id}`)
     }
 
-    const entity = new Entity(previous).update({ version_id, type, body, meta }, user)
-    const formatted = this.schema.format(entity.type, entity.body, entity.meta)
+    const entity = new Entity<BodyType, MetaType>(previous)
+      .update({ version_id, type, body, meta }, user)
+
+    const schema = this.schema.describe(entity.type)
+
+    entity
+      .formatBody(schema)
+      .formatMeta(this.metaSchema)
+      .sign()
 
     await this.verifyAccess(user, 'write', entity)
     await this.dataLink.validate(entity.type, entity.body, user)
 
-    return this.changelog.requestChange("update", entity, formatted.schema)
+    return this.changelog.requestChange("update", entity, schema.canonical())
   }
 
   async delete<BodyType extends object>(id: UUID, user: UUID = nobody): Promise<EntityEnvelope | undefined> {
@@ -258,11 +280,13 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     }
 
     const entity = new Entity(lastVersion).delete(user)
-    const schema = this.schema.describeEntity(lastVersion)
+    const schema = this.schema.describeEntity(entity)
+
+    entity.sign()
 
     await this.verifyAccess(user, 'write', entity)
 
-    return this.changelog.requestChange("delete", entity, schema)
+    return this.changelog.requestChange("delete", entity, schema.canonical())
   }
 
   observe<BodyType extends object>(handler: Observer<BodyType, MetaType>) {

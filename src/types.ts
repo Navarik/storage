@@ -105,10 +105,10 @@ export interface SearchOptions {
 export interface SchemaEngine {
   register(type: string, schema: CanonicalSchema): void
   validate<T>(type: string, body: T): ValidationResponse
-  format<T>(type: string, body: T): T
+  format<T>(type: string, body: Partial<T>): T
 }
 
-export interface SchemaRegistry {
+export interface SchemaRegistryAdapter {
   set(key: string, schema: CanonicalSchema): void
   get(key: string): CanonicalSchema|undefined
   observe(observer: (key: string, schema: CanonicalSchema) => void): void
@@ -153,16 +153,13 @@ export interface StorageConfig<M extends object> {
   schemaIdGenerator?: IdGenerator<CanonicalSchema>
 
   // Extensions - override when adding new rules/capacities
-  schemaRegistry?: SchemaRegistry
+  schemaRegistry?: SchemaRegistryAdapter
   accessControl?: AccessControlAdapter<M>
   logger?: Logger
 
   // Built-in schemas for entity body and metadata
   meta?: Array<SchemaField>
   schema?: Array<CanonicalSchema>
-
-  // Built-in entities if any
-  data?: Array<EntityData<any, M>>
 
   // Configuration
   cacheSize?: number

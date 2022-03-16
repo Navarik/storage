@@ -1,9 +1,8 @@
 import { Logger } from '@navarik/types'
 import { TransactionManager } from "@navarik/transaction-manager"
 import { v4 as uuidv4 } from 'uuid'
-import { ChangelogAdapter, CanonicalEntity, ChangeEvent, EntityEnvelope, ActionType, CanonicalSchema } from '../types'
-
-import { entityEnvelope } from './entity-envelope'
+import { ChangelogAdapter, CanonicalEntity, ChangeEvent, EntityEnvelope, ActionType, CanonicalSchema } from './types'
+import { Entity } from './entity'
 
 interface ChangelogConfig<M extends object> {
   adapter: ChangelogAdapter<M>
@@ -14,7 +13,7 @@ interface ChangelogConfig<M extends object> {
 export class Changelog<M extends object> {
   private adapter: ChangelogAdapter<M>
   private observer: (change: CanonicalEntity<any, M>, schema: CanonicalSchema) => Promise<void>
-  private transactionManager: TransactionManager<CanonicalEntity<any, M>>
+  private transactionManager: TransactionManager
   private logger: Logger
   private healthStats = {
     totalChangesProduced: 0,
@@ -36,7 +35,7 @@ export class Changelog<M extends object> {
     try {
       this.logger.debug({ component: "Storage" }, `Received change event for entity: ${entity.id}`)
       await this.observer(entity, schema)
-      this.transactionManager.commit(id, entityEnvelope(entity))
+      this.transactionManager.commit(id, new Entity(entity).envelope())
 
     } catch (error: any) {
       this.healthStats.totalProcessingErrors++

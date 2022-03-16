@@ -23,7 +23,11 @@ export class ObjectField implements DataField {
   }
 
   async validate(value: any, user: string) {
-    if (value instanceof Array && typeof value !== "object") {
+    if (value === undefined || value === null) {
+      return { isValid: true, message: "" }
+    }
+
+    if (value instanceof Array || typeof value !== "object") {
       return { isValid: false, message: `Field ${this.name} must be an object, ${typeof value} given. ` }
     }
 
