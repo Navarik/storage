@@ -68,7 +68,7 @@ export class State<MetaType extends object> {
     this.logger.debug({ component: "Storage" }, `Processing ${entity.last_action} event event for entity ${entity.id}`)
 
     if (entity.last_action === "delete") {
-      await this.cachedRegistry.delete(entity.id)
+      await this.cachedRegistry.delete(entity)
     } else {
       await this.cachedRegistry.put(entity)
     }
@@ -82,6 +82,14 @@ export class State<MetaType extends object> {
     }
 
     return this.cachedRegistry.has(id)
+  }
+
+  async history<BodyType extends object>(id: string): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
+    if (!id) {
+      return []
+    }
+
+    return this.cachedRegistry.history(id)
   }
 
   async get<BodyType extends object>(id: string): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {

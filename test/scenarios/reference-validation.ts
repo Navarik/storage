@@ -52,10 +52,12 @@ export const referenceValidation = (createStorage: <T extends object = {}>(confi
 
   const steps = new EntitySteps(storage)
 
-  describe('Deep search', () => {
+  describe('Reference validation', () => {
     before(async () => {
       await storage.up()
-      await Promise.all(fixtureData.map(x => storage.create<any>(x)))
+      for (const fixture of fixtureData) {
+        await storage.create<any>(fixture)
+      }
     })
 
     it("can create entities when referenced objects exist", async () => {

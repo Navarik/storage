@@ -62,7 +62,9 @@ export const searchDeep = (createStorage: <T extends object = {}>(config: Storag
   describe('Deep search', () => {
     before(async () => {
       await storage.up()
-      await Promise.all(fixtureData.map(x => storage.create<any>(x)))
+      for (const fixture of fixtureData) {
+        await storage.create<any>(fixture)
+      }
     })
 
     it("can find entities by referenced fields", async () => {

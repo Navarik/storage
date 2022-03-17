@@ -35,6 +35,10 @@ export class RegistryWithCache<M extends object> implements EntityRegistry<M> {
     return this.registry.has(id)
   }
 
+  async history<B extends object>(id: string) {
+    return this.registry.history<B>(id)
+  }
+
   async get<B extends object>(id: UUID) {
     if (this.cache.has(id)) {
       return this.cache.get(id)
@@ -48,9 +52,9 @@ export class RegistryWithCache<M extends object> implements EntityRegistry<M> {
     return entity
   }
 
-  async delete(id: UUID) {
-    await this.registry.delete(id)
-    this.cache.delete(id)
+  async delete<B extends object>(document: CanonicalEntity<B, M>) {
+    await this.registry.delete(document)
+    this.cache.delete(document.id)
   }
 
   async isClean() {

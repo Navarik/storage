@@ -133,9 +133,10 @@ export interface SearchIndex<M extends object> extends Service {
 
 export interface EntityRegistry<M extends object> extends Service {
   put<B extends object>(document: CanonicalEntity<B, M>): Promise<void>
-  has(id: UUID): Promise<boolean>
   get<B extends object>(id: UUID): Promise<CanonicalEntity<B, M>>
-  delete(id: UUID): Promise<void>
+  delete<B extends object>(document: CanonicalEntity<B, M>): Promise<void>
+  has(id: UUID): Promise<boolean>
+  history<B extends object>(id: UUID): Promise<Array<CanonicalEntity<B, M>>>
   isClean(): Promise<boolean>
 }
 
@@ -170,6 +171,7 @@ export interface StorageInterface<MetaType extends object> extends Service {
   describe(type: string): CanonicalSchema|undefined
   define(schema: CanonicalSchema): void
   has(id: UUID): Promise<boolean>
+  history<BodyType extends object>(id: UUID, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
   get<BodyType extends object>(id: UUID, options?: GetOptions, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
   count(query?: SearchQuery|Dictionary<any>, user?: UUID): Promise<number>
   find<BodyType extends object>(query?: SearchQuery|Dictionary<any>, options?: SearchOptions, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>

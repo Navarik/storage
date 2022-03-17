@@ -4,22 +4,22 @@ import { AvroSchemaEngine } from "@navarik/avro-schema-engine"
 import { v4 as uuidv4 } from 'uuid'
 import { ConflictError } from "./errors/conflict-error"
 import { AccessError } from "./errors/access-error"
+import { ValidationError } from "./errors/validation-error"
 import { Changelog } from "./changelog"
 import { DataLink } from "./data-link"
 import { SchemaRegistry } from "./schema-registry"
 import { State } from "./state"
 import { Entity } from "./entity"
 import { Schema } from "./schema"
+import { QueryStream } from "./query-stream"
 
 import { UuidV5IdGenerator } from "./adapters/uuid-v5-id-generator"
-import { SearchBasedEntityRegistry } from "./adapters/search-based-entity-registry"
+import { DefaultEntityRegistry } from "./adapters/defailt-entity-registry"
 import { NeDbSearchIndex } from "./adapters/nedb-search-index/index"
 import { DefaultAccessControl } from "./adapters/default-access-control"
 import { DefaultChangelogAdapter } from "./adapters/default-changelog"
 import { InMemorySchemaRegistry } from "./adapters/in-memory-schema-registry"
 import { defaultLogger } from "./adapters/default-logger"
-import { ValidationError } from "./errors/validation-error"
-import { QueryStream } from "./query-stream"
 
 export * from "./types"
 
@@ -44,7 +44,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   private isUp: boolean = false
 
   constructor(config: StorageConfig<MetaType> = {}) {
-    const { schema = [], cacheSize = 100000 } = config
+    const { schema = [], cacheSize = 100 } = config
 
     this.logger = config.logger || defaultLogger
     this.logger.info({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}`)
@@ -74,7 +74,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     this.state = new State<MetaType>({
       logger: this.logger,
       index: searchIndex,
-      registry: config.state || new SearchBasedEntityRegistry<MetaType>({ searchIndex }),
+      registry: config.state || new DefaultEntityRegistry<MetaType>(),
       metaSchema: this.metaSchema.canonical(),
       cacheSize
     })
@@ -184,6 +184,17 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
   async has(id: UUID): Promise<boolean> {
     return this.state.has(id)
+  }
+
+  async history<BodyType extends object>(id: UUID, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
+    const versions = await this.state.history<BodyType>(id)
+    if (!versions.length) {
+      return []
+    }
+
+    await this.verifyAccess(user, "read", versions[0])
+
+    return versions
   }
 
   async get<BodyType extends object>(id: UUID, { hydrate = false }: GetOptions = {}, user: UUID = nobody): Promise<CanonicalEntity<BodyType, MetaType> | undefined> {
