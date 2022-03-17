@@ -70,10 +70,9 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       onChange: this.onSchemaChange.bind(this)
     })
 
-    const searchIndex = config.index || new NeDbSearchIndex<MetaType>({ logger: this.logger })
     this.state = new State<MetaType>({
       logger: this.logger,
-      index: searchIndex,
+      index: config.index || new NeDbSearchIndex<MetaType>({ logger: this.logger }),
       registry: config.state || new DefaultEntityRegistry<MetaType>(),
       metaSchema: this.metaSchema.canonical(),
       cacheSize
