@@ -1,4 +1,5 @@
 import { Dictionary, Logger, Service } from '@navarik/types'
+import { Readable } from 'stream'
 
 export type Timestamp = string
 export type UUID = string
@@ -47,13 +48,6 @@ export type EntityPatch<B extends object, M extends object> = Partial<CanonicalE
   body: B
 }
 
-export type FormattedEntity<B extends object, M extends object> = Partial<CanonicalEntity<B, M>> & {
-  type: string
-  body: B
-  meta: M
-  schema: string
-}
-
 export interface ChangeEvent<B extends object, M extends object> {
   id: UUID
   action: ActionType
@@ -92,6 +86,11 @@ export interface QueryCompiler<T> {
 }
 
 export interface GetOptions {
+  hydrate?: boolean
+}
+
+export interface StreamOptions {
+  sort?: string|Array<string>
   hydrate?: boolean
 }
 
@@ -172,8 +171,9 @@ export interface StorageInterface<MetaType extends object> extends Service {
   define(schema: CanonicalSchema): void
   has(id: UUID): Promise<boolean>
   get<BodyType extends object>(id: UUID, options?: GetOptions, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
-  find<BodyType extends object>(query?: SearchQuery|Dictionary<any>, options?: SearchOptions, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
   count(query?: SearchQuery|Dictionary<any>, user?: UUID): Promise<number>
+  find<BodyType extends object>(query?: SearchQuery|Dictionary<any>, options?: SearchOptions, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
+  stream(query: SearchQuery|Dictionary<any>, options: StreamOptions, user?: UUID): Readable
   create<BodyType extends object>(data: EntityData<BodyType, MetaType>, user?: UUID): Promise<EntityEnvelope>
   update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, user?: UUID): Promise<EntityEnvelope>
   delete(id: UUID, user?: UUID): Promise<EntityEnvelope | undefined>

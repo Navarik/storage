@@ -1,5 +1,5 @@
 import { Dictionary, Logger } from "@navarik/types"
-import { CanonicalSchema, StorageInterface, UUID, CanonicalEntity, EntityEnvelope, Observer, SearchOptions, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery, AccessControlAdapter, AccessType } from "./types"
+import { CanonicalSchema, StorageInterface, UUID, CanonicalEntity, EntityEnvelope, Observer, SearchOptions, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery, AccessControlAdapter, AccessType, StreamOptions } from "./types"
 import { AvroSchemaEngine } from "@navarik/avro-schema-engine"
 import { v4 as uuidv4 } from 'uuid'
 import { ConflictError } from "./errors/conflict-error"
@@ -19,6 +19,7 @@ import { DefaultChangelogAdapter } from "./adapters/default-changelog"
 import { InMemorySchemaRegistry } from "./adapters/in-memory-schema-registry"
 import { defaultLogger } from "./adapters/default-logger"
 import { ValidationError } from "./errors/validation-error"
+import { QueryStream } from "./query-stream"
 
 export * from "./types"
 
@@ -220,6 +221,10 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     return this.state.count(secureQuery)
   }
 
+  stream(query: SearchQuery|Dictionary<any>, options: StreamOptions, user: UUID) {
+    return new QueryStream({ storage: this, query, options, user })
+  }
+
   async create<BodyType extends object>({ id = uuidv4(), type, body, meta }: EntityData<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope> {
     this.healthStats.totalCreateRequests++
 
@@ -241,7 +246,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     return this.changelog.requestChange("create", entity, schema.canonical())
   }
 
-  async update<BodyType extends object>({ id, version_id, body, meta }: EntityPatch<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope> {
+  async update<BodyType extends object>({ id, type, version_id, body, meta }: EntityPatch<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope> {
     this.healthStats.totalUpdateRequests++
     if (!version_id) {
       throw new ValidationError(`Update unsuccessful due to missing version_id.`)
@@ -252,7 +257,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       throw new ValidationError(`Update failed: can't find entity ${id}`)
     }
 
-    const schema = this.schema.describe(previous.type)
+    const schema = this.schema.describe(type || previous.type)
 
     const entity = new Entity<BodyType, MetaType>(previous)
       .update({ version_id, body, meta }, { schema, metaSchema: this.metaSchema }, user)
