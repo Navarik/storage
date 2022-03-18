@@ -27,12 +27,14 @@ const fixtureData = [
 export const searchNulls = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
-    data: fixtureData,
     logger: nullLogger
   })
 
   describe('Deep search', () => {
-    before(() => storage.up())
+    before(async () => {
+      await storage.up()
+      await Promise.all(fixtureData.map(x => storage.create<any>(x)))
+    })
 
     it("doesn't break when searching objects with nullable composite fields", async () => {
       expect(await storage.count({ "body.object.wow": "AAAAAAAA" })).to.equal(1)

@@ -1,111 +1,35 @@
-import { Dictionary } from '@navarik/types'
-import { SchemaRegistry, SchemaEngine, CanonicalSchema, CanonicalEntity, IdGenerator } from './types'
+import { SchemaEngine, CanonicalSchema } from './types'
 import { ValidationError } from "./errors/validation-error"
-import { Search } from './search'
-import { DataLink } from './data-link'
 
-interface Config<M extends object> {
-  schemaRegistry: SchemaRegistry
-  schemaEngine: SchemaEngine
-  metaSchema: CanonicalSchema
-  search: Search<M>
-  dataLink: DataLink
-  idGenerator: IdGenerator<CanonicalSchema>
+interface Config {
+  id: string
+  engine: SchemaEngine
+  definition: CanonicalSchema
 }
 
-export class Schema<M extends object> {
-  public metaSchema: CanonicalSchema
-  private idGenerator: IdGenerator<CanonicalSchema>
-  private metaSchemaId: string
-  private schemaRegistry: SchemaRegistry
-  private schemaEngine: SchemaEngine
-  private search: Search<M>
-  private dataLink: DataLink
-  private knownTypes: Dictionary<string> = {}
+export class Schema {
+  public id: string
+  public type: string
+  private definition: CanonicalSchema
+  private engine: SchemaEngine
 
-  constructor({ schemaRegistry, schemaEngine, metaSchema, idGenerator, search, dataLink }: Config<M>) {
-    this.schemaRegistry = schemaRegistry
-    this.schemaEngine = schemaEngine
-    this.idGenerator = idGenerator
-    this.metaSchema = metaSchema
-    this.search = search
-    this.dataLink = dataLink
-    this.metaSchemaId = this.idGenerator.id(this.metaSchema)
-    this.schemaEngine.register(this.metaSchemaId, this.metaSchema)
-
-    this.schemaRegistry.observe(this.onRegistryUpdate.bind(this))
+  constructor({ id, engine, definition }: Config) {
+    this.id = id
+    this.type = definition.name
+    this.engine = engine
+    this.definition = definition
   }
 
-  private onRegistryUpdate(schemaId: string, schema: CanonicalSchema) {
-    this.search.registerFields("body", schema.fields)
-    this.dataLink.registerSchema(schema.name, schema.fields)
-    this.schemaEngine.register(schemaId, schema)
-    this.knownTypes[schema.name] = schemaId
-  }
-
-  types(): Array<string> {
-    return Object.keys(this.knownTypes)
-  }
-
-  define(schema: CanonicalSchema): void {
-    const schemaId = this.idGenerator.id(schema)
-    this.schemaRegistry.set(schemaId, schema)
-  }
-
-  describe(type: string): CanonicalSchema|undefined {
-    // Provided type can be either the type name or its ID
-    const schemaId = this.knownTypes[type] || type
-    const schema = this.schemaRegistry.get(schemaId)
-
-    if (!schema) {
-      return undefined
-    }
-
-    return schema
-  }
-
-  describeEntity<B extends object>(entity: CanonicalEntity<B, M>): CanonicalSchema|undefined {
-    // If can't find this particular version of the schema, fallback to the latest version
-    const schema = this.describe(entity.schema) || this.describe(entity.type)
-    if (!schema) {
-      throw new ValidationError(`Cannot find schema for ${entity.type} (schema version: ${entity.schema})`)
-    }
-
-    return schema
-  }
-
-  validate<T = any>(type: string, body: T, meta: M) {
-    const schema = this.describe(type)
-    if (!schema) {
-      return { isValid: false, message: `Type "${type}" not found.`, schema: null, schemaId: null }
-    }
-
-    const schemaId = this.idGenerator.id(schema)
-
-    const metaValidationResult = this.schemaEngine.validate(this.metaSchemaId, meta || {})
-    if (!metaValidationResult.isValid) {
-      return { ...metaValidationResult, schema, schemaId }
-    }
-
-    const dataValidationResult = this.schemaEngine.validate(schemaId, body)
-    if (!dataValidationResult.isValid) {
-      return { ...dataValidationResult, schema, schemaId }
-    }
-
-    return { isValid: true, message: "", schema, schemaId }
-  }
-
-  format<T = any>(type: string, body: T, meta: M) {
-    const { isValid, message, schema, schemaId } = this.validate(type, body, meta)
+  format<B extends object>(data: Partial<B>) {
+    const { isValid, message } = this.engine.validate(this.id, data)
     if (!isValid) {
       throw new ValidationError(message)
     }
 
-    return {
-      schema,
-      schemaId,
-      body: this.schemaEngine.format(schemaId, body),
-      meta: this.schemaEngine.format(this.metaSchemaId, meta || {})
-    }
+    return this.engine.format<B>(this.id, data)
+  }
+
+  canonical() {
+    return { ...this.definition }
   }
 }

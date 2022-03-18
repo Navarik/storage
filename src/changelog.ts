@@ -1,20 +1,19 @@
 import { Logger } from '@navarik/types'
 import { TransactionManager } from "@navarik/transaction-manager"
-import { AccessControlAdapter, ChangelogAdapter, CanonicalEntity, ChangeEvent } from './types'
-import { AccessError } from './errors/access-error'
+import { v4 as uuidv4 } from 'uuid'
+import { ChangelogAdapter, CanonicalEntity, ChangeEvent, EntityEnvelope, ActionType, CanonicalSchema } from './types'
+import { Entity } from './entity'
 
 interface ChangelogConfig<M extends object> {
   adapter: ChangelogAdapter<M>
   logger: Logger
-  observer: (change: ChangeEvent<any, M>) => Promise<void>
-  accessControl: AccessControlAdapter<M>
+  observer: (change: CanonicalEntity<any, M>, schema: CanonicalSchema) => Promise<void>
 }
 
-export class Changelog<MetaType extends object> {
-  private adapter: ChangelogAdapter<MetaType>
-  private observer: (change: ChangeEvent<any, MetaType>) => Promise<void>
-  private accessControl: AccessControlAdapter<MetaType>
-  private transactionManager: TransactionManager<CanonicalEntity<any, MetaType>>
+export class Changelog<M extends object> {
+  private adapter: ChangelogAdapter<M>
+  private observer: (change: CanonicalEntity<any, M>, schema: CanonicalSchema) => Promise<void>
+  private transactionManager: TransactionManager
   private logger: Logger
   private healthStats = {
     totalChangesProduced: 0,
@@ -22,47 +21,39 @@ export class Changelog<MetaType extends object> {
     totalProcessingErrors: 0
   }
 
-  constructor({ observer, adapter, accessControl, logger }: ChangelogConfig<MetaType>) {
+  constructor({ observer, adapter, logger }: ChangelogConfig<M>) {
     this.logger = logger
     this.adapter = adapter
     this.observer = observer
-    this.accessControl = accessControl
     this.transactionManager = new TransactionManager()
     this.adapter.observe(x => this.onChange(x))
   }
 
-  async onChange<B extends object>(event: ChangeEvent<B, MetaType>) {
+  private async onChange<B extends object>({ id, entity, schema }: ChangeEvent<B, M>) {
     this.healthStats.totalChangesReceived++
 
     try {
-      this.logger.debug({ component: "Storage" }, `Received change event for entity: ${event.entity.id}`)
-      await this.observer(event)
+      this.logger.debug({ component: "Storage" }, `Received change event for entity: ${entity.id}`)
+      await this.observer(entity, schema)
+      this.transactionManager.commit(id, new Entity(entity).envelope())
 
-      if (!this.transactionManager.commit(event.id, event.entity)) {
-        this.logger.debug({ component: "Storage" }, `Can't find transaction ${event.id}`)
-      }
     } catch (error: any) {
       this.healthStats.totalProcessingErrors++
       this.logger.error({ component: "Storage", stack: error.stack }, `Error processing change event: ${error.message}`)
 
-      if (!this.transactionManager.reject(event.id, error)) {
-        this.logger.debug({ component: "Storage" }, `Can't find transaction ${event.id}`)
-      }
+      this.transactionManager.reject(id, error)
     }
   }
 
-  async requestChange<B extends object>(change: ChangeEvent<B, MetaType>) {
-    const access = await this.accessControl.check(change.user, 'write', change.entity)
-    if (!access.granted) {
-      throw new AccessError(access.explanation)
-    }
+  async requestChange<B extends object>(action: ActionType, entity: CanonicalEntity<B, M>, schema: CanonicalSchema) {
+    const id = uuidv4()
 
-    const transaction = this.transactionManager.start(change.id, 1)
-    await this.adapter.write(change)
+    const transaction = this.transactionManager.start(id, 1)
+    await this.adapter.write({ id, action, entity, schema })
 
     this.healthStats.totalChangesProduced++
 
-    return <Promise<CanonicalEntity<B, MetaType>>>transaction
+    return <Promise<EntityEnvelope>>transaction
   }
 
   async readAll() {
@@ -82,6 +73,9 @@ export class Changelog<MetaType extends object> {
   }
 
   async stats() {
-    return { ...this.healthStats }
+    return {
+      ...this.healthStats,
+      changelog: await this.adapter.stats()
+    }
   }
 }

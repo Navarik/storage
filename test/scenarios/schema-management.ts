@@ -46,7 +46,7 @@ export const schemaManagement = (createStorage: <T extends object = {}>(config: 
 
       fixtureSchemata.forEach(schema => {
         expect(response).to.contain(schema.name)
-        expect(storage.describe(schema.name)).to.equal(schema)
+        expect(storage.describe(schema.name)).to.deep.equal(schema)
       })
     })
 
@@ -62,7 +62,7 @@ export const schemaManagement = (createStorage: <T extends object = {}>(config: 
       storage.define(schema)
 
       const response = storage.describe("doge")
-      expect(response).to.equal(schema)
+      expect(response).to.deep.equal(schema)
     })
 
     it("allows creating entities of the new type", async () => {
@@ -85,7 +85,7 @@ export const schemaManagement = (createStorage: <T extends object = {}>(config: 
       storage.define(newSchema)
 
       const response = storage.describe("doge")
-      expect(response).to.equal(newSchema)
+      expect(response).to.deep.equal(newSchema)
     })
 
     it("allows manipulating previously created entities after the type has been updated", async () => {

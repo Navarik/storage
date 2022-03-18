@@ -15,10 +15,6 @@ export class OnlyMineAccessControl implements AccessControlAdapter<any> {
     }
   }
 
-  async attachTerms(entity: CanonicalEntity<any, any>): Promise<CanonicalEntity<any, any>> {
-    return entity
-  }
-
   async getQuery(subject: UUID, access: AccessType): Promise<SearchQuery> {
     return {
       operator: "eq",

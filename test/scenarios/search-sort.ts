@@ -21,12 +21,14 @@ const fixtureData = [
 export const searchSort = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
-    data: fixtureData,
     logger: nullLogger
   })
 
   describe('Sorting of search results', () => {
-    before(() => storage.up())
+    before(async () => {
+      await storage.up()
+      await Promise.all(fixtureData.map(x => storage.create<any>(x)))
+    })
 
     it("can perform ascending sorting on top-level field", async () => {
       const response = await storage.find({ type: 'profile.user' }, { sort: 'body.first_name' })

@@ -1,15 +1,8 @@
 import { Dictionary, Logger, Service } from '@navarik/types'
+import { Readable } from 'stream'
 
 export type Timestamp = string
 export type UUID = string
-
-export interface Compiler<FromType, ToType> {
-  compile(field: FromType): ToType
-}
-
-export interface IdGenerator<T extends object> {
-  id(body: T): UUID
-}
 
 export interface SchemaField<P = Dictionary<any>> {
   name: string
@@ -24,7 +17,9 @@ export interface CanonicalSchema {
   fields: Array<SchemaField>
 }
 
-export interface CanonicalEntity<B extends object, M extends object> {
+export type ActionType = 'create'|'update'|'delete'
+
+export interface EntityEnvelope {
   id: UUID
   version_id: UUID
   previous_version_id: UUID|null
@@ -34,9 +29,12 @@ export interface CanonicalEntity<B extends object, M extends object> {
   modified_by: UUID
   modified_at: Timestamp
   type: string
+  schema: UUID
+}
+
+export interface CanonicalEntity<B extends object, M extends object> extends EntityEnvelope {
   body: B
   meta: M
-  schema: UUID
 }
 
 export type EntityData<B extends object, M extends object> = Partial<CanonicalEntity<B, M>> & {
@@ -46,80 +44,29 @@ export type EntityData<B extends object, M extends object> = Partial<CanonicalEn
 
 export type EntityPatch<B extends object, M extends object> = Partial<CanonicalEntity<B, M>> & {
   id: UUID
-  body: B
   version_id: UUID
+  body: B
 }
-
-export type ActionType = 'create'|'update'|'delete'
 
 export interface ChangeEvent<B extends object, M extends object> {
   id: UUID
   action: ActionType
-  user: UUID
-  timestamp: Timestamp
-  message: string
   entity: CanonicalEntity<B, M>
   schema: CanonicalSchema|undefined
-  parent: CanonicalEntity<B, M>|undefined
 }
 
 export type AccessType = 'read'|'write'|'search'
-
-export type AccessGrant = {
-  subject: UUID
-  access: AccessType
-}
-
-export type AccessControlQueryTerms = {
-  dac: Array<AccessGrant>
-  mac: Array<UUID>
-}
 
 export type AccessControlDecision = {
   granted: boolean
   explanation: string
 }
 
-export interface AccessControlAdapter<M extends object> {
-  check<B extends object>(subject: UUID, action: AccessType, object: CanonicalEntity<B, M>): Promise<AccessControlDecision>
-  attachTerms<B extends object>(entity: CanonicalEntity<B, M>): Promise<CanonicalEntity<B, M>>
-  getQuery(subject: UUID, access: AccessType): Promise<SearchQuery|undefined>
-}
-
-export type Observer<B extends object, M extends object> = (event: ChangeEvent<B, M>) => void|Promise<void>
-
-export interface FormattedEntity<T> {
-  body: T
-  schema: CanonicalSchema
-  schemaId: string
-}
+export type Observer<B extends object, M extends object> = (event: CanonicalEntity<B, M>) => void|Promise<void>
 
 export interface ValidationResponse {
   isValid: boolean
   message: string
-}
-
-export interface DataField {
-  validate(value: any): Promise<ValidationResponse>
-  hydrate(value: any): Promise<any>
-}
-
-export interface SchemaEngine {
-  register(type: string, schema: CanonicalSchema): void
-  validate<T>(type: string, body: T): ValidationResponse
-  format<T>(type: string, body: T): T
-}
-
-export interface SchemaRegistry {
-  set(key: string, schema: CanonicalSchema): void
-  get(key: string): CanonicalSchema|undefined
-  observe(observer: (key: string, schema: CanonicalSchema) => void): void
-}
-
-export interface ChangelogAdapter<M extends object> extends Service {
-  observe(handler: <B extends object>(event: ChangeEvent<B, M>) => void|Promise<void>): void
-  write<B extends object>(message: ChangeEvent<B, M>): Promise<void>
-  readAll(): Promise<void>
 }
 
 export interface SearchableField {
@@ -142,11 +89,39 @@ export interface GetOptions {
   hydrate?: boolean
 }
 
+export interface StreamOptions {
+  sort?: string|Array<string>
+  hydrate?: boolean
+}
+
 export interface SearchOptions {
   limit?: number
   offset?: number
   sort?: string|Array<string>
   hydrate?: boolean
+}
+
+export interface SchemaEngine {
+  register(type: string, schema: CanonicalSchema): void
+  validate<T>(type: string, body: T): ValidationResponse
+  format<T>(type: string, body: Partial<T>): T
+}
+
+export interface SchemaRegistryAdapter {
+  set(key: string, schema: CanonicalSchema): void
+  get(key: string): CanonicalSchema|undefined
+  observe(observer: (key: string, schema: CanonicalSchema) => void): void
+}
+
+export interface AccessControlAdapter<M extends object> {
+  check<B extends object>(subject: UUID, action: AccessType, object: CanonicalEntity<B, M>): Promise<AccessControlDecision>
+  getQuery(subject: UUID, access: AccessType): Promise<SearchQuery|undefined>
+}
+
+export interface ChangelogAdapter<M extends object> extends Service {
+  observe(handler: <B extends object>(event: ChangeEvent<B, M>) => void|Promise<void>): void
+  write<B extends object>(message: ChangeEvent<B, M>): Promise<void>
+  readAll(): Promise<void>
 }
 
 export interface SearchIndex<M extends object> extends Service {
@@ -158,9 +133,15 @@ export interface SearchIndex<M extends object> extends Service {
 
 export interface EntityRegistry<M extends object> extends Service {
   put<B extends object>(document: CanonicalEntity<B, M>): Promise<void>
-  has(id: UUID): Promise<boolean>
   get<B extends object>(id: UUID): Promise<CanonicalEntity<B, M>>
-  delete(id: UUID): Promise<void>
+  delete<B extends object>(document: CanonicalEntity<B, M>): Promise<void>
+  has(id: UUID): Promise<boolean>
+  history<B extends object>(id: UUID): Promise<Array<CanonicalEntity<B, M>>>
+  isClean(): Promise<boolean>
+}
+
+export interface IdGenerator<T extends object> {
+  id(body: T): UUID
 }
 
 export interface StorageConfig<M extends object> {
@@ -172,16 +153,13 @@ export interface StorageConfig<M extends object> {
   schemaIdGenerator?: IdGenerator<CanonicalSchema>
 
   // Extensions - override when adding new rules/capacities
-  schemaRegistry?: SchemaRegistry
+  schemaRegistry?: SchemaRegistryAdapter
   accessControl?: AccessControlAdapter<M>
   logger?: Logger
 
   // Built-in schemas for entity body and metadata
   meta?: Array<SchemaField>
   schema?: Array<CanonicalSchema>
-
-  // Built-in entities if any
-  data?: Array<EntityData<any, M>>
 
   // Configuration
   cacheSize?: number
@@ -193,12 +171,13 @@ export interface StorageInterface<MetaType extends object> extends Service {
   describe(type: string): CanonicalSchema|undefined
   define(schema: CanonicalSchema): void
   has(id: UUID): Promise<boolean>
-  get<BodyType extends object>(id: UUID, user?: UUID, options?: GetOptions): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
-  find<BodyType extends object>(query?: Dictionary<any>, options?: SearchOptions, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
-  count(query?: Dictionary<any>, user?: UUID): Promise<number>
-  validate<BodyType extends object>(entity: EntityData<BodyType, MetaType>): ValidationResponse
-  create<BodyType extends object>(data: EntityData<BodyType, MetaType>, commitMessage?: string, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType>>
-  update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, commitMessage?: string , user?: UUID): Promise<CanonicalEntity<BodyType, MetaType>>
-  delete<BodyType extends object>(id: UUID, commitMessage?: string, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
+  history<BodyType extends object>(id: UUID, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
+  get<BodyType extends object>(id: UUID, options?: GetOptions, user?: UUID): Promise<CanonicalEntity<BodyType, MetaType> | undefined>
+  count(query?: SearchQuery|Dictionary<any>, user?: UUID): Promise<number>
+  find<BodyType extends object>(query?: SearchQuery|Dictionary<any>, options?: SearchOptions, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>>
+  stream(query: SearchQuery|Dictionary<any>, options: StreamOptions, user?: UUID): Readable
+  create<BodyType extends object>(data: EntityData<BodyType, MetaType>, user?: UUID): Promise<EntityEnvelope>
+  update<BodyType extends object>(data: EntityPatch<BodyType, MetaType>, user?: UUID): Promise<EntityEnvelope>
+  delete(id: UUID, user?: UUID): Promise<EntityEnvelope | undefined>
   observe<BodyType extends object>(handler: Observer<BodyType, MetaType>): void
 }

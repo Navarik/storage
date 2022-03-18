@@ -56,12 +56,16 @@ const fixtureData = [
 export const searchDeep = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
     schema: fixtureSchemata,
-    data: fixtureData,
     logger: nullLogger
   })
 
   describe('Deep search', () => {
-    before(() => storage.up())
+    before(async () => {
+      await storage.up()
+      for (const fixture of fixtureData) {
+        await storage.create<any>(fixture)
+      }
+    })
 
     it("can find entities by referenced fields", async () => {
       expect(await storage.count({

@@ -19,8 +19,6 @@ export const entityVersioning = (createStorage: <T extends object = {}>(config: 
 
   describe('Entity versioning', () => {
     before(() => storage.up())
-    after(() => storage.down())
-
 
     it("can't update nonexistent entity", async () => {
       await steps.cannotUpdate({ id: 'wow-such-much-doge', body: { a: 100, b: 500 }, version_id: 'wow-such-much-doge' })
@@ -44,9 +42,7 @@ export const entityVersioning = (createStorage: <T extends object = {}>(config: 
 
     it('only the latest version is directly available', async () => {
       const lastVersion = fixtures[fixtures.length - 1]
-      let response
-
-      response = await storage.get(id)
+      const response = await storage.get(id)
       expectSameEntity(response, lastVersion)
 
       await steps.canFind(lastVersion)
@@ -55,5 +51,13 @@ export const entityVersioning = (createStorage: <T extends object = {}>(config: 
     it('only one version counts', async () => {
       expect(await storage.count({id})).to.equal(1)
     })
+
+    it('can view version history using history() API', async () => {
+      const response = await storage.history(id)
+      expect(response).to.have.length(fixtures.length)
+      // expectSameEntity(response, lastVersion)
+    })
+
+    after(() => storage.down())
   })
 }

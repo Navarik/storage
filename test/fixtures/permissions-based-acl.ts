@@ -38,10 +38,6 @@ export class PermissionsBasedAccessControl implements AccessControlAdapter<any> 
     }
   }
 
-  async attachTerms(entity: CanonicalEntity<any, any>): Promise<CanonicalEntity<any, any>> {
-    return entity
-  }
-
   async getQuery(subject: UUID, access: AccessType): Promise<SearchQuery> {
     if (this.isGranted(subject, access)) {
       return undefined

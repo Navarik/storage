@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
 import { EntitySteps } from '../steps/entities'
-import { expectSameEntity } from '../steps/checks'
+import { expectEnvelope } from '../steps/checks'
 import { nullLogger } from "../fixtures/null-logger"
 import { PermissionsBasedAccessControl } from "../fixtures/permissions-based-acl"
 
@@ -42,9 +42,9 @@ export const aclPermissions = (createStorage: <T extends object = {}>(config: St
       await Promise.all(fixtureData.map(entity => steps.cannotCreate(entity, searcher)))
 
       await Promise.all(fixtureData.map(async (entity) => {
-        const created = await storage.create(entity, "AAAA", writer)
+        const created = await storage.create(entity, writer)
         createdIds.push(created.id)
-        expectSameEntity(created, entity)
+        expectEnvelope(created)
       }))
     })
 
@@ -53,7 +53,7 @@ export const aclPermissions = (createStorage: <T extends object = {}>(config: St
         expect(await storage.has(id)).to.be.true
         await steps.cannotGet(id, writer)
         await steps.cannotGet(id, searcher)
-        expect(await storage.get(id, reader)).to.be.an("object")
+        expect(await storage.get(id, {}, reader)).to.be.an("object")
       }))
     })
 
@@ -68,7 +68,7 @@ export const aclPermissions = (createStorage: <T extends object = {}>(config: St
         expect(await storage.has(id)).to.be.true
         await steps.cannotDelete(id, reader)
         await steps.cannotDelete(id, searcher)
-        expect(await storage.delete(id, "Ohno!", writer)).to.be.an("object")
+        expect(await storage.delete(id, writer)).to.be.an("object")
       }))
     })
 

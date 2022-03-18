@@ -1,7 +1,7 @@
 import { Dictionary } from "@navarik/types"
-import { SchemaRegistry, CanonicalSchema } from "../types"
+import { SchemaRegistryAdapter, CanonicalSchema } from "../types"
 
-export class InMemorySchemaRegistry implements SchemaRegistry {
+export class InMemorySchemaRegistry implements SchemaRegistryAdapter {
   private schemas: Dictionary<CanonicalSchema> = {}
   private observer: (key: string, schema: CanonicalSchema) => void
 

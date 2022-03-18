@@ -1,10 +1,10 @@
-import { ChangelogAdapter, Observer, ChangeEvent } from '../../src/types'
+import { ChangelogAdapter, ChangeEvent } from '../../src/types'
 
 export class PersistentInMemoryChangelog<M extends object> implements ChangelogAdapter<M> {
-  private observer?: Observer<any, M> = undefined
+  private observer?: (change: ChangeEvent<any, M>) => Promise<void> = undefined
   private log: Array<ChangeEvent<any, M>> = []
 
-  observe<B extends object>(handler: Observer<B, M>) {
+  observe(handler: (change: ChangeEvent<any, M>) => Promise<void>) {
     this.observer = handler
   }
 

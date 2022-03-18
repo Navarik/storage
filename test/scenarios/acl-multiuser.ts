@@ -36,8 +36,8 @@ export const aclMultiuser = (createStorage: <T extends object = {}>(config: Stor
   describe('Entity multi-user search given creator-only access control strategy', () => {
     before(async () => {
       await storage.up()
-      await Promise.all(fixtureDataA.map(x => storage.create(x, "AAAAAA", userA)))
-      await Promise.all(fixtureDataB.map(x => storage.create(x, "BBBBBB", userB)))
+      await Promise.all(fixtureDataA.map(x => storage.create(x, userA)))
+      await Promise.all(fixtureDataB.map(x => storage.create(x, userB)))
     })
 
     it("can find by user and complete bodies", async () => {
