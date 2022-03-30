@@ -1,7 +1,7 @@
 {
   "name": "@navarik/storage",
   "description": "Document storage with schemas and versions",
-  "version": "21.0.0",
+  "version": "21.0.1",
   "scripts": {
     "build": "rimraf dist && tsc -d",
     "prepublishOnly": "npm run build",
@@ -18,8 +18,7 @@
     "@navarik/avro-schema-engine": "^1.1.1",
     "@navarik/nedb": "^1.0.1",
     "@navarik/transaction-manager": "^2.0.0",
-    "deep-copy": "^1.4.2",
-    "i": "^0.3.7",
+    "deepcopy": "^2.1.0",
     "lru-cache": "^7.4.0",
     "npm": "^8.5.5",
     "uuid": "^8.3.2"
