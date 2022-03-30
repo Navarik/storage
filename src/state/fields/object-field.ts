@@ -1,5 +1,5 @@
 import { Dictionary } from "@navarik/types"
-import { SchemaField, SearchableField } from "../../types"
+import { SchemaField, SearchableField, SearchQuery } from "../../types"
 import { FieldFactory } from "../field-factory"
 import { UnionField } from "./union-field"
 
@@ -23,21 +23,21 @@ export class ObjectField implements SearchableField {
       })
     }
 
-    this.fields[field.name].chain(field)
+    this.fields[field.name]?.chain(field)
   }
 
   merge(field: SchemaField) {
-    for (const nestedField of field.parameters.fields) {
+    for (const nestedField of field.parameters?.fields) {
       this.chain(nestedField)
     }
   }
 
-  resolve([head, ...tail]: Array<string>, query, schemaRoot: SearchableField) {
+  resolve([head, ...tail]: Array<string>, query: SearchQuery, schemaRoot: SearchableField) {
     if (typeof head !== "string" || !this.fields[head]) {
       return false
     }
 
-    const descriptors = this.fields[head].resolve(tail, query, schemaRoot)
+    const descriptors = this.fields[head]?.resolve(tail, query, schemaRoot) || false
 
     return descriptors
   }

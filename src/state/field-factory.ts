@@ -8,13 +8,13 @@ import { ReferenceField } from "./fields/reference-field"
 import { UnionField } from "./fields/union-field"
 
 export class FieldFactory {
-  private typeFactories: Dictionary<Instantiable<SearchableField>> = {
-    "array": ArrayField,
-    "map": MapField,
-    "object": ObjectField,
-    "union": UnionField,
-    "reference": ReferenceField,
-    "other": PrimitiveField
+  private typeFactories: Dictionary<Instantiable<SearchableField>> & { other: Instantiable<SearchableField> } = {
+    array: ArrayField,
+    map: MapField,
+    object: ObjectField,
+    union: UnionField,
+    reference: ReferenceField,
+    other: PrimitiveField
   }
 
   create(field: SchemaField) {

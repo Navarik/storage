@@ -1,8 +1,8 @@
 import { expect } from "chai"
 import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
-import { nullLogger } from "../fixtures/null-logger"
-import { PersistentInMemoryChangelog } from "../fixtures/persistent-in-memory-changelog"
-import { EntitySteps } from "../steps/entities"
+import { nullLogger } from "../mocks/null-logger"
+import { PersistentInMemoryChangelog } from "../mocks/persistent-in-memory-changelog"
+import { EntitySteps } from "../steps/entity"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events').default

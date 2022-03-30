@@ -4,7 +4,7 @@ import { ValidationError } from "../../errors/validation-error"
 export class FieldCompiler implements QueryCompiler<SearchQuery> {
   private searchSchema: SearchableField
 
-  constructor({ searchSchema }) {
+  constructor({ searchSchema }: { searchSchema: SearchableField }) {
     this.searchSchema = searchSchema
   }
 

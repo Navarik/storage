@@ -13,9 +13,13 @@ export class UnionField implements DataField {
   public name: string
   public types: Dictionary<DataField> = {}
 
-  constructor({ factory, path, field: { parameters: { options } } }: Config) {
+  constructor({ factory, path, field: { parameters } }: Config) {
+    if (!parameters) {
+      throw new Error("DataLink: union fiedls require options parameter")
+    }
+
     this.name = path
-    for (const option of options) {
+    for (const option of parameters.options) {
       this.types[option.type] = factory.create(path, option)
     }
   }

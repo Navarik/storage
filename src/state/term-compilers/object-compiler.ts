@@ -5,7 +5,7 @@ import { ValidationError } from "../../errors/validation-error"
 export class ObjectCompiler implements QueryCompiler<Dictionary<any>> {
   private searchSchema: SearchableField
 
-  constructor({ searchSchema }) {
+  constructor({ searchSchema }: { searchSchema: SearchableField }) {
     this.searchSchema = searchSchema
   }
 

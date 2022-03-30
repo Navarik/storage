@@ -1,8 +1,7 @@
 import { expect } from "chai"
 import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
 import { expectEntity } from '../steps/checks'
-import { EntitySteps } from '../steps/entities'
-import { nullLogger } from "../fixtures/null-logger"
+import { nullLogger } from "../mocks/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events').default
@@ -23,21 +22,10 @@ export const search = (createStorage: <T extends object = {}>(config: StorageCon
     logger: nullLogger
   })
 
-  const steps = new EntitySteps(storage)
-
   describe('Entity search', () => {
     before(async () => {
       await storage.up()
       await Promise.all(fixtureData.map(x => storage.create<any>(x)))
-    })
-
-    it("can't get non-existing entities", async () => {
-      const response = await storage.get('nope')
-      expect(response).to.be.undefined
-    })
-
-    it("can find by complete bodies: timelog events", async () => {
-      await Promise.all(fixtureData.map(x => steps.canFind(x)))
     })
 
     it("can find entities by type", async () => {

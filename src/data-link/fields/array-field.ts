@@ -12,9 +12,12 @@ export class ArrayField implements DataField {
   private name: string
   private items: DataField
 
-  constructor({ factory, path, field: { parameters: { items } } }: Config) {
+  constructor({ factory, path, field: { parameters } }: Config) {
+    if (!parameters) {
+      throw new Error("DataLink: array fiedls require items parameter")
+    }
     this.name = path
-    this.items = factory.create(`${path}.*`, items)
+    this.items = factory.create(`${path}.*`, parameters.items)
   }
 
   async validate(value: any, user: string) {
@@ -36,7 +39,7 @@ export class ArrayField implements DataField {
     return { isValid, message }
   }
 
-  async hydrate(value: any, user: string) {
+  async hydrate(value: Array<any>, user: string) {
     if (!value) {
       return value
     }

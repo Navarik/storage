@@ -1,7 +1,7 @@
 import { expect } from "chai"
 import { StorageInterface, StorageConfig } from '../../src'
-import { nullLogger } from "../fixtures/null-logger"
-import { EntitySteps } from "../steps/entities"
+import { nullLogger } from "../mocks/null-logger"
+import { EntitySteps } from "../steps/entity"
 
 const fixtureSchemata = [
   {

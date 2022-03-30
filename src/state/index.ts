@@ -138,8 +138,8 @@ export class State<MetaType extends object> {
   async stats() {
     return {
       ...this.healthStats,
-      state: await this.cachedRegistry.stats(),
-      searchIndex: await this.index.stats()
+      state: this.cachedRegistry.stats && (await this.cachedRegistry.stats()),
+      searchIndex: this.index.stats && (await this.index.stats())
     }
   }
 }

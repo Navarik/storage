@@ -1,6 +1,6 @@
 import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
-import { EntitySteps } from '../steps/entities'
-import { nullLogger } from "../fixtures/null-logger"
+import { EntitySteps } from '../steps/entity'
+import { nullLogger } from "../mocks/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
 const fixtures: Array<CanonicalEntity<any, any>> = require('../fixtures/data/versions').default

@@ -1,6 +1,6 @@
 import { Dictionary } from "@navarik/types"
 import { ValidationError } from "../errors/validation-error"
-import { SearchQuery, QueryCompiler } from "../types"
+import { SearchQuery, QueryCompiler, SearchableField } from "../types"
 import { FieldCompiler } from "./term-compilers/field-compiler"
 import { NestedCompiler } from "./term-compilers/nested-compiler"
 import { ObjectCompiler } from "./term-compilers/object-compiler"
@@ -10,7 +10,7 @@ export class Compiler implements QueryCompiler<SearchQuery|Dictionary<any>> {
   private termCompilers: Dictionary<QueryCompiler<SearchQuery>>
   private objectCompiler: QueryCompiler<Dictionary<any>>
 
-  constructor({ searchSchema }) {
+  constructor({ searchSchema }: { searchSchema: SearchableField }) {
     this.termCompilers = {
       "noop": new PassthroughCompiler(),
       "subquery": new PassthroughCompiler(),

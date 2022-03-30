@@ -1,6 +1,7 @@
 import { expect } from "chai"
-import { StorageInterface, StorageConfig } from '../../src'
-import { nullLogger } from "../fixtures/null-logger"
+import { StorageInterface, StorageConfig } from "../../src"
+import { nullLogger } from "../mocks/null-logger"
+import { EntitySteps } from "../steps/entity"
 
 const fixtureSchemata = [
   {
@@ -30,43 +31,27 @@ export const entityCreationWithId = (createStorage: <T extends object = {}>(conf
     logger: nullLogger
   })
 
-  describe('Entity creation with pre-defined IDs', () => {
+  const dataSteps = new EntitySteps(storage)
+
+  describe("Entity creation with pre-defined IDs", () => {
     before(() => storage.up())
 
     it("can create entities with pre-defined IDs", async () => {
       await Promise.all(users.map(x => storage.create(x)))
       expect(await storage.count({ "type": "user" })).to.equal(3)
+      expect(await storage.find({ "type": "user" })).to.have.length(3)
     })
 
-    it("can get created entities", async () => {
-      for (const user of users) {
-        const result = await storage.get(user.id)
-        expect(result.id).to.equal(user.id)
-        expect(result.body).to.deep.equal(user.body)
-      }
-    })
-
-    it("can't create entities with duplicate IDs", async () => {
-      for (const user of userDuplicates) {
-        try {
-          await storage.create(user)
-        } catch (error) {
-          expect(error.name).to.equal("ConflictError")
-          continue
-        }
-
-        expect(true).to.equal(false, "Expected error didn't happen.")
-      }
+    it("can not create entities with duplicate IDs", async () => {
+      userDuplicates.forEach(async (x) => {
+        const error = await dataSteps.cannotCreate(x)
+        expect(error.name).to.equal("ConflictError")
+      })
     })
 
     it("verify that no duplicates has been created", async () => {
       expect(await storage.count({ "type": "user" })).to.equal(3)
-
-      for (const user of users) {
-        const result = await storage.get(user.id)
-        expect(result.id).to.equal(user.id)
-        expect(result.body).to.deep.equal(user.body)
-      }
+      expect(await storage.find({ "type": "user" })).to.have.length(3)
     })
 
     after(() => storage.down())

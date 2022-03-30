@@ -2,6 +2,13 @@ import { Dictionary } from "@navarik/types"
 import { Readable } from "stream"
 import { SearchQuery, StorageInterface, StreamOptions } from "./types"
 
+interface Config<M extends object> {
+  storage: StorageInterface<M>
+  query: SearchQuery|Dictionary<any>
+  options: StreamOptions
+  user: string
+}
+
 export class QueryStream<M extends object> extends Readable {
   private storage: StorageInterface<M>
   private query: SearchQuery|Dictionary<any>
@@ -9,7 +16,7 @@ export class QueryStream<M extends object> extends Readable {
   private user: string
   private offset: number = 0
 
-  constructor({ storage, options, query, user }) {
+  constructor({ storage, options, query, user }: Config<M>) {
     super({ objectMode: true })
     this.storage = storage
     this.query = query

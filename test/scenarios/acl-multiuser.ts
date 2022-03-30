@@ -1,9 +1,9 @@
 import { expect } from "chai"
 import { CanonicalSchema, CanonicalEntity, StorageConfig, StorageInterface } from '../../src'
-import { EntitySteps } from '../steps/entities'
-import { nullLogger } from "../fixtures/null-logger"
+import { EntitySteps } from '../steps/entity'
+import { nullLogger } from "../mocks/null-logger"
 import { expectEntity } from '../steps/checks'
-import { OnlyMineAccessControl } from "../fixtures/only-mine-acl"
+import { OnlyMineAccessControl } from "../mocks/only-mine-acl"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events').default
@@ -31,7 +31,7 @@ export const aclMultiuser = (createStorage: <T extends object = {}>(config: Stor
     accessControl: new OnlyMineAccessControl()
   })
 
-  const steps = new EntitySteps(storage)
+  const dataSteps = new EntitySteps(storage)
 
   describe('Entity multi-user search given creator-only access control strategy', () => {
     before(async () => {
@@ -40,20 +40,20 @@ export const aclMultiuser = (createStorage: <T extends object = {}>(config: Stor
       await Promise.all(fixtureDataB.map(x => storage.create(x, userB)))
     })
 
-    it("can find by user and complete bodies", async () => {
-      await Promise.all(fixtureDataA.map(x => steps.canFind(x, userA)))
-      await Promise.all(fixtureDataB.map(x => steps.canFind(x, userB)))
+    it("can find entities as a user", async () => {
+      await Promise.all(fixtureDataA.map(x => dataSteps.canFind(x, userA)))
+      await Promise.all(fixtureDataB.map(x => dataSteps.canFind(x, userB)))
     })
 
     it("cannot find by incorrect user and complete bodies", async () => {
-      await Promise.all(fixtureDataA.map(x => steps.cannotFind(x, userB)))
-      await Promise.all(fixtureDataB.map(x => steps.cannotFind(x, userA)))
-      await Promise.all(fixtureDataA.map(x => steps.cannotFind(x)))
+      await Promise.all(fixtureDataA.map(x => dataSteps.cannotFind(x, userB)))
+      await Promise.all(fixtureDataB.map(x => dataSteps.cannotFind(x, userA)))
+      await Promise.all(fixtureDataA.map(x => dataSteps.cannotFind(x)))
     })
 
     it("cannot find by unspecified user", async () => {
-      await Promise.all(fixtureDataA.map(x => steps.cannotFind(x)))
-      await Promise.all(fixtureDataB.map(x => steps.cannotFind(x)))
+      await Promise.all(fixtureDataA.map(x => dataSteps.cannotFind(x)))
+      await Promise.all(fixtureDataB.map(x => dataSteps.cannotFind(x)))
     })
 
     it("can find entities by user and one field", async () => {
