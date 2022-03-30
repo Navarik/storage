@@ -1,5 +1,5 @@
 import { v5 as uuidv5, v4 as uuidv4 } from 'uuid'
-import deepCopy from "deep-copy"
+import deepCopy from "deepcopy"
 import { UUID, ActionType, Timestamp, CanonicalEntity, EntityEnvelope } from './types'
 import { ConflictError } from './errors/conflict-error'
 import { Schema } from './schema'
