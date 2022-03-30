@@ -13,13 +13,26 @@ export class ObjectField implements DataField {
   private name: string
   private fields: Dictionary<DataField> = {}
 
-  constructor({ factory, path, field: { parameters: { fields } } }: Config) {
+  constructor({ factory, path, field: { parameters } }: Config) {
+    if (!parameters) {
+      throw new Error("DataLink: object fiedls require fields parameter")
+    }
+
     this.name = path
-    for (const field of fields) {
+    for (const field of parameters.fields) {
       if (!this.fields[field.name]) {
         this.fields[field.name] = factory.create(`${path}.${field.name}`, field)
       }
     }
+  }
+
+  private getField(name: string) {
+    const field = this.fields[name]
+    if (!field) {
+      throw new Error(`DataLink cannot find validator for ${name}`)
+    }
+
+    return field
   }
 
   async validate(value: any, user: string) {
@@ -33,7 +46,7 @@ export class ObjectField implements DataField {
 
     let isValid = true, message = ""
     for (const fieldName in this.fields) {
-      const fieldValidation = await this.fields[fieldName].validate(value[fieldName], user)
+      const fieldValidation = await this.getField(fieldName).validate(value[fieldName], user)
       isValid &&= fieldValidation.isValid
       message += fieldValidation.message
     }
@@ -46,9 +59,9 @@ export class ObjectField implements DataField {
       return value
     }
 
-    const result = {}
+    const result: Dictionary<any> = {}
     for (const name in this.fields) {
-      result[name] = await this.fields[name].hydrate(value[name], user)
+      result[name] = await this.getField(name).hydrate(value[name], user)
     }
 
     return result

@@ -10,16 +10,16 @@ import { UnionField } from "./fields/union-field"
 
 export class FieldFactory {
   private state: StorageInterface<any>
-  private typeFactories: Dictionary<Instantiable<DataField>> = {
-    "array": ArrayField,
-    "map": MapField,
-    "object": ObjectField,
-    "union": UnionField,
-    "reference": ReferenceField,
-    "other": PrimitiveField
+  private typeFactories: Dictionary<Instantiable<DataField>> & { other: Instantiable<DataField> } = {
+    array: ArrayField,
+    map: MapField,
+    object: ObjectField,
+    union: UnionField,
+    reference: ReferenceField,
+    other: PrimitiveField
   }
 
-  constructor({ state }) {
+  constructor({ state }: { state: StorageInterface<any> }) {
     this.state = state
   }
 

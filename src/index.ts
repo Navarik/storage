@@ -1,4 +1,5 @@
 import { Dictionary, Logger } from "@navarik/types"
+import { Readable } from "stream"
 import { CanonicalSchema, StorageInterface, UUID, CanonicalEntity, EntityEnvelope, Observer, SearchOptions, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery, AccessControlAdapter, AccessType, StreamOptions } from "./types"
 import { AvroSchemaEngine } from "@navarik/avro-schema-engine"
 import { v4 as uuidv4 } from 'uuid'
@@ -185,7 +186,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     return this.state.has(id)
   }
 
-  async history<BodyType extends object>(id: UUID, user?: UUID): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
+  async history<BodyType extends object>(id: UUID, user: UUID = nobody): Promise<Array<CanonicalEntity<BodyType, MetaType>>> {
     const versions = await this.state.history<BodyType>(id)
     if (!versions.length) {
       return []
@@ -231,7 +232,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
     return this.state.count(secureQuery)
   }
 
-  stream(query: SearchQuery|Dictionary<any>, options: StreamOptions, user: UUID) {
+  stream(query: SearchQuery|Dictionary<any>, options: StreamOptions, user: UUID): Readable {
     return new QueryStream({ storage: this, query, options, user })
   }
 
@@ -247,8 +248,11 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       throw new ValidationError(`Unknown type: ${type}`)
     }
 
-    const entity = new Entity<BodyType, MetaType>()
-      .create({ id, body, meta }, { schema, metaSchema: this.metaSchema }, user)
+    const entity = Entity.create<BodyType, MetaType>(
+      { id, body, meta: <MetaType>meta },
+      { schema, metaSchema: this.metaSchema },
+      user
+    )
 
     await this.verifyAccess(user, 'write', entity)
     await this.dataLink.validate(type, body, user)
@@ -259,7 +263,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
   async update<BodyType extends object>({ id, type, version_id, body, meta }: EntityPatch<BodyType, MetaType>, user: UUID = nobody): Promise<EntityEnvelope> {
     this.healthStats.totalUpdateRequests++
     if (!version_id) {
-      throw new ValidationError(`Update unsuccessful due to missing version_id.`)
+      throw new ValidationError(`Update failed: missing version_id.`)
     }
 
     const previous = await this.state.get<BodyType>(id)
@@ -267,10 +271,17 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
       throw new ValidationError(`Update failed: can't find entity ${id}`)
     }
 
-    const schema = this.schema.describe(type || previous.type)
+    const newType = type || previous.type
+    const schema = this.schema.describe(newType)
+    if (!schema) {
+      throw new ValidationError(`Update failed: can't find entity type ${newType}`)
+    }
 
-    const entity = new Entity<BodyType, MetaType>(previous)
-      .update({ version_id, body, meta }, { schema, metaSchema: this.metaSchema }, user)
+    const entity = new Entity<BodyType, MetaType>(previous).update(
+      { version_id, body, meta },
+      { schema, metaSchema: this.metaSchema },
+      user
+    )
 
     await this.verifyAccess(user, 'write', entity)
     await this.dataLink.validate(entity.type, entity.body, user)

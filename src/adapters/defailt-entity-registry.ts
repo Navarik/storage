@@ -10,7 +10,7 @@ export class DefaultEntityRegistry<M extends object> implements EntityRegistry<M
       this.live[document.id] = []
     }
 
-    this.live[document.id].unshift(document)
+    this.live[document.id]?.unshift({ ...document })
   }
 
   async has(id: UUID) {
@@ -36,9 +36,13 @@ export class DefaultEntityRegistry<M extends object> implements EntityRegistry<M
   }
 
   async delete<B extends object>(document: CanonicalEntity<B, M>) {
+    if (!this.live[document.id]) {
+      return
+    }
+
     this.dead[document.id] = this.live[document.id]
     delete this.live[document.id]
-    this.dead[document.id].unshift(document)
+    this.dead[document.id]?.unshift({ ...document })
   }
 
   async isClean() {

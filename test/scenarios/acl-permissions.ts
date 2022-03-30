@@ -1,9 +1,9 @@
 import { expect } from 'chai'
 import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
-import { EntitySteps } from '../steps/entities'
+import { EntitySteps } from '../steps/entity'
 import { expectEnvelope } from '../steps/checks'
-import { nullLogger } from "../fixtures/null-logger"
-import { PermissionsBasedAccessControl } from "../fixtures/permissions-based-acl"
+import { nullLogger } from "../mocks/null-logger"
+import { PermissionsBasedAccessControl } from "../mocks/permissions-based-acl"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events').default

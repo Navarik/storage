@@ -75,7 +75,7 @@ export class Changelog<M extends object> {
   async stats() {
     return {
       ...this.healthStats,
-      changelog: await this.adapter.stats()
+      changelog: this.adapter.stats && (await this.adapter.stats())
     }
   }
 }

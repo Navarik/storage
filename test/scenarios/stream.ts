@@ -1,13 +1,11 @@
 import { expect } from "chai"
-import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
-// import { expectEntity } from '../steps/checks'
-import { nullLogger } from "../fixtures/null-logger"
-
-const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
-const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events').default
-const fixturesJobs: Array<CanonicalEntity<any, any>> = require('../fixtures/data/job-orders').default
-const fixturesUsers: Array<CanonicalEntity<any, any>> = require('../fixtures/data/users').default
-const fixturesMessages: Array<CanonicalEntity<any, any>> = require('../fixtures/data/messages').default
+import { StorageInterface, StorageConfig } from '../../src'
+import { nullLogger } from "../mocks/null-logger"
+import fixtureSchemata from '../fixtures/schemata.json'
+import fixturesEvents from '../fixtures/data/events'
+import fixturesJobs from '../fixtures/data/job-orders'
+import fixturesUsers from '../fixtures/data/users'
+import fixturesMessages from '../fixtures/data/messages'
 
 const fixtureData = [
   ...fixturesEvents,

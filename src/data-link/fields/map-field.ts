@@ -1,3 +1,4 @@
+import { Dictionary } from "@navarik/types"
 import { SchemaField } from "../../types"
 import { FieldFactory } from "../field-factory"
 import { DataField } from "../index"
@@ -12,9 +13,12 @@ export class MapField implements DataField {
   private name: string
   private items: DataField
 
-  constructor({ factory, path, field: { parameters: { values } } }: Config) {
+  constructor({ factory, path, field: { parameters } }: Config) {
+    if (!parameters) {
+      throw new Error("DataLink: map fiedls require values parameter")
+    }
     this.name = path
-    this.items = factory.create(`${path}.*`, values)
+    this.items = factory.create(`${path}.*`, parameters.values)
   }
 
   async validate(value: any, user: string) {
@@ -42,7 +46,7 @@ export class MapField implements DataField {
       return value
     }
 
-    const result = {}
+    const result: Dictionary<any> = {}
     for (const name in value) {
       result[name] = await this.items.hydrate(value[name], user)
     }

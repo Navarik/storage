@@ -1,8 +1,8 @@
 import { expect } from "chai"
 import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
-import { EntitySteps } from '../steps/entities'
+import { EntitySteps } from '../steps/entity'
 import { expectEntity } from '../steps/checks'
-import { nullLogger } from "../fixtures/null-logger"
+import { nullLogger } from "../mocks/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
 const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events').default
@@ -21,15 +21,10 @@ export const metadata = (createStorage: <T extends object = {}>(config: StorageC
 
   describe('Metadata support', () => {
     before(() => storage.up())
-    after(() => storage.down())
 
     it("correctly creates entities with metadata", async () => {
       const fixtures = fixturesEvents.map(x => ({ ...x, meta: { wow: 'doge', very: 1 } }))
       await Promise.all(fixtures.map(x => steps.canCreate(x)))
-    })
-
-    it("can find created entities", async () => {
-      await Promise.all(fixturesEvents.map(x => steps.canFind(x)))
     })
 
     it("can read metadata from created entities", async () => {
@@ -63,5 +58,7 @@ export const metadata = (createStorage: <T extends object = {}>(config: StorageC
       expect(selectedEntities).to.be.an('array')
       expect(selectedEntities).to.have.length(fixturesEvents.length)
     })
+
+    after(() => storage.down())
   })
 }

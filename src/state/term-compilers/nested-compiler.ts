@@ -4,7 +4,7 @@ import { SearchQuery, QueryCompiler } from "../../types"
 export class NestedCompiler implements QueryCompiler<SearchQuery> {
   private rootCompiler: QueryCompiler<SearchQuery|Dictionary<string>>
 
-  constructor({ rootCompiler }) {
+  constructor({ rootCompiler }: { rootCompiler: QueryCompiler<SearchQuery> }) {
     this.rootCompiler = rootCompiler
   }
 

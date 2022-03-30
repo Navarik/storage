@@ -1,10 +1,9 @@
 import { StorageInterface, StorageConfig } from '../../src'
-import { nullLogger } from "../fixtures/null-logger"
-import { EntitySteps } from '../steps/entities'
+import { nullLogger } from "../mocks/null-logger"
+import { EntitySteps } from '../steps/entity'
 import fixtureSchemata from '../fixtures/schemata.json'
 
 export const entityCreationConstraints = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
-
   const storage = createStorage({
     schema: fixtureSchemata,
     logger: nullLogger

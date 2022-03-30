@@ -8,6 +8,10 @@ export class ArrayField implements SearchableField {
   private items: UnionField
 
   constructor(factory: FieldFactory, field: ArrayFieldDefinition) {
+    if (!field.parameters) {
+      throw new Error("DeepSearch: array fiedls require items parameter")
+    }
+
     this.items = new UnionField(factory, {
       name: field.name,
       type: "union",

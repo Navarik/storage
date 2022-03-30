@@ -53,7 +53,7 @@ export class SchemaRegistry {
     return new Schema({ id, definition, engine: this.engine })
   }
 
-  describeEntity(entity: EntityEnvelope): Schema|undefined {
+  describeEntity(entity: EntityEnvelope): Schema {
     // If can't find this particular version of the schema, fallback to the latest version
     const schema = this.describe(entity.schema) || this.describe(entity.type)
     if (!schema) {

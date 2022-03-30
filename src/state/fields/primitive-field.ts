@@ -1,4 +1,4 @@
-import { SchemaField, SearchableField } from "../../types"
+import { SchemaField, SearchableField, SearchQuery } from "../../types"
 import { CompilerError } from "../../errors/compiler-error"
 import { FieldFactory } from "../field-factory"
 
@@ -19,7 +19,7 @@ export class PrimitiveField implements SearchableField {
     }
   }
 
-  resolve(path: Array<string>, query) {
+  resolve(path: Array<string>, query: SearchQuery) {
     if (path.length > 0) {
       return false
     }

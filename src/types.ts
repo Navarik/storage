@@ -52,7 +52,7 @@ export interface ChangeEvent<B extends object, M extends object> {
   id: UUID
   action: ActionType
   entity: CanonicalEntity<B, M>
-  schema: CanonicalSchema|undefined
+  schema: CanonicalSchema
 }
 
 export type AccessType = 'read'|'write'|'search'
@@ -133,7 +133,7 @@ export interface SearchIndex<M extends object> extends Service {
 
 export interface EntityRegistry<M extends object> extends Service {
   put<B extends object>(document: CanonicalEntity<B, M>): Promise<void>
-  get<B extends object>(id: UUID): Promise<CanonicalEntity<B, M>>
+  get<B extends object>(id: UUID): Promise<CanonicalEntity<B, M>|undefined>
   delete<B extends object>(document: CanonicalEntity<B, M>): Promise<void>
   has(id: UUID): Promise<boolean>
   history<B extends object>(id: UUID): Promise<Array<CanonicalEntity<B, M>>>
