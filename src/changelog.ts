@@ -29,12 +29,18 @@ export class Changelog<M extends object> {
     this.adapter.observe(x => this.onChange(x))
   }
 
-  private async onChange<B extends object>({ id, entity, schema }: ChangeEvent<B, M>) {
+  private async onChange<B extends object>({ id, action, entity, schema }: ChangeEvent<B, M>) {
     this.healthStats.totalChangesReceived++
 
     try {
       this.logger.debug({ component: "Storage" }, `Received change event for entity: ${entity.id}`)
       await this.observer(entity, schema)
+
+      // This makes Storage compatible with older CanonicalEntity type without the `last_action` field
+      if (!entity.last_action) {
+        entity.last_action = action
+      }
+
       this.transactionManager.commit(id, new Entity(entity).envelope())
 
     } catch (error: any) {
