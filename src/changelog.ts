@@ -34,12 +34,13 @@ export class Changelog<M extends object> {
 
     try {
       this.logger.debug({ component: "Storage" }, `Received change event for entity: ${entity.id}`)
-      await this.observer(entity, schema)
 
       // This makes Storage compatible with older CanonicalEntity type without the `last_action` field
       if (!entity.last_action) {
         entity.last_action = action
       }
+
+      await this.observer(entity, schema)
 
       this.transactionManager.commit(id, new Entity(entity).envelope())
 
