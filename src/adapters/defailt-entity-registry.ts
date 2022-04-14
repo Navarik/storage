@@ -46,7 +46,7 @@ export class DefaultEntityRegistry<M extends object> implements EntityRegistry<M
   }
 
   async isClean() {
-    return true
+    return false
   }
 
   async up() {}
