@@ -42,13 +42,6 @@ export const searchPagination = (createStorage: <T extends object = {}>(config: 
       response.forEach(expectEntity)
     })
 
-    it("limit 0 is not applied (with offset)", async () => {
-      const response = await storage.find({ 'body.sender': 1, 'body.job_order': 13 }, { limit: 0, offset: 3 })
-      expect(response).to.be.an('array')
-      expect(response).to.have.length(2)
-      response.forEach(expectEntity)
-    })
-
     it("can offset the search results", async () => {
       let response = await storage.find({ 'body.sender': 1, 'body.job_order': 13 }, { limit: 2, offset: 2 })
       expect(response).to.be.an('array')
@@ -61,6 +54,13 @@ export const searchPagination = (createStorage: <T extends object = {}>(config: 
       response.forEach(expectEntity)
 
       response = await storage.find({ 'body.sender': 1, 'body.job_order': 13 }, { limit: 2, offset: 0 })
+      expect(response).to.be.an('array')
+      expect(response).to.have.length(2)
+      response.forEach(expectEntity)
+    })
+
+    it("limit 0 is not applied (with offset)", async () => {
+      const response = await storage.find({ 'body.sender': 1, 'body.job_order': 13 }, { limit: 0, offset: 3 })
       expect(response).to.be.an('array')
       expect(response).to.have.length(2)
       response.forEach(expectEntity)

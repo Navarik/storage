@@ -9,7 +9,7 @@ export class OnlyMineAccessControl implements AccessControlAdapter<any> {
       }
     } else {
       return {
-        granted: true,
+        granted: false,
         explanation: `[OnlyMineAccessControl]: Denied - "${subject}" => "${action}" => "${object && object.id}"`
       }
     }
