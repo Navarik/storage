@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@navarik/avro-schema-engine": "^1.1.1",
-    "@navarik/nedb": "^1.0.1",
+    "@navarik/nedb": "^1.0.2",
     "@navarik/transaction-manager": "^2.0.0",
     "deepcopy": "^2.1.0",
     "lru-cache": "^7.4.0",
