@@ -30,11 +30,10 @@ export class DefaultSearchIndex<M extends object> implements SearchIndex<M> {
     }
   }
 
-  async find<B extends object>(searchParams: SearchQuery, options: SearchOptions = {}): Promise<Array<CanonicalEntity<B, M>>> {
+  async find<B extends object>(searchParams: SearchQuery, { offset = 0, limit = 0, sort = [] }: SearchOptions = {}): Promise<Array<CanonicalEntity<B, M>>> {
     const filter = objectFilter(searchParams)
-
-    const { offset = 0, limit = 0, sort = [] } = options
     const comparator = objectCompare(this.parseSort(sort instanceof Array ? sort : sort.split(",")))
+
     const collection = this.documents.filter(filter).sort(comparator)
 
     return limit ? collection.slice(offset, offset + limit) : collection.slice(offset)
@@ -53,9 +52,13 @@ export class DefaultSearchIndex<M extends object> implements SearchIndex<M> {
     return count
   }
 
-  async up() {}
+  async up() {
+    this.documents = []
+  }
 
-  async down() {}
+  async down() {
+    this.documents = []
+  }
 
   async isHealthy() {
     return true
