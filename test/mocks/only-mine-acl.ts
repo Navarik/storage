@@ -2,6 +2,7 @@ import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, Acc
 
 export class OnlyMineAccessControl implements AccessControlAdapter<any> {
   async check(subject: UUID, action: AccessType, object: CanonicalEntity<any, any>): Promise<AccessControlDecision> {
+    console.log(subject, object)
     if (object && (object.modified_by === subject)) {
       return {
         granted: true,
