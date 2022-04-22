@@ -1,9 +1,10 @@
-import { objectFilter } from "@navarik/object-filter"
+import { objectFilter, compiler } from "@navarik/object-filter"
 import { objectCompare } from "@navarik/object-compare"
-import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, ActionType, CanonicalSchema } from '../types'
+import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, ActionType, CanonicalSchema } from '../../types'
+import { SubqueryOperator } from "./subquery-operator"
 
 export class DefaultSearchIndex<M extends object> implements SearchIndex<M> {
-  private documents: Array<CanonicalEntity<any, M>> = []
+  public documents: Array<CanonicalEntity<any, M>> = []
 
    private parseSort(sortQueries: Array<string>): Array<{ field: string, direction: "desc"|"asc" }> {
     const result: Array<{ field: string, direction: "desc"|"asc" }> = []
@@ -54,6 +55,7 @@ export class DefaultSearchIndex<M extends object> implements SearchIndex<M> {
 
   async up() {
     this.documents = []
+    compiler.addOperator("subquery", new SubqueryOperator(compiler, this.documents))
   }
 
   async down() {

@@ -16,7 +16,7 @@ import { QueryStream } from "./query-stream"
 
 import { UuidV5IdGenerator } from "./adapters/uuid-v5-id-generator"
 import { DefaultEntityRegistry } from "./adapters/defailt-entity-registry"
-import { DefaultSearchIndex } from "./adapters/default-search-index"
+import { DefaultSearchIndex } from "./adapters/default-search-index/index"
 // import { NeDbSearchIndex } from "./adapters/nedb-search-index/index"
 import { DefaultAccessControl } from "./adapters/default-access-control"
 import { DefaultChangelogAdapter } from "./adapters/default-changelog"

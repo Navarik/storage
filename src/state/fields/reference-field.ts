@@ -26,13 +26,10 @@ export class ReferenceField implements SearchableField {
     }
 
     const result: SearchQuery = {
-      operator: "in",
+      operator: "subquery",
       args: [
         referenceField,
-        {
-          operator: "subquery",
-          args: [schemaRoot.resolve(path, subquery, schemaRoot)]
-        }
+        schemaRoot.resolve(path, subquery, schemaRoot)
       ]
     }
 
