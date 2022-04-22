@@ -16,7 +16,8 @@ import { QueryStream } from "./query-stream"
 
 import { UuidV5IdGenerator } from "./adapters/uuid-v5-id-generator"
 import { DefaultEntityRegistry } from "./adapters/defailt-entity-registry"
-import { NeDbSearchIndex } from "./adapters/nedb-search-index/index"
+import { DefaultSearchIndex } from "./adapters/default-search-index"
+// import { NeDbSearchIndex } from "./adapters/nedb-search-index/index"
 import { DefaultAccessControl } from "./adapters/default-access-control"
 import { DefaultChangelogAdapter } from "./adapters/default-changelog"
 import { InMemorySchemaRegistry } from "./adapters/in-memory-schema-registry"
@@ -73,7 +74,7 @@ export class Storage<MetaType extends object> implements StorageInterface<MetaTy
 
     this.state = new State<MetaType>({
       logger: this.logger,
-      index: config.index || new NeDbSearchIndex<MetaType>({ logger: this.logger }),
+      index: config.index || new DefaultSearchIndex<MetaType>(),
       registry: config.state || new DefaultEntityRegistry<MetaType>(),
       metaSchema: this.metaSchema.canonical(),
       cacheSize
