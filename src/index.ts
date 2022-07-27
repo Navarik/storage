@@ -23,6 +23,7 @@ import { InMemorySchemaRegistry } from "./adapters/in-memory-schema-registry"
 import { defaultLogger } from "./adapters/default-logger"
 
 export * from "./types"
+export { DefaultChangelogAdapter, DefaultSearchIndex, DefaultEntityRegistry }
 
 const nobody = "00000000-0000-0000-0000-000000000000"
 const defaultSchemaIdNamespace = '00000000-0000-0000-0000-000000000000'
