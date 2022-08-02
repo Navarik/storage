@@ -103,7 +103,7 @@ export interface SearchOptions {
 
 export interface SchemaEngine {
   register(type: string, schema: CanonicalSchema): void
-  validate<T>(type: string, body: T): ValidationResponse
+  validate<T>(type: string, body: Partial<T>): ValidationResponse
   format<T>(type: string, body: Partial<T>): T
 }
 
