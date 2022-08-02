@@ -16,11 +16,11 @@ export const observer = (createStorage: <T extends object = {}>(config: StorageC
   })
 
   const steps = new EntitySteps(storage)
-  const results: Array<CanonicalEntity<any, any>> = []
 
   describe('Observing changes', () => {
     it("can observe entity changes", async () => {
-      storage.observe((x) => { results.push(x) })
+      let results = 0
+      storage.observe(() => { results++ })
 
       await storage.up()
 
@@ -28,22 +28,22 @@ export const observer = (createStorage: <T extends object = {}>(config: StorageC
         await storage.create(entity)
       }
 
-      expect(results).to.be.an('array')
       // Jobs were created once
-      expect(results).to.have.length(fixturesJobs.length)
+      expect(results).to.equal(fixturesJobs.length)
 
       for (const entity of fixturesEvents) {
         await storage.create(entity)
       }
 
-      expect(results).to.be.an('array')
       // Jobs were created once and events were created once
-      expect(results).to.have.length(fixturesJobs.length + fixturesEvents.length)
+      expect(results).to.equal(fixturesJobs.length + fixturesEvents.length)
 
       await storage.down()
     })
 
     it("ignores errors thrown in observers", async () => {
+      let results = 0
+      storage.observe(() => { results++ })
       storage.observe(() => { throw new Error("Onoz!!!!") })
 
       await storage.up()
@@ -55,12 +55,17 @@ export const observer = (createStorage: <T extends object = {}>(config: StorageC
       // Jobs were created 2 times and events were created once
       const expectedCount = 2 * fixturesJobs.length + fixturesEvents.length
       expect(await storage.count({})).to.eql(expectedCount)
-      expect(results).to.have.length(expectedCount)
+
+      // Only the jobs got observed
+      expect(results).to.equal(fixturesJobs.length)
 
       await storage.down()
     })
 
     it("doesn't observe previously recorder events when restarted", async () => {
+      let results = 0
+      storage.observe(() => { results++ })
+
       await storage.up()
 
       for (const entity of fixturesJobs) {
@@ -70,7 +75,9 @@ export const observer = (createStorage: <T extends object = {}>(config: StorageC
       // Jobs were created 3 times and events were created once
       const expectedCount = 3 * fixturesJobs.length + fixturesEvents.length
       expect(await storage.count({})).to.eql(expectedCount)
-      expect(results).to.have.length(expectedCount)
+
+      // Only the jobs got observed
+      expect(results).to.equal(fixturesJobs.length)
 
       await storage.down()
     })
