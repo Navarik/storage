@@ -25,7 +25,8 @@ export class Compiler implements QueryCompiler<SearchQuery|Dictionary<any>> {
       "lt": new FieldCompiler({ searchSchema }),
       "gte": new FieldCompiler({ searchSchema }),
       "lte": new FieldCompiler({ searchSchema }),
-      "like": new FieldCompiler({ searchSchema })
+      "like": new FieldCompiler({ searchSchema }),
+      "empty": new FieldCompiler({ searchSchema })
     }
     this.objectCompiler = new ObjectCompiler({ searchSchema })
   }
