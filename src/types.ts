@@ -75,7 +75,7 @@ export interface SearchableField {
   resolve(path: Array<string>, query: SearchQuery, schemaRoot: SearchableField): false|SearchQuery
 }
 
-export type SearchOperator = "noop"|"and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"|"subquery"|"fulltext"
+export type SearchOperator = "noop"|"empty"|"and"|"or"|"eq"|"in"|"neq"|"gt"|"lt"|"gte"|"lte"|"not"|"like"|"subquery"|"fulltext"
 export interface SearchQuery {
   operator: SearchOperator
   args: Array<any>
