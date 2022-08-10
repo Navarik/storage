@@ -1,13 +1,12 @@
 import { expect } from "chai"
-import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
+import { StorageInterface, StorageConfig } from '../../src'
 import { expectEntity } from '../steps/checks'
 import { nullLogger } from "../mocks/null-logger"
-
-const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
-const fixturesEvents: Array<CanonicalEntity<any, any>> = require('../fixtures/data/events').default
-const fixturesJobs: Array<CanonicalEntity<any, any>> = require('../fixtures/data/job-orders').default
-const fixturesUsers: Array<CanonicalEntity<any, any>> = require('../fixtures/data/users').default
-const fixturesMessages: Array<CanonicalEntity<any, any>> = require('../fixtures/data/messages').default
+import fixtureSchemata from '../fixtures/schemata.json'
+import fixturesEvents from "../fixtures/data/events"
+import fixturesJobs from "../fixtures/data/job-orders"
+import fixturesUsers from "../fixtures/data/users"
+import fixturesMessages from "../fixtures/data/messages"
 
 const fixtureData = [
   ...fixturesEvents,
@@ -30,8 +29,7 @@ export const search = (createStorage: <T extends object = {}>(config: StorageCon
 
     it("can find entities by type", async () => {
       const response = await storage.find({ type: 'timelog.timelog_event' })
-      expect(response).to.be.an('array')
-      expect(response).to.have.length(fixturesEvents.length)
+      expect(response).to.be.an('array').to.have.length(fixturesEvents.length)
       response.forEach(entity => {
         expectEntity(entity)
         expect(entity.type).to.equal('timelog.timelog_event')
@@ -40,25 +38,30 @@ export const search = (createStorage: <T extends object = {}>(config: StorageCon
 
     it("can find entities by one field", async () => {
       const response = await storage.find({ 'body.sender': 1 })
-      expect(response).to.be.an('array')
-      expect(response).to.have.length(6)
+      expect(response).to.be.an('array').to.have.length(6)
       response.forEach(expectEntity)
     })
 
     it("can find entities by combination of fields", async () => {
       let response = await storage.find({ 'body.sender': 1, 'body.job_order': 13 })
-      expect(response).to.be.an('array')
-      expect(response).to.have.length(5)
+      expect(response).to.be.an('array').to.have.length(5)
       response.forEach(expectEntity)
     })
 
     it("can find entities by type and combination of fields", async () => {
-      let response = await storage.find({ 'body.sender': 1, 'body.job_order': 13, 'type': 'timelog.timelog_event' })
-      expect(response).to.be.an('array')
-      expect(response).to.have.length(2)
+      let response = await storage.find({
+        'body.sender': 1,
+        'body.job_order': 13,
+        'type': 'timelog.timelog_event'
+      })
+
+      expect(response).to.be.an('array').to.have.length(2)
+
       response.forEach(entity => {
         expectEntity(entity)
         expect(entity.type).to.equal('timelog.timelog_event')
+        expect(entity.body['job_order']).to.equal(13)
+        expect(entity.body['sender']).to.equal(1)
       })
     })
 
@@ -73,12 +76,24 @@ export const search = (createStorage: <T extends object = {}>(config: StorageCon
           ]}
         ]
       })
-      expect(response).to.be.an('array')
-      expect(response).to.have.length(3)
+      expect(response).to.be.an('array').to.have.length(3)
       response.forEach(entity => {
         expectEntity(entity)
         expect(entity.type).to.equal('timelog.timelog_event')
       })
+    })
+
+    it("automatically convert string filter values to their respective schema types", async () => {
+      let response = await storage.find({
+        operator: "and",
+        args: [
+          { operator: "eq", args: ["type", "timelog.timelog_event"] },
+          { operator: "eq", args: ["body.sender", '3'] },
+          { operator: "eq", args: ["body.timestamp", "2018-01-12T21:29:00.000Z"] }
+        ]
+      })
+      expect(response).to.be.an('array').to.have.length(1)
+      response.forEach(expectEntity)
     })
 
     it("can use comparison operators", async () => {

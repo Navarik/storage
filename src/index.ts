@@ -28,7 +28,7 @@ export { DefaultChangelogAdapter, DefaultSearchIndex, DefaultEntityRegistry }
 const nobody = "00000000-0000-0000-0000-000000000000"
 const defaultSchemaIdNamespace = '00000000-0000-0000-0000-000000000000'
 
-export class Storage<MetaType extends object> implements StorageInterface<MetaType> {
+export class Storage<MetaType extends object = {}> implements StorageInterface<MetaType> {
   private schema: SchemaRegistry
   private metaSchema: Schema
   private state: State<MetaType>
