@@ -35,11 +35,11 @@ export class PrimitiveField implements SearchableField {
       return false
     }
 
-    const { operator, args: [field, value] } = query
+    const { operator, args: [field, value, ...rest] } = query
     const formattedValue = value instanceof Array
       ? value.map(x => this.convertor(x))
       : this.convertor(value)
 
-    return { operator, args: [field, formattedValue] }
+    return { operator, args: [field, formattedValue, ...rest] }
   }
 }
