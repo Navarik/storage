@@ -17,7 +17,7 @@ export class Changelog<M extends object> {
   private observer: (change: CanonicalEntity<any, M>, schema: CanonicalSchema) => Promise<void>
   private transactionManager: TransactionManager
   private logger: Logger
-  private cache: LRU<string, { id: string }>
+  private cache: LRU<string, boolean>
   private healthStats = {
     totalChangesProduced: 0,
     totalChangesReceived: 0,
@@ -54,7 +54,7 @@ export class Changelog<M extends object> {
       await this.observer(entity, schema)
 
       this.transactionManager.commit(id, new Entity(entity).envelope())
-      this.cache.set(id, { id: entity.id })
+      this.cache.set(id, true)
 
     } catch (error: any) {
       this.healthStats.totalProcessingErrors++
