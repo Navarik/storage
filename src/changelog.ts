@@ -17,7 +17,7 @@ export class Changelog<M extends object> {
   private observer: (change: CanonicalEntity<any, M>, schema: CanonicalSchema) => Promise<void>
   private transactionManager: TransactionManager
   private logger: Logger
-  private cache: LRU<string, CanonicalEntity<any, M>>
+  private cache: LRU<string, { id: string }>
   private healthStats = {
     totalChangesProduced: 0,
     totalChangesReceived: 0,
@@ -41,7 +41,8 @@ export class Changelog<M extends object> {
     try {
       this.logger.debug({ component: "Storage" }, `Received change event for entity: ${entity.id}`)
 
-      if (this.cache.has(id)) { 
+      if (this.cache.has(id)) {
+        this.logger.debug({ component: "Storage" }, `Change event already executed id[${id}] entityId[${entity.id}]`)
         return 
       }
 
@@ -53,8 +54,8 @@ export class Changelog<M extends object> {
       await this.observer(entity, schema)
 
       this.transactionManager.commit(id, new Entity(entity).envelope())
-      this.cache.set(id, entity)
-      
+      this.cache.set(id, { id: entity.id })
+
     } catch (error: any) {
       this.healthStats.totalProcessingErrors++
       this.logger.error({ component: "Storage", stack: error.stack }, `Error processing change event: ${error.message}`)
