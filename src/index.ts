@@ -83,7 +83,8 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
     this.changelog = new Changelog<MetaType>({
       adapter: config.changelog || new DefaultChangelogAdapter(),
       logger: this.logger,
-      observer: this.onDataChange.bind(this)
+      observer: this.onDataChange.bind(this),
+      cacheSize
     })
 
     this.accessControl = config.accessControl || new DefaultAccessControl()
