@@ -1,6 +1,6 @@
 import { expect } from "chai"
-import { StorageInterface, StorageConfig } from "../../src"
-import { expectSameEntity } from "../steps/checks"
+import { StorageInterface, StorageConfig, EntityEnvelope } from "../../src"
+import { expectSameEntity } from "../checks"
 import { EntitySteps } from "../steps/entity"
 import { nullLogger } from "../mocks/null-logger"
 
@@ -63,7 +63,7 @@ export const entityVersioning = (createStorage: <T extends object = {}>(config: 
   })
 
   const steps = new EntitySteps(storage)
-  let testEntity
+  let testEntity: EntityEnvelope
 
   describe('Entity updates and versioning', () => {
     before(() => storage.up())
@@ -117,7 +117,7 @@ export const entityVersioning = (createStorage: <T extends object = {}>(config: 
       const error = await steps.cannotUpdate({
         id: testEntity.id,
         body: { role: "Memetic translator" },
-        version_id: testEntity.previous_version_id
+        version_id: <string>testEntity.previous_version_id
       })
       expect(error.name).to.equal("ConflictError")
       expect(error.message)

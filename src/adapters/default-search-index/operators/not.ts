@@ -1,9 +1,10 @@
-import { FilterCompiler, SearchQuery } from "../types"
+import { SearchQuery } from "../../../types"
+import { FilterCompiler } from "../types"
 
 export class NotOperator implements FilterCompiler {
   private root: FilterCompiler
 
-  constructor(root) {
+  constructor(root: FilterCompiler) {
     this.root = root
   }
 

@@ -1,7 +1,7 @@
 import { expect } from "chai"
 import { StorageInterface, StorageConfig } from '../../src'
 import { nullLogger } from "../mocks/null-logger"
-import { expectSameEntity } from "../steps/checks"
+import { expectSameEntity } from "../checks"
 
 const catId = "9913a4d3-4f64-45ca-8ef9-4e5d1f3ad4b3"
 const dogeId = "17c43a4a-b8ee-49fc-b760-8060ac6877c0"

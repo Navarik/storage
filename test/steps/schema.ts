@@ -1,6 +1,6 @@
 import { expect } from "chai"
 import { StorageInterface, CanonicalSchema } from '../../src'
-import { expectCanonicalSchema } from './checks'
+import { expectCanonicalSchema } from '../checks'
 
 export class SchemaSteps {
   private storage: StorageInterface<any>

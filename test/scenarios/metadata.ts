@@ -1,7 +1,7 @@
 import { expect } from "chai"
 import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
 import { EntitySteps } from '../steps/entity'
-import { expectEntity } from '../steps/checks'
+import { expectEntity } from '../checks'
 import { nullLogger } from "../mocks/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')
@@ -38,13 +38,12 @@ export const metadata = (createStorage: <T extends object = {}>(config: StorageC
     })
 
     it("can create default metadata if it's not required", async () => {
-      const entity = await steps.canCreate(fixturesEvents[0])
-      if (undefined === entity) {
-        throw new Error('No entity created')
-      }
-      expect(entity.meta).to.be.an('object')
-      expect(entity.meta.wow).to.equal(null)
-      expect(entity.meta.very).to.equal(null)
+      const { id } = await steps.canCreate(fixturesEvents[0])
+      const entity = await storage.get(id)
+      expectEntity(entity)
+      expect(entity?.meta).to.be.an('object')
+      expect(entity?.meta.wow).to.equal(null)
+      expect(entity?.meta.very).to.equal(null)
     })
 
     it("can find entities by metadata values", async () => {

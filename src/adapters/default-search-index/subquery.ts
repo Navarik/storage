@@ -1,15 +1,12 @@
 import objectPath from "object-path"
 import { CanonicalEntity, SearchQuery } from "../../types"
-
-interface FilterCompiler {
-  compile(query: SearchQuery): (data: any) => boolean
-}
+import { FilterCompiler } from "./types"
 
 export class SubqueryOperator implements FilterCompiler {
   private root: FilterCompiler
   private index: Array<CanonicalEntity<any, any>>
 
-  constructor(rootCompiler, index) {
+  constructor(rootCompiler: FilterCompiler, index: Array<CanonicalEntity<any, any>>) {
     this.root = rootCompiler
     this.index = index
   }

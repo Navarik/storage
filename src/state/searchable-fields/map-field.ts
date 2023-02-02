@@ -1,17 +1,17 @@
 import { SchemaField, SearchableField, SearchQuery } from "../../types"
-import { FieldFactory } from "../field-factory"
+import { createField } from "."
 
 type MapFieldDefinition = SchemaField<{ values: SchemaField }>
 
 export class MapField implements SearchableField {
   private items: SearchableField
 
-  constructor(factory: FieldFactory, field: MapFieldDefinition) {
+  constructor(field: MapFieldDefinition) {
     if (!field.parameters) {
       throw new Error("DeepSearch: map fiedls require items parameter")
     }
 
-    this.items = factory.create(field.parameters.values)
+    this.items = createField(field.parameters.values)
   }
 
   chain(field: SchemaField) {}

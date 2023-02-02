@@ -1,7 +1,7 @@
 import { Dictionary } from "@navarik/types"
 import { expect } from "chai"
 import { StorageInterface, UUID, SearchQuery, SearchOptions } from '../../src'
-import { expectEntity } from './checks'
+import { expectEntity } from '../checks'
 
 export class SearchSteps {
   private storage: StorageInterface<any>

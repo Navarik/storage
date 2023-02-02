@@ -2,7 +2,7 @@ import { expect } from "chai"
 import { CanonicalSchema, CanonicalEntity, StorageConfig, StorageInterface } from '../../src'
 import { EntitySteps } from '../steps/entity'
 import { nullLogger } from "../mocks/null-logger"
-import { expectEntity } from '../steps/checks'
+import { expectEntity } from '../checks'
 import { OnlyMineAccessControl } from "../mocks/only-mine-acl"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')

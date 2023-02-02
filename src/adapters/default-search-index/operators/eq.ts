@@ -1,4 +1,5 @@
-import { FilterCompiler, SearchQuery } from "../types"
+import { SearchQuery } from "../../../types"
+import { FilterCompiler } from "../types"
 import objectPath from "object-path"
 import { normalizeType } from "../normalize-type"
 

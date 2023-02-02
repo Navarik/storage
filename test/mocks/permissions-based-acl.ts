@@ -38,7 +38,7 @@ export class PermissionsBasedAccessControl implements AccessControlAdapter<any> 
     }
   }
 
-  async getQuery(subject: UUID, access: AccessType): Promise<SearchQuery> {
+  async getQuery(subject: UUID, access: AccessType): Promise<SearchQuery|undefined> {
     if (this.isGranted(subject, access)) {
       return undefined
     }

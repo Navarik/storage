@@ -1,14 +1,12 @@
 import { Dictionary, SchemaField, SearchableField, SearchQuery } from "../../types"
-import { FieldFactory } from "../field-factory"
+import { createField } from "."
 
 type UnionFieldDefninition = SchemaField<{ options: Array<SchemaField> }>
 
 export class UnionField implements SearchableField {
-  private factory: FieldFactory
   private types: Dictionary<SearchableField> = {}
 
-  constructor(factory: FieldFactory, field: UnionFieldDefninition) {
-    this.factory = factory
+  constructor(field: UnionFieldDefninition) {
     this.merge(field)
   }
 
@@ -16,7 +14,7 @@ export class UnionField implements SearchableField {
     if (this.types[field.type]) {
       this.types[field.type]?.merge(field)
     } else {
-      this.types[field.type] = this.factory.create(field)
+      this.types[field.type] = createField(field)
     }
   }
 
@@ -26,7 +24,7 @@ export class UnionField implements SearchableField {
     }
 
     for (const option of field.parameters.options) {
-      this.types[option.type] = this.factory.create(option)
+      this.types[option.type] = createField(option)
     }
   }
 

@@ -1,6 +1,6 @@
 import { expect } from "chai"
 import { StorageInterface, StorageConfig } from '../../src'
-import { expectEntity } from '../steps/checks'
+import { expectEntity } from '../checks'
 import { nullLogger } from "../mocks/null-logger"
 import fixtureSchemata from '../fixtures/schemata.json'
 import fixturesEvents from "../fixtures/data/events"
@@ -49,7 +49,7 @@ export const search = (createStorage: <T extends object = {}>(config: StorageCon
     })
 
     it("can find entities by type and combination of fields", async () => {
-      let response = await storage.find({
+      let response = await storage.find<any>({
         'body.sender': 1,
         'body.job_order': 13,
         'type': 'timelog.timelog_event'

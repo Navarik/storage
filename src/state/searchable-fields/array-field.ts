@@ -1,5 +1,4 @@
 import { SchemaField, SearchableField, SearchQuery } from "../../types"
-import { FieldFactory } from "../field-factory"
 import { UnionField } from "./union-field"
 
 type ArrayFieldDefinition = SchemaField<{ items: SchemaField }>
@@ -7,12 +6,12 @@ type ArrayFieldDefinition = SchemaField<{ items: SchemaField }>
 export class ArrayField implements SearchableField {
   private items: UnionField
 
-  constructor(factory: FieldFactory, field: ArrayFieldDefinition) {
+  constructor(field: ArrayFieldDefinition) {
     if (!field.parameters) {
       throw new Error("DeepSearch: array fiedls require items parameter")
     }
 
-    this.items = new UnionField(factory, {
+    this.items = new UnionField({
       name: field.name,
       type: "union",
       parameters: { options: [] }

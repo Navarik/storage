@@ -1,23 +1,24 @@
-import { SchemaField, SearchableField, SearchQuery } from "../../types"
+import { Dictionary, SchemaField, SearchableField, SearchQuery } from "../../types"
 import { CompilerError } from "../../errors/compiler-error"
-import { FieldFactory } from "../field-factory"
 
-const typeConvertors = {
+type TypeConvertor<T, G> = (x: T) => G
+
+const typeConvertors: Dictionary<TypeConvertor<any, any>> = {
   int: parseInt,
   float: parseFloat,
   double: parseFloat,
-  string: x => `${x}`,
-  datetime: x => new Date(x),
-  default: x => x
+  string: (x: any) => `${x}`,
+  datetime: (x: any) => new Date(x)
 }
+const defaultTypeConvertor = (x: any) => x
 
 export class PrimitiveField implements SearchableField {
   public type: string
-  private convertor: (x: any) => any
+  private convertor: TypeConvertor<any, any>
 
-  constructor(factory: FieldFactory, field: SchemaField) {
+  constructor(field: SchemaField) {
     this.type = field.type
-    this.convertor = typeConvertors[this.type] || typeConvertors.default
+    this.convertor = typeConvertors[this.type] || defaultTypeConvertor
   }
 
   chain(field: SchemaField) {
