@@ -1,5 +1,4 @@
-import { Dictionary } from '@navarik/types'
-import { SchemaRegistryAdapter, SchemaEngine, CanonicalSchema, IdGenerator, EntityEnvelope } from './types'
+import { Dictionary, SchemaRegistryAdapter, SchemaEngine, CanonicalSchema, IdGenerator, EntityEnvelope } from './types'
 import { ValidationError } from "./errors/validation-error"
 import { Schema } from './schema'
 

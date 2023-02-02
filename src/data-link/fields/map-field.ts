@@ -1,5 +1,4 @@
-import { Dictionary } from "@navarik/types"
-import { SchemaField } from "../../types"
+import { Dictionary, SchemaField } from "../../types"
 import { FieldFactory } from "../field-factory"
 import { DataField } from "../index"
 

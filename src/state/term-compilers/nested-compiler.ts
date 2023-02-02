@@ -1,5 +1,4 @@
-import { Dictionary } from "@navarik/types"
-import { SearchQuery, QueryCompiler } from "../../types"
+import { Dictionary, SearchQuery, QueryCompiler } from "../../types"
 
 export class NestedCompiler implements QueryCompiler<SearchQuery> {
   private rootCompiler: QueryCompiler<SearchQuery|Dictionary<string>>

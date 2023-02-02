@@ -1,5 +1,4 @@
-import { Dictionary } from "@navarik/types"
-import { SchemaRegistryAdapter, CanonicalSchema } from "../types"
+import { Dictionary, SchemaRegistryAdapter, CanonicalSchema } from "../types"
 
 export class InMemorySchemaRegistry implements SchemaRegistryAdapter {
   private schemas: Dictionary<CanonicalSchema> = {}

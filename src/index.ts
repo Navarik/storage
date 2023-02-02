@@ -1,6 +1,5 @@
-import { Dictionary, Logger } from "@navarik/types"
 import { Readable } from "stream"
-import { CanonicalSchema, StorageInterface, UUID, CanonicalEntity, EntityEnvelope, Observer, SearchOptions, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery, AccessControlAdapter, AccessType, StreamOptions } from "./types"
+import { Logger, Dictionary, CanonicalSchema, StorageInterface, UUID, CanonicalEntity, EntityEnvelope, Observer, SearchOptions, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery, AccessControlAdapter, AccessType, StreamOptions } from "./types"
 import { AvroSchemaEngine } from "@navarik/avro-schema-engine"
 import { v4 as uuidv4 } from 'uuid'
 import { ConflictError } from "./errors/conflict-error"

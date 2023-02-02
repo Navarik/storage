@@ -1,8 +1,7 @@
-import { Logger } from '@navarik/types'
-import { TransactionManager } from "@navarik/transaction-manager"
 import { v4 as uuidv4 } from 'uuid'
 import LRU from "lru-cache"
-import { ChangelogAdapter, CanonicalEntity, ChangeEvent, EntityEnvelope, ActionType, CanonicalSchema } from './types'
+import { Logger, ChangelogAdapter, CanonicalEntity, ChangeEvent, EntityEnvelope, ActionType, CanonicalSchema } from './types'
+import { TransactionManager } from "./transaction-manager"
 import { Entity } from './entity'
 
 interface ChangelogConfig<M extends object> {
@@ -43,7 +42,7 @@ export class Changelog<M extends object> {
 
       if (this.cache.has(id)) {
         this.logger.debug({ component: "Storage" }, `Change event already executed id[${id}] entityId[${entity.id}]`)
-        return 
+        return
       }
 
       // This makes Storage compatible with older CanonicalEntity type without the `last_action` field
