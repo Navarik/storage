@@ -1,6 +1,5 @@
-import { Dictionary } from "@navarik/types"
+import { Dictionary, SearchQuery, QueryCompiler, SearchableField } from "../types"
 import { ValidationError } from "../errors/validation-error"
-import { SearchQuery, QueryCompiler, SearchableField } from "../types"
 import { FieldCompiler } from "./term-compilers/field-compiler"
 import { NestedCompiler } from "./term-compilers/nested-compiler"
 import { ObjectCompiler } from "./term-compilers/object-compiler"

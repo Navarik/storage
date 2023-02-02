@@ -1,4 +1,4 @@
-import { Logger } from "@navarik/types";
+import { Logger } from "@navarik/types"
 
 export const nullLogger: Logger = {
   fatal: () => {},

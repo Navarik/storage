@@ -1,5 +1,4 @@
-import { Dictionary } from "@navarik/types"
-import { CanonicalEntity, UUID, EntityRegistry } from "../types"
+import { Dictionary, CanonicalEntity, UUID, EntityRegistry } from "../types"
 
 export class DefaultEntityRegistry<M extends object> implements EntityRegistry<M> {
   private live: Dictionary<Array<CanonicalEntity<any, M>>> = {}

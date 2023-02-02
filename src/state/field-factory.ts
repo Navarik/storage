@@ -1,5 +1,4 @@
-import { Dictionary, Instantiable } from "@navarik/types"
-import { SchemaField, SearchableField } from "../types"
+import { Instantiable, Dictionary, SchemaField, SearchableField } from "../types"
 import { ArrayField } from "./fields/array-field"
 import { MapField } from "./fields/map-field"
 import { ObjectField } from "./fields/object-field"

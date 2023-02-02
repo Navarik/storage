@@ -1,5 +1,4 @@
-import { Dictionary } from "@navarik/types"
-import { SearchQuery, QueryCompiler, SearchableField } from "../../types"
+import { Dictionary, SearchQuery, QueryCompiler, SearchableField } from "../../types"
 import { ValidationError } from "../../errors/validation-error"
 
 export class ObjectCompiler implements QueryCompiler<Dictionary<any>> {

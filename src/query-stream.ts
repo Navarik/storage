@@ -1,6 +1,5 @@
-import { Dictionary } from "@navarik/types"
 import { Readable } from "stream"
-import { SearchQuery, StorageInterface, StreamOptions } from "./types"
+import { Dictionary, SearchQuery, StorageInterface, StreamOptions } from "./types"
 
 interface Config<M extends object> {
   storage: StorageInterface<M>

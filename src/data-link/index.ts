@@ -1,5 +1,4 @@
-import { Dictionary } from "@navarik/types"
-import { SchemaField, CanonicalEntity, ValidationResponse, StorageInterface } from "../types"
+import { Dictionary, SchemaField, CanonicalEntity, ValidationResponse, StorageInterface } from "../types"
 import { ValidationError } from "../errors/validation-error"
 import { FieldFactory } from "./field-factory"
 

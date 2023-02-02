@@ -16,9 +16,6 @@
   },
   "dependencies": {
     "@navarik/avro-schema-engine": "^1.1.1",
-    "@navarik/object-compare": "^1.0.0",
-    "@navarik/object-filter": "^1.1.1",
-    "@navarik/transaction-manager": "^2.0.0",
     "deepcopy": "^2.1.0",
     "lru-cache": "^7.4.0",
     "object-path": "^0.11.8",
@@ -30,9 +27,8 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@navarik/types": "^13.1.0",
+    "@navarik/types": "^15.1.0",
     "@types/chai": "^4.2.15",
-    "@types/lru-cache": "^7.4.0",
     "@types/mocha": "^9.0.0",
     "@types/node": "^18.0.3",
     "@types/object-path": "^0.11.1",

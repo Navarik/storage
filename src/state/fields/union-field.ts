@@ -1,5 +1,4 @@
-import { Dictionary } from "@navarik/types"
-import { SchemaField, SearchableField, SearchQuery } from "../../types"
+import { Dictionary, SchemaField, SearchableField, SearchQuery } from "../../types"
 import { FieldFactory } from "../field-factory"
 
 type UnionFieldDefninition = SchemaField<{ options: Array<SchemaField> }>

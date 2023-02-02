@@ -1,5 +1,4 @@
-import { Dictionary, Logger } from "@navarik/types"
-import { CanonicalSchema, SearchIndex, EntityRegistry, CanonicalEntity, SearchOptions, SearchQuery, SchemaField, SearchableField } from "../types"
+import { Logger, Dictionary, CanonicalSchema, SearchIndex, EntityRegistry, CanonicalEntity, SearchOptions, SearchQuery, SchemaField, SearchableField } from "../types"
 import { FieldFactory } from "./field-factory"
 import { Compiler } from "./compiler"
 import { RegistryWithCache } from "./registry-with-cache"

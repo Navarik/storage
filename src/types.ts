@@ -1,8 +1,31 @@
-import { Dictionary, Logger, Service } from '@navarik/types'
 import { Readable } from 'stream'
 
 export type Timestamp = string
 export type UUID = string
+
+export type Dictionary<T> = Partial<{
+  [key: string]: T
+}>
+
+export interface Instantiable<T> {
+  new (...args: Array<any>): T
+}
+
+export interface Logger {
+  trace(...messages: Array<(string|object)>): void
+  debug(...messages: Array<(string|object)>): void
+  info(...messages: Array<(string|object)>): void
+  warn(...messages: Array<(string|object)>): void
+  error(...messages: Array<(string|object)>): void
+  fatal(...messages: Array<(string|object)>): void
+}
+
+export interface Service {
+  up(): Promise<void>
+  down(): Promise<void>
+  isHealthy(): Promise<boolean>
+  stats?(): Promise<object>
+}
 
 export interface SchemaField<P = Dictionary<any>> {
   name: string

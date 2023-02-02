@@ -1,4 +1,4 @@
-import { Logger } from "@navarik/types";
+import { Logger } from "../types"
 
 export const defaultLogger: Logger = {
   fatal: (...args) => console.error(args),

@@ -1,6 +1,6 @@
-import { objectFilter, compiler } from "@navarik/object-filter"
-import { objectCompare } from "@navarik/object-compare"
 import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, ActionType, CanonicalSchema } from '../../types'
+import { objectFilter, compiler } from "./object-filter"
+import { objectCompare } from "./object-compare"
 import { SubqueryOperator } from "./subquery-operator"
 
 export class DefaultSearchIndex<M extends object> implements SearchIndex<M> {
