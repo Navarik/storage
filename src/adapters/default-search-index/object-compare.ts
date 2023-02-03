@@ -7,10 +7,10 @@ interface SortCriterion {
 }
 
 const convertors = {
-  string: (x) => x === undefined || x === null ? "" : x,
-  number: (x) => x === undefined || x === null ? undefined : new Number(x),
-  date: (x) => x === undefined || x === null  ? 0 : new Date(x).getTime(),
-  auto: (x) => x === undefined || x === null  ? "" : x instanceof Date ? new Date(x).getTime() : x
+  string: (x: any) => x === undefined || x === null ? "" : x,
+  number: (x: any) => x === undefined || x === null ? undefined : new Number(x),
+  date: (x: any) => x === undefined || x === null  ? 0 : new Date(x).getTime(),
+  auto: (x: any) => x === undefined || x === null  ? "" : x instanceof Date ? new Date(x).getTime() : x
 }
 
 

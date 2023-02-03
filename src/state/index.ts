@@ -1,5 +1,5 @@
 import { Logger, Dictionary, CanonicalSchema, SearchIndex, EntityRegistry, CanonicalEntity, SearchOptions, SearchQuery, SchemaField, SearchableField } from "../types"
-import { FieldFactory } from "./field-factory"
+import { createField } from "./searchable-fields"
 import { Compiler } from "./compiler"
 import { RegistryWithCache } from "./registry-with-cache"
 
@@ -17,7 +17,6 @@ export class State<MetaType extends object> {
   private metaSchema: CanonicalSchema
   private index: SearchIndex<MetaType>
   private searchSchema: SearchableField
-  private fieldFactory: FieldFactory
   private compiler: Compiler
   private healthStats = {
     totalSearchQueries: 0,
@@ -31,8 +30,7 @@ export class State<MetaType extends object> {
     this.index = index
     this.cachedRegistry = new RegistryWithCache({ cacheSize, registry })
 
-    this.fieldFactory = new FieldFactory()
-    this.searchSchema = this.fieldFactory.create({
+    this.searchSchema = createField({
       name: "",
       type: "object",
       parameters: { fields: [

@@ -1,7 +1,7 @@
 import { Dictionary } from "@navarik/types"
 import { expect } from "chai"
 import { EntityPatch, StorageInterface, CanonicalEntity, UUID, EntityData } from '../../src'
-import { expectSameEntity, expectEnvelope } from './checks'
+import { expectSameEntity, expectEnvelope } from '../checks'
 
 export class EntitySteps {
   private storage: StorageInterface<any>
@@ -21,13 +21,13 @@ export class EntitySteps {
     const foundCollection = await this.storage.find({ id: created.id })
     expectSameEntity(foundCollection[0], entity)
 
-    return found
+    return created
   }
 
   async cannotCreate(entity: EntityData<any, any>, user?: UUID) {
     try {
       await this.storage.create(entity, user)
-    } catch (err) {
+    } catch (err: any) {
       expect(true).to.equal(true)
       return err
     }
@@ -38,7 +38,7 @@ export class EntitySteps {
   async cannotGet(id: string, user?: UUID) {
     try {
       await this.storage.get(id, {}, user)
-    } catch (err) {
+    } catch (err: any) {
       expect(true).to.equal(true)
       return
     }
@@ -60,7 +60,7 @@ export class EntitySteps {
   async cannotDelete(id: string, user?: UUID) {
     try {
       await this.storage.delete(id, user)
-    } catch (err) {
+    } catch (err: any) {
       expect(true).to.equal(true)
       return err
     }
@@ -125,13 +125,13 @@ export class EntitySteps {
     const found = await this.storage.get(entity.id)
     expectSameEntity(found, entity)
 
-    return found
+    return response
   }
 
   async cannotUpdate(entity: EntityPatch<any, any>) {
     try {
       await this.storage.update(entity)
-    } catch (err) {
+    } catch (err: any) {
       expect(true).to.equal(true)
       return err
     }

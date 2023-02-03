@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { StorageInterface, StorageConfig } from '../../src'
+import { StorageInterface, StorageConfig, EntityEnvelope } from '../../src'
 import { nullLogger } from "../mocks/null-logger"
 import { EntitySteps } from '../steps/entity'
 
@@ -16,7 +16,7 @@ export const entityDeletion = (createStorage: <T extends object = {}>(config: St
   })
 
   const steps = new EntitySteps(storage)
-  let testEntity
+  let testEntity: EntityEnvelope
 
   describe('Entity deletion', () => {
     before(() => storage.up())

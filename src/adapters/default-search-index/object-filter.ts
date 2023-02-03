@@ -1,4 +1,5 @@
-import { SearchQuery, Filter, FilterCompiler } from './types'
+import { Dictionary, SearchOperator, SearchQuery } from '../../types'
+import { Filter, FilterCompiler } from './types'
 import { EqOperator } from './operators/eq'
 import { NeqOperator } from './operators/neq'
 import { LikeOperator } from './operators/like'
@@ -12,9 +13,10 @@ import { LteOperator } from './operators/lte'
 import { InOperator } from './operators/in'
 import { FulltextOperator } from './operators/fulltext'
 import { EmptyOperator } from './operators/empty'
+import { NoopOperator } from './operators/noop'
 
-export class Compiler implements FilterCompiler {
-  private operators = {
+export class ObjectFilter implements FilterCompiler {
+  private operators: Dictionary<FilterCompiler> = {
     and: new AndOperator(this),
     or: new OrOperator(this),
     not: new NotOperator(this),
@@ -27,10 +29,11 @@ export class Compiler implements FilterCompiler {
     lte: new LteOperator(),
     in: new InOperator(this),
     like: new LikeOperator(),
-    fulltext: new FulltextOperator()
+    fulltext: new FulltextOperator(),
+    noop: new NoopOperator()
   }
 
-  addOperator(operator: string, strategy: FilterCompiler) {
+  addOperator(operator: SearchOperator, strategy: FilterCompiler) {
     this.operators[operator] = strategy
   }
 

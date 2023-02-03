@@ -11,7 +11,8 @@
     "esModuleInterop": true,
     "noUnusedLocals": true,
     "lib": ["ES2018"],
-    "types": ["node", "mocha"]
+    "types": ["node", "mocha"],
+    "strict": true
   },
   "include": ["./src/**/*"]
 }

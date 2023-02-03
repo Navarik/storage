@@ -1,21 +1,18 @@
 import { Dictionary, SchemaField, SearchableField, SearchQuery } from "../../types"
-import { FieldFactory } from "../field-factory"
 import { UnionField } from "./union-field"
 
 type ObjectFieldDefinition = SchemaField<{ fields: Array<SchemaField> }>
 
 export class ObjectField implements SearchableField {
-  private factory: FieldFactory
   private fields: Dictionary<UnionField> = {}
 
-  constructor(factory: FieldFactory, field: ObjectFieldDefinition) {
-    this.factory = factory
+  constructor(field: ObjectFieldDefinition) {
     this.merge(field)
   }
 
   chain(field: SchemaField) {
     if (!this.fields[field.name]) {
-      this.fields[field.name] = new UnionField(this.factory, {
+      this.fields[field.name] = new UnionField({
         name: field.name,
         type: "union",
         parameters: { options: [] }

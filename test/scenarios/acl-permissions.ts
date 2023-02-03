@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
 import { EntitySteps } from '../steps/entity'
-import { expectEnvelope } from '../steps/checks'
+import { expectEnvelope } from '../checks'
 import { nullLogger } from "../mocks/null-logger"
 import { PermissionsBasedAccessControl } from "../mocks/permissions-based-acl"
 

@@ -1,6 +1,6 @@
 import { expect } from "chai"
 import { StorageInterface, CanonicalSchema, CanonicalEntity, StorageConfig } from '../../src'
-import { expectEntity } from '../steps/checks'
+import { expectEntity } from '../checks'
 import { nullLogger } from "../mocks/null-logger"
 
 const fixtureSchemata: Array<CanonicalSchema> = require('../fixtures/schemata')

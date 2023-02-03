@@ -1,8 +1,10 @@
 import { Dictionary, SchemaRegistryAdapter, CanonicalSchema } from "../types"
 
+type SchemaObserver = (key: string, schema: CanonicalSchema) => void
+
 export class InMemorySchemaRegistry implements SchemaRegistryAdapter {
   private schemas: Dictionary<CanonicalSchema> = {}
-  private observer: (key: string, schema: CanonicalSchema) => void
+  private observer: SchemaObserver|undefined
 
   set(key: string, schema: CanonicalSchema) {
     this.schemas[key] = schema
@@ -15,7 +17,7 @@ export class InMemorySchemaRegistry implements SchemaRegistryAdapter {
     return this.schemas[key]
   }
 
-  observe(observer) {
+  observe(observer: SchemaObserver) {
     this.observer = observer
   }
 }

@@ -1,12 +1,13 @@
 import { SearchIndex, SearchQuery, SearchOptions, CanonicalEntity, ActionType, CanonicalSchema } from '../../types'
-import { objectFilter, compiler } from "./object-filter"
+import { ObjectFilter } from "./object-filter"
 import { objectCompare } from "./object-compare"
-import { SubqueryOperator } from "./subquery-operator"
+import { SubqueryOperator } from "./subquery"
 
 export class DefaultSearchIndex<M extends object> implements SearchIndex<M> {
   public documents: Array<CanonicalEntity<any, M>> = []
+  private filterCompiler: ObjectFilter = new ObjectFilter()
 
-   private parseSort(sortQueries: Array<string>): Array<{ field: string, direction: "desc"|"asc" }> {
+  private parseSort(sortQueries: Array<string>): Array<{ field: string, direction: "desc"|"asc" }> {
     const result: Array<{ field: string, direction: "desc"|"asc" }> = []
     for (const item of sortQueries) {
       const [field, direction = ""] = item.split(':')
@@ -32,7 +33,7 @@ export class DefaultSearchIndex<M extends object> implements SearchIndex<M> {
   }
 
   async find<B extends object>(searchParams: SearchQuery, { offset = 0, limit = 0, sort = [] }: SearchOptions = {}): Promise<Array<CanonicalEntity<B, M>>> {
-    const filter = objectFilter(searchParams)
+    const filter = this.filterCompiler.compile(searchParams)
     const comparator = objectCompare(this.parseSort(sort instanceof Array ? sort : sort.split(",")))
 
     const collection = this.documents.filter(filter).sort(comparator)
@@ -41,7 +42,7 @@ export class DefaultSearchIndex<M extends object> implements SearchIndex<M> {
   }
 
   async count(searchParams: SearchQuery): Promise<number> {
-    const filter = objectFilter(searchParams)
+    const filter = this.filterCompiler.compile(searchParams)
 
     let count = 0
     this.documents.forEach(x => {
@@ -55,7 +56,7 @@ export class DefaultSearchIndex<M extends object> implements SearchIndex<M> {
 
   async up() {
     this.documents = []
-    compiler.addOperator("subquery", new SubqueryOperator(compiler, this.documents))
+    this.filterCompiler.addOperator("subquery", new SubqueryOperator(this.filterCompiler, this.documents))
   }
 
   async down() {
