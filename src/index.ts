@@ -18,7 +18,7 @@ import { DefaultEntityRegistry } from "./adapters/defailt-entity-registry"
 import { DefaultSearchIndex } from "./adapters/default-search-index/index"
 import { DefaultAccessControl } from "./adapters/default-access-control"
 import { DefaultChangelogAdapter } from "./adapters/default-changelog"
-import { InMemorySchemaRegistry } from "./adapters/in-memory-schema-registry"
+import { DefaultSchemaRegistry } from "./adapters/default-schema-registry"
 import { defaultLogger } from "./adapters/default-logger"
 
 export * from "./types"
@@ -65,7 +65,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
     schemaEngine.register(this.metaSchema.id, metaSchemaDefinition)
 
     this.schema = new SchemaRegistry({
-      adapter: config.schemaRegistry || new InMemorySchemaRegistry(),
+      adapter: config.schemaRegistry || new DefaultSchemaRegistry(),
       engine: config.schemaEngine || new AvroSchemaEngine(),
       idGenerator: schemaIdGenerator,
       onChange: this.onSchemaChange.bind(this)

@@ -26,9 +26,9 @@ export class SchemaRegistry {
   }
 
   private onRegistryUpdate(schemaId: string, schema: CanonicalSchema) {
-    this.onChange(schema)
     this.engine.register(schemaId, schema)
     this.knownTypes[schema.name] = schemaId
+    this.onChange(schema)
   }
 
   types(): Array<string> {
