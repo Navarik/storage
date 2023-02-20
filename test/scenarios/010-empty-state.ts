@@ -10,17 +10,17 @@ export const emptyState = (createStorage: <T extends object = {}>(config: Storag
 
     it("has no types", async () => {
       expect(storage.types())
-      .to.be.an("array")
-      .to.be.empty
+        .to.be.an("array")
+        .to.be.empty
     })
 
     it("has no entities", async () => {
       expect(await storage.find())
-      .to.be.an("array")
-      .to.be.empty
+        .to.be.an("array")
+        .to.be.empty
 
       expect(await storage.count())
-      .to.equal(0)
+        .to.equal(0)
     })
   })
 

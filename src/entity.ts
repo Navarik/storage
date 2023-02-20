@@ -2,7 +2,7 @@ import { v5 as uuidv5, v4 as uuidv4 } from 'uuid'
 import deepCopy from "deepcopy"
 import { UUID, ActionType, Timestamp, CanonicalEntity, EntityEnvelope } from './types'
 import { ConflictError } from './errors/conflict-error'
-import { Schema } from './schema'
+import { SchemaType } from './schema-type'
 
 export class Entity<B extends object, M extends object> implements CanonicalEntity<B, M> {
   public id: UUID
@@ -33,7 +33,7 @@ export class Entity<B extends object, M extends object> implements CanonicalEnti
     this.meta = data.meta
   }
 
-  static create<B extends object, M extends object>({ id = uuidv4(), body, meta }: { id?: UUID, body: B, meta: M }, { schema, metaSchema }: { schema: Schema, metaSchema: Schema }, user: UUID): Entity<B, M> {
+  static create<B extends object, M extends object>({ id = uuidv4(), body, meta }: { id?: UUID, body: B, meta: M }, { schema, metaSchema }: { schema: SchemaType, metaSchema: SchemaType }, user: UUID): Entity<B, M> {
     const now = new Date().toISOString()
 
     const formattedBody = schema.format<B>(body)
@@ -54,7 +54,7 @@ export class Entity<B extends object, M extends object> implements CanonicalEnti
     })
   }
 
-  update({ version_id, body, meta }: { version_id: UUID, type?: string, body?: B, meta?: M }, { schema, metaSchema }: { schema: Schema, metaSchema: Schema }, user: UUID): Entity<B, M> {
+  update({ version_id, body, meta }: { version_id: UUID, type?: string, body?: B, meta?: M }, { schema, metaSchema }: { schema: SchemaType, metaSchema: SchemaType }, user: UUID): Entity<B, M> {
     if (this.version_id != version_id) {
       throw new ConflictError(`Update unsuccessful due to ${version_id} being not the latest version for entity ${this.id}`)
     }

@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { CanonicalEntity, CanonicalSchema, EntityEnvelope } from "../src"
+import { CanonicalEntity, EntityEnvelope } from "../src"
 
 export const expectEnvelope = (given: EntityEnvelope|undefined) => {
   expect(given).to.be.an("object")
@@ -46,11 +46,4 @@ export const expectSameEntity = (given: CanonicalEntity<any, any>|undefined, exp
   for (const field in expected.body) {
     expect(given?.body[field]).to.deep.eq(expected.body[field])
   }
-}
-
-export const expectCanonicalSchema = (given: CanonicalSchema|undefined) => {
-  expect(given).to.be.an("object")
-  expect(given).to.have.keys(["name", "fields"])
-  expect(given?.name).to.be.a("string")
-  expect(given?.fields).to.be.a("array")
 }

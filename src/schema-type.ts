@@ -7,7 +7,7 @@ interface Config {
   definition: CanonicalSchema
 }
 
-export class Schema {
+export class SchemaType {
   public id: string
   public type: string
   private definition: CanonicalSchema

@@ -1,6 +1,6 @@
 import { Dictionary, SchemaRegistryAdapter, SchemaEngine, CanonicalSchema, IdGenerator, EntityEnvelope } from './types'
 import { ValidationError } from "./errors/validation-error"
-import { Schema } from './schema'
+import { SchemaType } from './schema-type'
 
 interface Config {
   adapter: SchemaRegistryAdapter
@@ -40,7 +40,7 @@ export class SchemaRegistry {
     this.adapter.set(schemaId, schema)
   }
 
-  describe(type: string): Schema|undefined {
+  describe(type: string): SchemaType|undefined {
     // Provided type can be either the type name or its ID
     const id = this.knownTypes[type] || type
     const definition = this.adapter.get(id)
@@ -49,10 +49,10 @@ export class SchemaRegistry {
       return undefined
     }
 
-    return new Schema({ id, definition, engine: this.engine })
+    return new SchemaType({ id, definition, engine: this.engine })
   }
 
-  describeEntity(entity: EntityEnvelope): Schema {
+  describeEntity(entity: EntityEnvelope): SchemaType {
     // If can't find this particular version of the schema, fallback to the latest version
     const schema = this.describe(entity.schema) || this.describe(entity.type)
     if (!schema) {

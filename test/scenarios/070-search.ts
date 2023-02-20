@@ -83,7 +83,7 @@ export const search = (createStorage: <T extends object = {}>(config: StorageCon
       })
     })
 
-    it("automatically convert string filter values to their respective schema types", async () => {
+    it("automatically converts string filter values to their respective schema types", async () => {
       let response = await storage.find({
         operator: "and",
         args: [

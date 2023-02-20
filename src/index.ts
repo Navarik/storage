@@ -10,7 +10,7 @@ import { DataLink } from "./data-link"
 import { SchemaRegistry } from "./schema-registry"
 import { State } from "./state"
 import { Entity } from "./entity"
-import { Schema } from "./schema"
+import { SchemaType } from "./schema-type"
 import { QueryStream } from "./query-stream"
 
 import { UuidV5IdGenerator } from "./adapters/uuid-v5-id-generator"
@@ -29,7 +29,7 @@ const defaultSchemaIdNamespace = '00000000-0000-0000-0000-000000000000'
 
 export class Storage<MetaType extends object = {}> implements StorageInterface<MetaType> {
   private schema: SchemaRegistry
-  private metaSchema: Schema
+  private metaSchema: SchemaType
   private state: State<MetaType>
   private accessControl: AccessControlAdapter<MetaType>
   private dataLink: DataLink
@@ -57,7 +57,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
       name: "metadata",
       fields: config.meta || []
     }
-    this.metaSchema = new Schema({
+    this.metaSchema = new SchemaType({
       id: schemaIdGenerator.id(metaSchemaDefinition),
       definition: metaSchemaDefinition,
       engine: schemaEngine
