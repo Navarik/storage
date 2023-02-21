@@ -1,5 +1,5 @@
-import { SchemaEngine, CanonicalSchema } from '../types'
-import { ValidationError } from "../errors/validation-error"
+import { SchemaEngine, CanonicalSchema } from './types'
+import { ValidationError } from "./errors/validation-error"
 
 interface Config {
   id: string
@@ -7,7 +7,7 @@ interface Config {
   definition: CanonicalSchema
 }
 
-export class SchemaType {
+export class Schema {
   public id: string
   public type: string
   private definition: CanonicalSchema

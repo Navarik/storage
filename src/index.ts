@@ -6,11 +6,10 @@ import { ConflictError } from "./errors/conflict-error"
 import { AccessError } from "./errors/access-error"
 import { ValidationError } from "./errors/validation-error"
 import { Changelog } from "./changelog"
-import { DataLink } from "./data-link"
-import { SchemaRegistry } from "./data-link/schema-registry"
+import { SchemaRegistry } from "./schema-registry"
 import { State } from "./state"
 import { Entity } from "./entity"
-import { SchemaType } from "./data-link/schema-type"
+import { Schema } from "./schema"
 import { QueryStream } from "./query-stream"
 
 import { UuidV5IdGenerator } from "./adapters/uuid-v5-id-generator"
@@ -29,10 +28,9 @@ const defaultSchemaIdNamespace = '00000000-0000-0000-0000-000000000000'
 
 export class Storage<MetaType extends object = {}> implements StorageInterface<MetaType> {
   private schema: SchemaRegistry
-  private metaSchema: SchemaType
+  private metaSchema: Schema
   private state: State<MetaType>
   private accessControl: AccessControlAdapter<MetaType>
-  private dataLink: DataLink
   private changelog: Changelog<MetaType>
   private observers: Array<Observer<any, MetaType>> = []
   private logger: Logger
@@ -57,7 +55,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
       name: "metadata",
       fields: config.meta || []
     }
-    this.metaSchema = new SchemaType({
+    this.metaSchema = new Schema({
       id: schemaIdGenerator.id(metaSchemaDefinition),
       definition: metaSchemaDefinition,
       engine: schemaEngine
@@ -65,10 +63,11 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
     schemaEngine.register(this.metaSchema.id, metaSchemaDefinition)
 
     this.schema = new SchemaRegistry({
-      adapter: config.schemaRegistry || new DefaultSchemaRegistry(),
+      registry: config.schemaRegistry || new DefaultSchemaRegistry(),
       engine: config.schemaEngine || new AvroSchemaEngine(),
       idGenerator: schemaIdGenerator,
-      onChange: this.onSchemaChange.bind(this)
+      onChange: this.onSchemaChange.bind(this),
+      state: this
     })
 
     this.state = new State<MetaType>({
@@ -88,17 +87,12 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
 
     this.accessControl = config.accessControl || new DefaultAccessControl()
 
-    this.dataLink = new DataLink({
-      state: this
-    })
-
     // Static schema definitions if there is any
     schema.forEach(this.define.bind(this))
   }
 
   private async onSchemaChange(schema: CanonicalSchema) {
     this.state.registerFields("body", schema.fields)
-    this.dataLink.registerSchema(schema.name, schema.fields)
   }
 
   private async onDataChange<B extends object>(entity: CanonicalEntity<B, MetaType>, schema: CanonicalSchema) {
@@ -207,7 +201,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
     await this.verifyAccess(user, "read", entity)
 
     return hydrate
-      ? this.dataLink.hydrate(entity, user)
+      ? this.schema.hydrate(entity, user)
       : entity
   }
 
@@ -223,7 +217,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
       return collection
     }
 
-    return Promise.all(collection.map(entity => this.dataLink.hydrate(entity, user)))
+    return Promise.all(collection.map(entity => this.schema.hydrate(entity, user)))
   }
 
   async count(query: SearchQuery|Dictionary<any>, user: UUID = nobody): Promise<number> {
@@ -256,7 +250,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
     )
 
     await this.verifyAccess(user, 'write', entity)
-    await this.dataLink.validate(type, body, user)
+    await this.schema.validate(type, body, user)
 
     return this.changelog.requestChange("create", entity, schema.canonical())
   }
@@ -285,7 +279,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
     )
 
     await this.verifyAccess(user, 'write', entity)
-    await this.dataLink.validate(entity.type, entity.body, user)
+    await this.schema.validate(entity.type, entity.body, user)
 
     return this.changelog.requestChange("update", entity, schema.canonical())
   }
