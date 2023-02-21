@@ -1,6 +1,6 @@
-import { Dictionary, SchemaField } from "../../types"
+import { DataField, Dictionary, SchemaField } from "../../types"
 import { FieldFactory } from "../field-factory"
-import { DataField } from "../index"
+import { combineValidationResponses, isEmpty } from "./utils"
 
 interface Config {
   factory: FieldFactory
@@ -10,18 +10,21 @@ interface Config {
 
 export class MapField implements DataField {
   private name: string
-  private items: DataField
+  private itemType: DataField
+  private required: boolean
 
-  constructor({ factory, path, field: { parameters } }: Config) {
+  constructor({ factory, path, field: { parameters, required = false } }: Config) {
     if (!parameters) {
-      throw new Error("DataLink: map fiedls require values parameter")
+      throw new Error("Schema: map fiedls require values parameter")
     }
+
+    this.required = required
     this.name = path
-    this.items = factory.create(`${path}.*`, parameters.values)
+    this.itemType = factory.create(`${path}.*`, parameters.values)
   }
 
   async validate(value: any, user: string) {
-    if (value === undefined || value === null) {
+    if (!this.required && isEmpty(value)) {
       return { isValid: true, message: "" }
     }
 
@@ -30,14 +33,9 @@ export class MapField implements DataField {
     }
 
     const values = Object.values(value)
-    const itemsValidation = await Promise.all(values.map(x => this.items.validate(x, user)))
-    let isValid = true, message = ""
-    for (const itemValidation of itemsValidation) {
-      isValid &&= itemValidation.isValid
-      message += itemValidation.message
-    }
+    const itemsValidation = await Promise.all(values.map(x => this.itemType.validate(x, user)))
 
-    return { isValid, message }
+    return combineValidationResponses(itemsValidation)
   }
 
   async hydrate(value: any, user: string) {
@@ -47,7 +45,7 @@ export class MapField implements DataField {
 
     const result: Dictionary<any> = {}
     for (const name in value) {
-      result[name] = await this.items.hydrate(value[name], user)
+      result[name] = await this.itemType.hydrate(value[name], user)
     }
 
     return result

@@ -1,6 +1,6 @@
-import { Dictionary, SchemaField } from "../../types"
+import { DataField, Dictionary, SchemaField } from "../../types"
 import { FieldFactory } from "../field-factory"
-import { DataField } from "../index"
+import { combineValidationResponses, isEmpty } from "./utils"
 
 interface Config {
   factory: FieldFactory
@@ -11,12 +11,14 @@ interface Config {
 export class ObjectField implements DataField {
   private name: string
   private fields: Dictionary<DataField> = {}
+  private required: boolean
 
-  constructor({ factory, path, field: { parameters } }: Config) {
+  constructor({ factory, path, field: { parameters, required = false } }: Config) {
     if (!parameters) {
-      throw new Error("DataLink: object fiedls require fields parameter")
+      throw new Error("DataLink: object fiedls require fields parameter.")
     }
 
+    this.required = required
     this.name = path
     for (const field of parameters.fields) {
       if (!this.fields[field.name]) {
@@ -28,29 +30,25 @@ export class ObjectField implements DataField {
   private getField(name: string) {
     const field = this.fields[name]
     if (!field) {
-      throw new Error(`DataLink cannot find validator for ${name}`)
+      throw new Error(`DataLink cannot find validator for ${name}.`)
     }
 
     return field
   }
 
   async validate(value: any, user: string) {
-    if (value === undefined || value === null) {
+    if (!this.required && isEmpty(value)) {
       return { isValid: true, message: "" }
     }
 
-    if (value instanceof Array || typeof value !== "object") {
+    if (value instanceof Array || value === null || typeof value !== "object") {
       return { isValid: false, message: `Field ${this.name} must be an object, ${typeof value} given. ` }
     }
 
-    let isValid = true, message = ""
-    for (const fieldName in this.fields) {
-      const fieldValidation = await this.getField(fieldName).validate(value[fieldName], user)
-      isValid &&= fieldValidation.isValid
-      message += fieldValidation.message
-    }
+    const fieldNames = Object.keys(this.fields)
+    const itemsValidation = await Promise.all(fieldNames.map(x => this.getField(x).validate(value[x], user)))
 
-    return { isValid, message }
+    return combineValidationResponses(itemsValidation)
   }
 
   async hydrate(value: any, user: string) {

@@ -1,5 +1,4 @@
-import { Instantiable, Dictionary, SchemaField, StorageInterface } from "../types"
-import { DataField } from "."
+import { Instantiable, Dictionary, SchemaField, StorageInterface, DataField } from "../types"
 import { ArrayField } from "./fields/array-field"
 import { MapField } from "./fields/map-field"
 import { ObjectField } from "./fields/object-field"

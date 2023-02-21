@@ -1,14 +1,9 @@
-import { Dictionary, SchemaField, CanonicalEntity, ValidationResponse, StorageInterface } from "../types"
+import { Dictionary, SchemaField, CanonicalEntity, StorageInterface, DataField } from "../types"
 import { ValidationError } from "../errors/validation-error"
 import { FieldFactory } from "./field-factory"
 
 interface Config {
   state: StorageInterface<any>
-}
-
-export interface DataField {
-  validate(value: any, user: string): Promise<ValidationResponse>
-  hydrate(value: any, user: string): Promise<any>
 }
 
 export class DataLink {
@@ -25,7 +20,14 @@ export class DataLink {
       return
     }
 
-    this.schema[type] = this.fieldFactory.create("body", { name: "body", type: "object", parameters: { fields } })
+    this.schema[type] = this.fieldFactory.create(
+      "body",
+      {
+        name: "body",
+        type: "object",
+        parameters: { fields }
+      }
+    )
   }
 
   async validate<BodyType extends object>(type: string, body: BodyType, user: string): Promise<void> {

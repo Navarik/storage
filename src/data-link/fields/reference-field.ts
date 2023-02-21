@@ -1,5 +1,5 @@
-import { SchemaField, StorageInterface } from "../../types"
-import { DataField } from "../index"
+import { DataField, SchemaField, StorageInterface } from "../../types"
+import { isEmpty } from "./utils"
 
 interface Config {
   path: string
@@ -10,33 +10,29 @@ interface Config {
 export class ReferenceField implements DataField {
   private name: string
   private state: StorageInterface<any>
-  private isRequired: boolean
+  private required: boolean
 
   constructor({ state, path, field: { required } }: Config) {
     this.name = path
     this.state = state
-    this.isRequired = !!required
+    this.required = !!required
   }
 
   async validate(value: any = null, user: string) {
-    if (value === null && !this.isRequired) {
-      return {
-        isValid: true,
-        message: ""
-      }
+    if (isEmpty(value)) {
+      return this.required
+        ? { isValid: false, message: `Field ${this.name} cannot be empty.` }
+        : { isValid: true, message: "" }
     }
 
-    if (this.isRequired && !await this.state.get(value, {}, user)) {
+    if (!await this.state.get(value, {}, user)) {
       return {
         isValid: false,
-        message: `Reference document ${value} not found for ${this.name}`
+        message: `Reference document ${value} not found for ${this.name}.`
       }
     }
 
-    return {
-      isValid: true,
-      message: ""
-    }
+    return { isValid: true, message: "" }
   }
 
   async hydrate(value: any, user: string) {

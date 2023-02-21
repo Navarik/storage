@@ -124,6 +124,11 @@ export interface SearchOptions {
   hydrate?: boolean
 }
 
+export interface DataField {
+  validate(value: any, user: string): Promise<ValidationResponse>
+  hydrate(value: any, user: string): Promise<any>
+}
+
 export interface SchemaEngine {
   register(type: string, schema: CanonicalSchema): void
   validate<T>(type: string, body: Partial<T>): ValidationResponse
