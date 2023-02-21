@@ -1,5 +1,5 @@
-import { Dictionary, SchemaRegistryAdapter, SchemaEngine, CanonicalSchema, IdGenerator, EntityEnvelope } from './types'
-import { ValidationError } from "./errors/validation-error"
+import { Dictionary, SchemaRegistryAdapter, SchemaEngine, CanonicalSchema, IdGenerator, EntityEnvelope } from '../types'
+import { ValidationError } from "../errors/validation-error"
 import { SchemaType } from './schema-type'
 
 interface Config {

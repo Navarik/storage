@@ -2,7 +2,7 @@ import { v5 as uuidv5, v4 as uuidv4 } from 'uuid'
 import deepCopy from "deepcopy"
 import { UUID, ActionType, Timestamp, CanonicalEntity, EntityEnvelope } from './types'
 import { ConflictError } from './errors/conflict-error'
-import { SchemaType } from './schema-type'
+import { SchemaType } from './data-link/schema-type'
 
 export class Entity<B extends object, M extends object> implements CanonicalEntity<B, M> {
   public id: UUID

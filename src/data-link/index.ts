@@ -20,21 +20,13 @@ export class DataLink {
       return
     }
 
-    this.schema[type] = this.fieldFactory.create(
-      "body",
-      {
-        name: "body",
-        type: "object",
-        parameters: { fields }
-      }
-    )
+    this.schema[type] = this.fieldFactory.create("body", { name: "body", type: "object", parameters: { fields } })
   }
 
   async validate<BodyType extends object>(type: string, body: BodyType, user: string): Promise<void> {
     const typeSchema = this.schema[type]
     if (!typeSchema) {
-      // No links to validate. Whatever it is, it must be valid.
-      return
+      throw new ValidationError(`Validation failed: type ${type} not found.`)
     }
 
     const { isValid, message } = await typeSchema.validate(body, user)

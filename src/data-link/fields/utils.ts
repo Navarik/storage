@@ -6,8 +6,11 @@ export const combineValidationResponses = (items: Array<ValidationResponse>): Va
   let isValid = true, message = "", separator = ""
   for (const item of items) {
     isValid &&= item.isValid
-    message += `${separator}${item.message}`
-    separator = "; "
+
+    if (item.message.length) {
+      message += `${separator}${item.message}`
+      separator = "; "
+    }
   }
 
   return { isValid, message }

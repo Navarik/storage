@@ -17,6 +17,8 @@
   "dependencies": {
     "@navarik/avro-schema-engine": "^1.1.1",
     "deepcopy": "^2.1.0",
+    "is-url": "^1.2.4",
+    "is-uuid": "^1.0.2",
     "lru-cache": "^7.4.0",
     "object-path": "^0.11.8",
     "uuid": "^9.0.0"
@@ -29,6 +31,8 @@
   "devDependencies": {
     "@navarik/types": "^15.1.0",
     "@types/chai": "^4.2.15",
+    "@types/is-url": "^1.2.30",
+    "@types/is-uuid": "^1.0.0",
     "@types/mocha": "^9.0.0",
     "@types/node": "^18.0.3",
     "@types/object-path": "^0.11.1",
