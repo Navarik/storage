@@ -1,0 +1,17 @@
+{
+  "ts-node": {
+    "ignore": [ "node_modules/(?!@navarik/storage)" ]
+  },
+  "compilerOptions": {
+    "allowJs": true,
+    "outDir": "./dist",
+    "target": "es2018",
+    "sourceMap": true,
+    "module": "commonjs",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "lib": ["ES2018"],
+    "types": ["node", "mocha"]
+  },
+  "include": ["./src/**/*"]
+}
