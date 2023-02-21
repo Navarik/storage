@@ -27,7 +27,7 @@ export interface Service {
   stats?(): Promise<object>
 }
 
-export interface SchemaField<P = Dictionary<any>> {
+export interface FieldSchema<P = Dictionary<any>> {
   name: string
   type: string
   parameters?: P
@@ -37,7 +37,7 @@ export interface SchemaField<P = Dictionary<any>> {
 
 export interface CanonicalSchema {
   name: string;
-  fields: Array<SchemaField>
+  fields: Array<FieldSchema>
 }
 
 export type ActionType = 'create'|'update'|'delete'
@@ -87,14 +87,9 @@ export type AccessControlDecision = {
 
 export type Observer<B extends object, M extends object> = (event: CanonicalEntity<B, M>) => void|Promise<void>
 
-export interface ValidationResponse {
-  isValid: boolean
-  message: string
-}
-
 export interface SearchableField {
-  chain(field: SchemaField): void
-  merge(field: SchemaField): void
+  chain(field: FieldSchema): void
+  merge(field: FieldSchema): void
   resolve(path: Array<string>, query: SearchQuery, schemaRoot: SearchableField): false|SearchQuery
 }
 
@@ -122,12 +117,6 @@ export interface SearchOptions {
   offset?: number
   sort?: string|Array<string>
   hydrate?: boolean
-}
-
-export interface SchemaEngine {
-  register(type: string, schema: CanonicalSchema): void
-  validate<T>(type: string, body: Partial<T>): ValidationResponse
-  format<T>(type: string, body: Partial<T>): T
 }
 
 export interface SchemaRegistryAdapter {
@@ -172,7 +161,6 @@ export interface StorageConfig<M extends object> {
   changelog?: ChangelogAdapter<M>
   index?: SearchIndex<M>
   state?: EntityRegistry<M>
-  schemaEngine?: SchemaEngine
   schemaIdGenerator?: IdGenerator<CanonicalSchema>
 
   // Extensions - override when adding new rules/capacities
@@ -181,7 +169,7 @@ export interface StorageConfig<M extends object> {
   logger?: Logger
 
   // Built-in schemas for entity body and metadata
-  meta?: Array<SchemaField>
+  meta?: Array<FieldSchema>
   schema?: Array<CanonicalSchema>
 
   // Configuration

@@ -1,16 +1,13 @@
 import { Readable } from "stream"
 import { Logger, Dictionary, CanonicalSchema, StorageInterface, UUID, CanonicalEntity, EntityEnvelope, Observer, SearchOptions, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery, AccessControlAdapter, AccessType, StreamOptions } from "./types"
-import { AvroSchemaEngine } from "@navarik/avro-schema-engine"
 import { v4 as uuidv4 } from 'uuid'
 import { ConflictError } from "./errors/conflict-error"
 import { AccessError } from "./errors/access-error"
 import { ValidationError } from "./errors/validation-error"
 import { Changelog } from "./changelog"
-import { DataLink } from "./data-link"
 import { SchemaRegistry } from "./schema-registry"
 import { State } from "./state"
 import { Entity } from "./entity"
-import { Schema } from "./schema"
 import { QueryStream } from "./query-stream"
 
 import { UuidV5IdGenerator } from "./adapters/uuid-v5-id-generator"
@@ -18,7 +15,7 @@ import { DefaultEntityRegistry } from "./adapters/defailt-entity-registry"
 import { DefaultSearchIndex } from "./adapters/default-search-index/index"
 import { DefaultAccessControl } from "./adapters/default-access-control"
 import { DefaultChangelogAdapter } from "./adapters/default-changelog"
-import { InMemorySchemaRegistry } from "./adapters/in-memory-schema-registry"
+import { DefaultSchemaRegistry } from "./adapters/default-schema-registry"
 import { defaultLogger } from "./adapters/default-logger"
 
 export * from "./types"
@@ -29,10 +26,9 @@ const defaultSchemaIdNamespace = '00000000-0000-0000-0000-000000000000'
 
 export class Storage<MetaType extends object = {}> implements StorageInterface<MetaType> {
   private schema: SchemaRegistry
-  private metaSchema: Schema
+  private metaSchema: SchemaRegistry
   private state: State<MetaType>
   private accessControl: AccessControlAdapter<MetaType>
-  private dataLink: DataLink
   private changelog: Changelog<MetaType>
   private observers: Array<Observer<any, MetaType>> = []
   private logger: Logger
@@ -51,31 +47,32 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
     this.logger.info({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}`)
 
     const schemaIdGenerator = config.schemaIdGenerator || new UuidV5IdGenerator({ root: defaultSchemaIdNamespace })
-    const schemaEngine = config.schemaEngine || new AvroSchemaEngine()
 
     const metaSchemaDefinition = {
       name: "metadata",
       fields: config.meta || []
     }
-    this.metaSchema = new Schema({
-      id: schemaIdGenerator.id(metaSchemaDefinition),
-      definition: metaSchemaDefinition,
-      engine: schemaEngine
+
+    this.metaSchema = new SchemaRegistry({
+      registry: new DefaultSchemaRegistry(),
+      idGenerator: schemaIdGenerator,
+      onChange: () => {},
+      state: this
     })
-    schemaEngine.register(this.metaSchema.id, metaSchemaDefinition)
+    this.metaSchema.define(metaSchemaDefinition)
 
     this.schema = new SchemaRegistry({
-      adapter: config.schemaRegistry || new InMemorySchemaRegistry(),
-      engine: config.schemaEngine || new AvroSchemaEngine(),
+      registry: config.schemaRegistry || new DefaultSchemaRegistry(),
       idGenerator: schemaIdGenerator,
-      onChange: this.onSchemaChange.bind(this)
+      onChange: this.onSchemaChange.bind(this),
+      state: this
     })
 
     this.state = new State<MetaType>({
       logger: this.logger,
       index: config.index || new DefaultSearchIndex<MetaType>(),
       registry: config.state || new DefaultEntityRegistry<MetaType>(),
-      metaSchema: this.metaSchema.canonical(),
+      metaSchema: metaSchemaDefinition,
       cacheSize
     })
 
@@ -88,17 +85,12 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
 
     this.accessControl = config.accessControl || new DefaultAccessControl()
 
-    this.dataLink = new DataLink({
-      state: this
-    })
-
     // Static schema definitions if there is any
     schema.forEach(this.define.bind(this))
   }
 
   private async onSchemaChange(schema: CanonicalSchema) {
     this.state.registerFields("body", schema.fields)
-    this.dataLink.registerSchema(schema.name, schema.fields)
   }
 
   private async onDataChange<B extends object>(entity: CanonicalEntity<B, MetaType>, schema: CanonicalSchema) {
@@ -207,7 +199,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
     await this.verifyAccess(user, "read", entity)
 
     return hydrate
-      ? this.dataLink.hydrate(entity, user)
+      ? this.schema.hydrate(entity, user)
       : entity
   }
 
@@ -223,7 +215,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
       return collection
     }
 
-    return Promise.all(collection.map(entity => this.dataLink.hydrate(entity, user)))
+    return Promise.all(collection.map(entity => this.schema.hydrate(entity, user)))
   }
 
   async count(query: SearchQuery|Dictionary<any>, user: UUID = nobody): Promise<number> {
@@ -249,14 +241,16 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
       throw new ValidationError(`Unknown type: ${type}`)
     }
 
+    const formattedBody = await this.schema.format<BodyType>(type, body)
+    const formattedMeta = await this.metaSchema.format<MetaType>("metadata", meta || {})
+
     const entity = Entity.create<BodyType, MetaType>(
-      { id, body, meta: <MetaType>meta },
-      { schema, metaSchema: this.metaSchema },
+      { id, body: formattedBody, meta: formattedMeta },
+      schema,
       user
     )
 
     await this.verifyAccess(user, 'write', entity)
-    await this.dataLink.validate(type, body, user)
 
     return this.changelog.requestChange("create", entity, schema.canonical())
   }
@@ -272,7 +266,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
       throw new ValidationError(`Update failed: can't find entity ${id}`)
     }
 
-    const newType = type || previous.type
+    const newType = type || previous.type // TODO: this will automatically up the structure. Do we want that?
     const schema = this.schema.describe(newType)
     if (!schema) {
       throw new ValidationError(`Update failed: can't find entity type ${newType}`)
@@ -280,12 +274,13 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
 
     const entity = new Entity<BodyType, MetaType>(previous).update(
       { version_id, body, meta },
-      { schema, metaSchema: this.metaSchema },
+      schema,
       user
     )
 
+    entity.body = await this.schema.format<BodyType>(schema.id, entity.body)
+
     await this.verifyAccess(user, 'write', entity)
-    await this.dataLink.validate(entity.type, entity.body, user)
 
     return this.changelog.requestChange("update", entity, schema.canonical())
   }

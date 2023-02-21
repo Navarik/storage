@@ -1,4 +1,4 @@
-import { Logger, Dictionary, CanonicalSchema, SearchIndex, EntityRegistry, CanonicalEntity, SearchOptions, SearchQuery, SchemaField, SearchableField } from "../types"
+import { Logger, Dictionary, CanonicalSchema, SearchIndex, EntityRegistry, CanonicalEntity, SearchOptions, SearchQuery, FieldSchema, SearchableField } from "../types"
 import { createField } from "./searchable-fields"
 import { Compiler } from "./compiler"
 import { RegistryWithCache } from "./registry-with-cache"
@@ -53,7 +53,7 @@ export class State<MetaType extends object> {
     this.registerFields("meta", metaSchema.fields)
   }
 
-  registerFields(branch: string, fields: Array<SchemaField>) {
+  registerFields(branch: string, fields: Array<FieldSchema>) {
     if (!fields) {
       return
     }

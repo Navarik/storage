@@ -2,9 +2,9 @@ import { expect } from "chai"
 import { nullLogger } from "../mocks/null-logger"
 import { StorageInterface, StorageConfig } from "../../src"
 import { EntitySteps } from "../steps/entity"
-import { SchemaSteps } from "../steps/schema"
 import { SearchSteps } from "../steps/search"
-import fixtureSchemata from "../fixtures/schemata.json"
+import schemas from "../fixtures/schemata.json"
+import { createRunner } from "../setup"
 
 interface TestData {
   such: string
@@ -18,26 +18,28 @@ interface UpdatedTestData {
 
 export const schemaManagement = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
-    schema: fixtureSchemata,
+    schema: schemas,
     logger: nullLogger
   })
 
+  const runner = createRunner(storage)
+
   const dataSteps = new EntitySteps(storage)
   const searchSteps = new SearchSteps(storage)
-  const schemaSteps = new SchemaSteps(storage)
 
   describe("Schema management", () => {
     before(() => storage.up())
 
     it("has statically defined types", async () => {
-      expect(storage.types()).to.have.length(fixtureSchemata.length)
-      fixtureSchemata.forEach(schema =>
-        schemaSteps.canFindSchema(schema)
-      )
+      schemas.forEach(x => runner.canSync("findSchema", x))
+    })
+
+    it("has no other types", async () => {
+      expect(storage.types()).to.have.length(schemas.length)
     })
 
     it("allows defining new types", async () => {
-      schemaSteps.canDefineType({
+      runner.canSync("defineSchema", {
         name: "doge",
         fields: [
           { name: "such", type: "string" },
@@ -58,7 +60,7 @@ export const schemaManagement = (createStorage: <T extends object = {}>(config: 
     })
 
     it("allows updating types", async () => {
-      schemaSteps.canDefineType({
+      runner.canSync("defineSchema", {
         name: "doge",
         fields: [
           { name: "very", type: "int" },
@@ -67,22 +69,27 @@ export const schemaManagement = (createStorage: <T extends object = {}>(config: 
       })
     })
 
-    it("only latest version of the type is visible", async () => {
-      expect(storage.types()).to.have.length(fixtureSchemata.length + 1)
-      schemaSteps.canFindSchema({
+    it("can see the latest version of the type", async () => {
+      runner.canSync("findSchema", {
         name: "doge",
         fields: [
           { name: "very", type: "int" },
           { name: "much", type: "int" }
         ]
       })
-      schemaSteps.cannotFindSchema({
+    })
+
+    it("can not see previous versions of the type", async () => {
+      expect(storage.types()).to.have.length(schemas.length + 1)
+
+      const error = runner.cannotSync("findSchema", {
         name: "doge",
         fields: [
           { name: "such", type: "string" },
           { name: "much", type: "string" }
         ]
       })
+      expect(error.name).to.equal("AssertionError")
     })
 
     it("allows manipulating previously created entities after the type has been updated", async () => {

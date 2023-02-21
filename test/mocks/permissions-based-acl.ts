@@ -1,4 +1,4 @@
-import { Dictionary } from '@navarik/types'
+import { Dictionary } from '../../src/types'
 import { AccessControlAdapter, CanonicalEntity, AccessControlDecision, UUID, AccessType, SearchQuery } from '../../src/types'
 
 interface Permissions {

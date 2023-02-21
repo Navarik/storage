@@ -1,4 +1,4 @@
-import { Dictionary } from "@navarik/types"
+import { Dictionary } from "../../src/types"
 import { expect } from "chai"
 import { StorageInterface, UUID, SearchQuery, SearchOptions } from '../../src'
 import { expectEntity } from '../checks'

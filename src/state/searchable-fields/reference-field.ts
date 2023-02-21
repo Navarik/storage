@@ -1,12 +1,12 @@
-import { SearchableField, SchemaField, SearchQuery } from "../../types"
+import { SearchableField, FieldSchema, SearchQuery } from "../../types"
 import { CompilerError } from "../../errors/compiler-error"
 
 export class ReferenceField implements SearchableField {
-  chain(field: SchemaField) {
+  chain(field: FieldSchema) {
     throw new CompilerError("Can't chain reference types.")
   }
 
-  merge(field: SchemaField) {
+  merge(field: FieldSchema) {
     if (field.type !== "reference") {
       throw new CompilerError(`Can't merge fields of different primitive types reference and ${field.type}`)
     }

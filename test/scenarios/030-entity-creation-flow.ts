@@ -57,10 +57,10 @@ export const entityCreationFlow = (createStorage: <T extends object = {}>(config
     schema: [{
       name: "timelog.event",
       fields: [
-        { name: "event_type", type: "string" },
-        { name: "sender", type: "int" },
-        { name: "timestamp", type: "datetime" },
-        { name: "job_order", type: "int" }
+        { name: "event_type", type: "string"   },
+        { name: "sender",     type: "int"      },
+        { name: "timestamp",  type: "datetime" },
+        { name: "job_order",  type: "int"      }
       ]
     }],
     logger: nullLogger

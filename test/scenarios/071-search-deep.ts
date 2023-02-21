@@ -2,7 +2,7 @@ import { expect } from "chai"
 import { StorageInterface, StorageConfig } from '../../src'
 import { nullLogger } from "../mocks/null-logger"
 
-const fixtureSchemata = [
+const schema = [
   {
     name: "channel",
     fields: [
@@ -55,7 +55,7 @@ const fixtureData = [
 
 export const searchDeep = (createStorage: <T extends object = {}>(config: StorageConfig<T>) => StorageInterface<T>) => {
   const storage = createStorage({
-    schema: fixtureSchemata,
+    schema,
     logger: nullLogger
   })
 

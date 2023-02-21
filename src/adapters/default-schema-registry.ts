@@ -2,7 +2,7 @@ import { Dictionary, SchemaRegistryAdapter, CanonicalSchema } from "../types"
 
 type SchemaObserver = (key: string, schema: CanonicalSchema) => void
 
-export class InMemorySchemaRegistry implements SchemaRegistryAdapter {
+export class DefaultSchemaRegistry implements SchemaRegistryAdapter {
   private schemas: Dictionary<CanonicalSchema> = {}
   private observer: SchemaObserver|undefined
 

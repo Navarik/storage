@@ -1,7 +1,7 @@
-import { SchemaField, SearchableField, SearchQuery } from "../../types"
+import { FieldSchema, SearchableField, SearchQuery } from "../../types"
 import { UnionField } from "./union-field"
 
-type ArrayFieldDefinition = SchemaField<{ items: SchemaField }>
+type ArrayFieldDefinition = FieldSchema<{ items: FieldSchema }>
 
 export class ArrayField implements SearchableField {
   private items: UnionField
@@ -19,9 +19,9 @@ export class ArrayField implements SearchableField {
     this.items.chain(field.parameters.items)
   }
 
-  chain(field: SchemaField) {}
+  chain(field: FieldSchema) {}
 
-  merge(field: SchemaField) {}
+  merge(field: FieldSchema) {}
 
   resolve([head, ...tail]: Array<string>, query: SearchQuery, schemaRoot: SearchableField) {
     if (head !== "*") {

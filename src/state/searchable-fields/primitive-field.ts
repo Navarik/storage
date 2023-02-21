@@ -1,4 +1,4 @@
-import { Dictionary, SchemaField, SearchableField, SearchQuery } from "../../types"
+import { Dictionary, FieldSchema, SearchableField, SearchQuery } from "../../types"
 import { CompilerError } from "../../errors/compiler-error"
 
 type TypeConvertor<T, G> = (x: T) => G
@@ -16,16 +16,16 @@ export class PrimitiveField implements SearchableField {
   public type: string
   private convertor: TypeConvertor<any, any>
 
-  constructor(field: SchemaField) {
+  constructor(field: FieldSchema) {
     this.type = field.type
     this.convertor = typeConvertors[this.type] || defaultTypeConvertor
   }
 
-  chain(field: SchemaField) {
+  chain(field: FieldSchema) {
     throw new CompilerError("Can't chain primitive types")
   }
 
-  merge(field: SchemaField) {
+  merge(field: FieldSchema) {
     if (field.type !== this.type) {
       throw new CompilerError(`Can't merge fields of different primitive types ${this.type} and ${field.type}`)
     }
