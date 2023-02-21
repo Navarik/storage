@@ -241,8 +241,8 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
       throw new ValidationError(`Unknown type: ${type}`)
     }
 
-    const formattedBody = await this.schema.format<BodyType>(type, body, user)
-    const formattedMeta = await this.metaSchema.format<MetaType>("metadata", meta || {}, user)
+    const formattedBody = await this.schema.format<BodyType>(type, body)
+    const formattedMeta = await this.metaSchema.format<MetaType>("metadata", meta || {})
 
     const entity = Entity.create<BodyType, MetaType>(
       { id, body: formattedBody, meta: formattedMeta },
@@ -278,7 +278,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
       user
     )
 
-    entity.body = await this.schema.format<BodyType>(schema.id, entity.body, user)
+    entity.body = await this.schema.format<BodyType>(schema.id, entity.body)
 
     await this.verifyAccess(user, 'write', entity)
 

@@ -26,7 +26,7 @@ export class UnionField implements DataField {
     this.types = field.parameters.options.map((x: FieldSchema) => factory.create(path, x))
   }
 
-  async format(data: any, user: string) {
+  async format(data: any) {
     const value = data === undefined ? this.default : data
 
     if (isEmpty(value)) {
@@ -36,7 +36,7 @@ export class UnionField implements DataField {
     }
 
     for (const validator of this.types) {
-      const validationResult = await validator.format(value, user)
+      const validationResult = await validator.format(value)
       if (validationResult.isValid) {
         return validationResult
       }

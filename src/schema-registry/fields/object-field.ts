@@ -39,7 +39,7 @@ export class ObjectField implements DataField {
     return field
   }
 
-  async format(data: any, user: string) {
+  async format(data: any) {
     const value = data === undefined ? this.default : data
 
     if (!this.required && isEmpty(value)) {
@@ -51,7 +51,7 @@ export class ObjectField implements DataField {
     }
 
     const fieldNames = Object.keys(this.fields)
-    const itemsValidation = await Promise.all(fieldNames.map(x => this.getField(x).format(value[x], user)))
+    const itemsValidation = await Promise.all(fieldNames.map(x => this.getField(x).format(value[x])))
     const { isValid, message, value: fieldValues } = combineValidationResponses(itemsValidation)
 
     return {

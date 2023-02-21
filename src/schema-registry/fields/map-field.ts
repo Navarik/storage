@@ -1,4 +1,4 @@
-import { Dictionary, FieldSchema } from "../../types"
+import { FieldSchema } from "../../types"
 import { FieldFactory } from "../field-factory"
 import { DataField } from "../types"
 import { combineValidationResponses, isEmpty, zip } from "./utils"
@@ -26,7 +26,7 @@ export class MapField implements DataField {
     this.itemType = factory.create(`${path}.*`, field.parameters.values)
   }
 
-  async format(data: any, user: string) {
+  async format(data: any) {
     const value = data === undefined ? this.default : data
 
     if (!this.required && isEmpty(value)) {
@@ -38,7 +38,7 @@ export class MapField implements DataField {
     }
 
     const keys = Object.keys(value)
-    const itemsValidation = await Promise.all(keys.map(x => this.itemType.format(value[x], user)))
+    const itemsValidation = await Promise.all(keys.map(x => this.itemType.format(value[x])))
     const { isValid, message, value: fieldValues } = combineValidationResponses(itemsValidation)
 
     return {
@@ -53,11 +53,9 @@ export class MapField implements DataField {
       return value
     }
 
-    const result: Dictionary<any> = {}
-    for (const name in value) {
-      result[name] = await this.itemType.hydrate(value[name], user)
-    }
+    const keys = Object.keys(value)
+    const values = await Promise.all(keys.map(key => this.itemType.hydrate(value[key], user)))
 
-    return result
+    return zip(keys, values)
   }
 }

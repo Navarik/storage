@@ -73,14 +73,14 @@ export class SchemaRegistry {
     return schema
   }
 
-  async format<BodyType extends object>(type: string, body: Partial<BodyType>, user: string): Promise<BodyType> {
+  async format<BodyType extends object>(type: string, body: Partial<BodyType>): Promise<BodyType> {
     const id = this.knownTypes[type] || type
     const schema = this.schemas[id]
     if (!schema) {
       throw new ValidationError(`Validation failed: type ${type} not found.`)
     }
 
-    const { isValid, message, value } = await schema.format(body, user)
+    const { isValid, message, value } = await schema.format(body)
     if (!isValid) {
       throw new ValidationError(message)
     }

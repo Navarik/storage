@@ -26,7 +26,7 @@ export class ArrayField implements DataField {
     this.itemType = factory.create(`${path}.*`, field.parameters.items)
   }
 
-  async format(data: any, user: string) {
+  async format(data: any) {
     const value = data === undefined ? this.default : data
 
     if (!this.required && isEmpty(value)) {
@@ -37,7 +37,7 @@ export class ArrayField implements DataField {
       return { isValid: false, message: `Field ${this.name} must be an array, ${typeof value} given.`, value }
     }
 
-    const itemsValidation = await Promise.all(value.map(x => this.itemType.format(x, user)))
+    const itemsValidation = await Promise.all(value.map(x => this.itemType.format(x)))
 
     return combineValidationResponses(itemsValidation)
   }

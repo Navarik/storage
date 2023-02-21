@@ -5,6 +5,6 @@ export interface FormatResponse {
 }
 
 export interface DataField {
-  format(value: any, user: string): Promise<FormatResponse>
+  format(value: any): Promise<FormatResponse>
   hydrate(value: any, user: string): Promise<any>
 }

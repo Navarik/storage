@@ -1,16 +1,21 @@
-import { FieldSchema, StorageInterface } from "../../types"
+import { CanonicalEntity, FieldSchema } from "../../types"
 import { DataField } from "../types"
 import { isEmpty } from "./utils"
 
+interface State {
+  has: (id: string) => Promise<boolean>
+  get: (id: string, {}, user: string) => Promise<CanonicalEntity<any, any>|undefined>
+}
+
 interface Config {
   path: string
-  state: StorageInterface<any>
+  state: State
   field: FieldSchema<{}>
 }
 
 export class ReferenceField implements DataField {
   private name: string
-  private state: StorageInterface<any>
+  private state: State
   private required: boolean
   private default: string|null
 
@@ -21,7 +26,7 @@ export class ReferenceField implements DataField {
     this.default = field.default === undefined ? null : field.default
   }
 
-  async format(data: any = null, user: string) {
+  async format(data: any = null) {
     const value = data === undefined ? this.default : data
 
     if (isEmpty(value)) {
@@ -30,7 +35,7 @@ export class ReferenceField implements DataField {
         : { isValid: true, message: "", value }
     }
 
-    if (!await this.state.get(value, {}, user)) {
+    if (!await this.state.has(value)) {
       return {
         isValid: false,
         message: `Reference document ${value} not found for ${this.name}.`,
