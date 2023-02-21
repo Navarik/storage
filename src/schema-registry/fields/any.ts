@@ -1,18 +1,25 @@
-import { DataField } from "../../types"
+import { FieldSchema } from "../../types"
+import { DataField } from "../types"
+import { isEmpty } from "./utils"
 
 interface Config {
   path: string
+  field: FieldSchema<{}>
 }
 
 export class AnyField implements DataField {
-  public name: string
+  private default: any
 
-  constructor({ path }: Config) {
-    this.name = path
+  constructor({ field }: Config) {
+    this.default = field.default === undefined ? null : field.default
   }
 
-  async validate() {
-    return { isValid: true, message: "" }
+  async format(value: any) {
+    return {
+      isValid: true,
+      message: "",
+      value: isEmpty(value) ? this.default : value
+    }
   }
 
   async hydrate(value: any) {

@@ -1,7 +1,7 @@
-import { SchemaField, SearchableField, SearchQuery } from "../../types"
+import { FieldSchema, SearchableField, SearchQuery } from "../../types"
 import { createField } from "."
 
-type MapFieldDefinition = SchemaField<{ values: SchemaField }>
+type MapFieldDefinition = FieldSchema<{ values: FieldSchema }>
 
 export class MapField implements SearchableField {
   private items: SearchableField
@@ -14,9 +14,9 @@ export class MapField implements SearchableField {
     this.items = createField(field.parameters.values)
   }
 
-  chain(field: SchemaField) {}
+  chain(field: FieldSchema) {}
 
-  merge(field: SchemaField) {}
+  merge(field: FieldSchema) {}
 
   resolve([head, ...tail]: Array<string>, query: SearchQuery, schemaRoot: SearchableField) {
     if (typeof head !== "string") {

@@ -1,4 +1,4 @@
-import { Instantiable, Dictionary, SchemaField, SearchableField } from "../../types"
+import { Instantiable, Dictionary, FieldSchema, SearchableField } from "../../types"
 import { ArrayField } from "./array-field"
 import { MapField } from "./map-field"
 import { ObjectField } from "./object-field"
@@ -14,7 +14,7 @@ const typeFactories: Dictionary<Instantiable<SearchableField>> = {
   reference: ReferenceField
 }
 
-export const createField = (field: SchemaField): SearchableField => {
+export const createField = (field: FieldSchema): SearchableField => {
   const FieldClass = typeFactories[field.type] || PrimitiveField
   const descriptor = new FieldClass(field)
 

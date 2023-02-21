@@ -1,8 +1,7 @@
-import { v5 as uuidv5, v4 as uuidv4 } from 'uuid'
+import { v5 as uuidv5 } from 'uuid'
 import deepCopy from "deepcopy"
 import { UUID, ActionType, Timestamp, CanonicalEntity, EntityEnvelope } from './types'
 import { ConflictError } from './errors/conflict-error'
-import { Schema } from './schema'
 
 export class Entity<B extends object, M extends object> implements CanonicalEntity<B, M> {
   public id: UUID
@@ -33,19 +32,17 @@ export class Entity<B extends object, M extends object> implements CanonicalEnti
     this.meta = data.meta
   }
 
-  static create<B extends object, M extends object>({ id = uuidv4(), body, meta }: { id?: UUID, body: B, meta: M }, { schema, metaSchema }: { schema: Schema, metaSchema: Schema }, user: UUID): Entity<B, M> {
+  static create<B extends object, M extends object>({ id, body, meta }: { id: UUID, body: B, meta: M }, schema: { type: string, id: string }, user: UUID): Entity<B, M> {
     const now = new Date().toISOString()
 
-    const formattedBody = schema.format<B>(body)
-
     return new Entity<B, M>({
-      body: formattedBody,
+      id,
+      body,
       type: schema.type,
       schema: schema.id,
-      meta: metaSchema.format(meta || {}),
-      id: id,
+      meta: meta || {},
       previous_version_id: null,
-      version_id: uuidv5(JSON.stringify(formattedBody), id),
+      version_id: uuidv5(JSON.stringify(body), id),
       last_action: "create",
       created_by: user,
       created_at: now,
@@ -54,7 +51,7 @@ export class Entity<B extends object, M extends object> implements CanonicalEnti
     })
   }
 
-  update({ version_id, body, meta }: { version_id: UUID, type?: string, body?: B, meta?: M }, { schema, metaSchema }: { schema: Schema, metaSchema: Schema }, user: UUID): Entity<B, M> {
+  update({ version_id, body, meta }: { version_id: UUID, body?: B, meta?: M }, schema: { type: string, id: string }, user: UUID): Entity<B, M> {
     if (this.version_id != version_id) {
       throw new ConflictError(`Update unsuccessful due to ${version_id} being not the latest version for entity ${this.id}`)
     }
@@ -69,10 +66,8 @@ export class Entity<B extends object, M extends object> implements CanonicalEnti
 
     const now = new Date().toISOString()
 
-    this.body = schema.format(this.body)
     this.type = schema.type
     this.schema = schema.id
-    this.meta = metaSchema.format(this.meta)
 
     this.previous_version_id = this.version_id
     this.version_id = uuidv5(JSON.stringify(this.body), this.id)

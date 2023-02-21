@@ -1,7 +1,7 @@
-import { Dictionary, SchemaField, SearchableField, SearchQuery } from "../../types"
+import { Dictionary, FieldSchema, SearchableField, SearchQuery } from "../../types"
 import { createField } from "."
 
-type UnionFieldDefninition = SchemaField<{ options: Array<SchemaField> }>
+type UnionFieldDefninition = FieldSchema<{ options: Array<FieldSchema> }>
 
 export class UnionField implements SearchableField {
   private types: Dictionary<SearchableField> = {}
@@ -10,7 +10,7 @@ export class UnionField implements SearchableField {
     this.merge(field)
   }
 
-  chain(field: SchemaField) {
+  chain(field: FieldSchema) {
     if (this.types[field.type]) {
       this.types[field.type]?.merge(field)
     } else {
@@ -18,7 +18,7 @@ export class UnionField implements SearchableField {
     }
   }
 
-  merge(field: SchemaField) {
+  merge(field: FieldSchema) {
     if (!field.parameters) {
       throw new Error("DeepSearch: union fiedls require options parameter")
     }

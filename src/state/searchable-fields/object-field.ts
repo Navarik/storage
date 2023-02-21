@@ -1,7 +1,7 @@
-import { Dictionary, SchemaField, SearchableField, SearchQuery } from "../../types"
+import { Dictionary, FieldSchema, SearchableField, SearchQuery } from "../../types"
 import { UnionField } from "./union-field"
 
-type ObjectFieldDefinition = SchemaField<{ fields: Array<SchemaField> }>
+type ObjectFieldDefinition = FieldSchema<{ fields: Array<FieldSchema> }>
 
 export class ObjectField implements SearchableField {
   private fields: Dictionary<UnionField> = {}
@@ -10,7 +10,7 @@ export class ObjectField implements SearchableField {
     this.merge(field)
   }
 
-  chain(field: SchemaField) {
+  chain(field: FieldSchema) {
     if (!this.fields[field.name]) {
       this.fields[field.name] = new UnionField({
         name: field.name,
@@ -22,7 +22,7 @@ export class ObjectField implements SearchableField {
     this.fields[field.name]?.chain(field)
   }
 
-  merge(field: SchemaField) {
+  merge(field: FieldSchema) {
     for (const nestedField of field.parameters?.fields) {
       this.chain(nestedField)
     }

@@ -15,7 +15,6 @@
     "url": "git@github.com:TICitHub/storage.git"
   },
   "dependencies": {
-    "@navarik/avro-schema-engine": "^1.1.1",
     "deepcopy": "^2.1.0",
     "is-url": "^1.2.4",
     "is-uuid": "^1.0.2",

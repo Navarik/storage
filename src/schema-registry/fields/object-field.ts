@@ -1,28 +1,31 @@
-import { DataField, Dictionary, SchemaField } from "../../types"
+import { Dictionary, FieldSchema } from "../../types"
 import { FieldFactory } from "../field-factory"
-import { combineValidationResponses, isEmpty } from "./utils"
+import { DataField } from "../types"
+import { combineValidationResponses, isEmpty, zip } from "./utils"
 
 interface Config {
   factory: FieldFactory
   path: string
-  field: SchemaField<{ fields: Array<SchemaField> }>
+  field: FieldSchema<{ fields: Array<FieldSchema> }>
 }
 
 export class ObjectField implements DataField {
   private name: string
   private fields: Dictionary<DataField> = {}
   private required: boolean
+  private default: object|null
 
-  constructor({ factory, path, field: { parameters, required = false } }: Config) {
-    if (!parameters) {
-      throw new Error("DataLink: object fiedls require fields parameter.")
+  constructor({ factory, path, field }: Config) {
+    if (!field.parameters) {
+      throw new Error("Schema: object fiedls require fields parameter.")
     }
 
-    this.required = required
+    this.required = field.required || false
     this.name = path
-    for (const field of parameters.fields) {
-      if (!this.fields[field.name]) {
-        this.fields[field.name] = factory.create(`${path}.${field.name}`, field)
+    this.default = field.default === undefined ? null : field.default
+    for (const x of field.parameters.fields) {
+      if (!this.fields[x.name]) {
+        this.fields[x.name] = factory.create(`${path}.${x.name}`, x)
       }
     }
   }
@@ -30,25 +33,32 @@ export class ObjectField implements DataField {
   private getField(name: string) {
     const field = this.fields[name]
     if (!field) {
-      throw new Error(`DataLink cannot find validator for ${name}.`)
+      throw new Error(`Schema cannot find validator for ${name}.`)
     }
 
     return field
   }
 
-  async validate(value: any, user: string) {
+  async format(data: any, user: string) {
+    const value = data === undefined ? this.default : data
+
     if (!this.required && isEmpty(value)) {
-      return { isValid: true, message: "" }
+      return { isValid: true, message: "", value }
     }
 
     if (value instanceof Array || value === null || typeof value !== "object") {
-      return { isValid: false, message: `Field ${this.name} must be an object, ${typeof value} given. ` }
+      return { isValid: false, message: `Field ${this.name} must be an object, ${typeof value} given.`, value }
     }
 
     const fieldNames = Object.keys(this.fields)
-    const itemsValidation = await Promise.all(fieldNames.map(x => this.getField(x).validate(value[x], user)))
+    const itemsValidation = await Promise.all(fieldNames.map(x => this.getField(x).format(value[x], user)))
+    const { isValid, message, value: fieldValues } = combineValidationResponses(itemsValidation)
 
-    return combineValidationResponses(itemsValidation)
+    return {
+      isValid,
+      message,
+      value: zip(fieldNames, fieldValues)
+    }
   }
 
   async hydrate(value: any, user: string) {

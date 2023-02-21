@@ -1,13 +1,14 @@
 import isUrl from "is-url"
 import isUuid from "is-uuid"
-import { Dictionary, DataField, SchemaField } from "../../types"
+import { Dictionary, FieldSchema } from "../../types"
+import { DataField } from "../types"
 import { isEmpty } from "./utils"
 
 type TypeValidator = (x: any) => boolean
 
 interface Config {
   path: string
-  field: SchemaField<{}>
+  field: FieldSchema<{}>
 }
 
 const typeValidators: Dictionary<TypeValidator> = {
@@ -29,31 +30,36 @@ export class PrimitiveField implements DataField {
   private type: string
   private validator: (x: any) => boolean
   private required: boolean
+  private default: any
 
-  constructor({ path, field: { type, required = false } }: Config) {
-    const validator = typeValidators[type]
+  constructor({ path, field }: Config) {
+    const validator = typeValidators[field.type]
     if (!validator) {
-      throw new Error(`Schema: type ${type} is not supported.`)
+      throw new Error(`Schema: type ${field.type} is not supported.`)
     }
 
-    this.type = type
+    this.type = field.type
     this.validator = validator
-    this.required = required
+    this.required = field.required || false
+    this.default = field.default === undefined ? null : field.default
     this.name = path
   }
 
-  async validate(value: any) {
+  async format(data: any) {
+    const value = data === undefined ? this.default : data
+
     if (isEmpty(value)) {
       return this.required
-        ? { isValid: false, message: `Field ${this.name} cannot be empty.` }
-        : { isValid: true, message: "" }
+        ? { isValid: false, message: `Field ${this.name} cannot be empty.`, value }
+        : { isValid: true, message: "", value }
     }
 
     const isValid = this.validator(value)
 
     return {
       isValid,
-      message: isValid ? "" : `Field ${this.name} must be a ${this.type}, ${typeof value} is given.`
+      message: isValid ? "" : `Field ${this.name} must be a ${this.type}, ${typeof value} is given.`,
+      value
     }
   }
 

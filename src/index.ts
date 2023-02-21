@@ -1,6 +1,5 @@
 import { Readable } from "stream"
 import { Logger, Dictionary, CanonicalSchema, StorageInterface, UUID, CanonicalEntity, EntityEnvelope, Observer, SearchOptions, EntityPatch, EntityData, StorageConfig, GetOptions, SearchQuery, AccessControlAdapter, AccessType, StreamOptions } from "./types"
-import { AvroSchemaEngine } from "@navarik/avro-schema-engine"
 import { v4 as uuidv4 } from 'uuid'
 import { ConflictError } from "./errors/conflict-error"
 import { AccessError } from "./errors/access-error"
@@ -9,7 +8,6 @@ import { Changelog } from "./changelog"
 import { SchemaRegistry } from "./schema-registry"
 import { State } from "./state"
 import { Entity } from "./entity"
-import { Schema } from "./schema"
 import { QueryStream } from "./query-stream"
 
 import { UuidV5IdGenerator } from "./adapters/uuid-v5-id-generator"
@@ -28,7 +26,7 @@ const defaultSchemaIdNamespace = '00000000-0000-0000-0000-000000000000'
 
 export class Storage<MetaType extends object = {}> implements StorageInterface<MetaType> {
   private schema: SchemaRegistry
-  private metaSchema: Schema
+  private metaSchema: SchemaRegistry
   private state: State<MetaType>
   private accessControl: AccessControlAdapter<MetaType>
   private changelog: Changelog<MetaType>
@@ -49,22 +47,22 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
     this.logger.info({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}`)
 
     const schemaIdGenerator = config.schemaIdGenerator || new UuidV5IdGenerator({ root: defaultSchemaIdNamespace })
-    const schemaEngine = config.schemaEngine || new AvroSchemaEngine()
 
     const metaSchemaDefinition = {
       name: "metadata",
       fields: config.meta || []
     }
-    this.metaSchema = new Schema({
-      id: schemaIdGenerator.id(metaSchemaDefinition),
-      definition: metaSchemaDefinition,
-      engine: schemaEngine
+
+    this.metaSchema = new SchemaRegistry({
+      registry: new DefaultSchemaRegistry(),
+      idGenerator: schemaIdGenerator,
+      onChange: () => {},
+      state: this
     })
-    schemaEngine.register(this.metaSchema.id, metaSchemaDefinition)
+    this.metaSchema.define(metaSchemaDefinition)
 
     this.schema = new SchemaRegistry({
       registry: config.schemaRegistry || new DefaultSchemaRegistry(),
-      engine: config.schemaEngine || new AvroSchemaEngine(),
       idGenerator: schemaIdGenerator,
       onChange: this.onSchemaChange.bind(this),
       state: this
@@ -74,7 +72,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
       logger: this.logger,
       index: config.index || new DefaultSearchIndex<MetaType>(),
       registry: config.state || new DefaultEntityRegistry<MetaType>(),
-      metaSchema: this.metaSchema.canonical(),
+      metaSchema: metaSchemaDefinition,
       cacheSize
     })
 
@@ -243,14 +241,16 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
       throw new ValidationError(`Unknown type: ${type}`)
     }
 
+    const formattedBody = await this.schema.format<BodyType>(type, body, user)
+    const formattedMeta = await this.metaSchema.format<MetaType>("metadata", meta || {}, user)
+
     const entity = Entity.create<BodyType, MetaType>(
-      { id, body, meta: <MetaType>meta },
-      { schema, metaSchema: this.metaSchema },
+      { id, body: formattedBody, meta: formattedMeta },
+      schema,
       user
     )
 
     await this.verifyAccess(user, 'write', entity)
-    await this.schema.validate(type, body, user)
 
     return this.changelog.requestChange("create", entity, schema.canonical())
   }
@@ -266,7 +266,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
       throw new ValidationError(`Update failed: can't find entity ${id}`)
     }
 
-    const newType = type || previous.type
+    const newType = type || previous.type // TODO: this will automatically up the structure. Do we want that?
     const schema = this.schema.describe(newType)
     if (!schema) {
       throw new ValidationError(`Update failed: can't find entity type ${newType}`)
@@ -274,12 +274,13 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
 
     const entity = new Entity<BodyType, MetaType>(previous).update(
       { version_id, body, meta },
-      { schema, metaSchema: this.metaSchema },
+      schema,
       user
     )
 
+    entity.body = await this.schema.format<BodyType>(schema.id, entity.body, user)
+
     await this.verifyAccess(user, 'write', entity)
-    await this.schema.validate(entity.type, entity.body, user)
 
     return this.changelog.requestChange("update", entity, schema.canonical())
   }
