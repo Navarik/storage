@@ -44,7 +44,7 @@ export class Storage<MetaType extends object = {}> implements StorageInterface<M
     const { schema = [], cacheSize = 100 } = config
 
     this.logger = config.logger || defaultLogger
-    this.logger.info({ component: "Storage" }, `Initializing storage (cache size: ${cacheSize}, static schemas: ${schema.length}`)
+    this.logger.info({ component: "Storage" }, `Initializing storage. Cache size: ${cacheSize}, static schemas: ${schema.length}`)
 
     const schemaIdGenerator = config.schemaIdGenerator || new UuidV5IdGenerator({ root: defaultSchemaIdNamespace })
 
